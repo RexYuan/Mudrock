@@ -3,14 +3,14 @@
 
 CXX := g++-10
 
-CXXFLAGS := -std=c++20 -I. -O3
-HXXFLAGS := -std=c++20 -I. -O3
+CXXFLAGS := -std=c++20 -I.
+HXXFLAGS := -std=c++20 -I.
 
 LIBS := -L. -lminisat
-OBJS := bv.o
-HDRS := minisat.hxx.gch bv.hxx
+OBJS := bv.o mana.o
+HDRS := minisat.hxx.gch
 MAIN := main.cxx
-DEP := $(MINISAT) $(OBJS) $(HDRS) $(MAIN)
+DEP := $(OBJS) $(HDRS) $(MAIN)
 
 OUT := mudk.o
 
@@ -31,11 +31,12 @@ run:
 
 .PHONY: clean
 clean:
-	-trash *.o
-	-trash *.gch
+	@-trash *.o || :
+	@-trash *.gch || :
+	@-trash *.dSYM || :
 
-bv.o: bv.cxx bv.hxx
-	$(CXX) $(CXXFLAGS) -c bv.cxx $(LIBS) -o bv.o
+%.o: %.cxx %.hxx
+	$(CXX) $(CXXFLAGS) -c $< $(LIBS) -o $@
 
 minisat.hxx.gch: minisat.hxx
 	$(CXX) $(HXXFLAGS) -c minisat.hxx
