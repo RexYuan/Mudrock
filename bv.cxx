@@ -106,7 +106,7 @@ Bv::Bv (size_t len)
     assert (data);
 }
 
-Bv::Bv (string bs)
+Bv::Bv (std::string bs)
 {
     for (const auto& b : bs) assert (b == '0' || b == '1');
     length = bs.length();
@@ -165,7 +165,7 @@ void Bv::flipper (size_t ind)
         get_index_mask(get_index_suffix(ind));
 }
 
-void Bv::setter (string bs)
+void Bv::setter (std::string bs)
 {
     /*
      * set by bit string.
@@ -176,9 +176,9 @@ void Bv::setter (string bs)
         bit.setbit(*sit == '1');
 }
 
-string Bv::to_string () const
+std::string Bv::to_string () const
 {
-    string s = "";
+    std::string s = "";
     for (bool b : *this)
         s += (b ? "1" : "0");
     return s;
@@ -193,7 +193,7 @@ Bv::BitIterator::BitIterator (unsigned char* ptr, size_t ind) : p(ptr), i(ind)
     mask_ind = get_index_mask(get_index_suffix(i));
 }
 
-BitIterator& Bv::BitIterator::operator++() // prefix
+Bv::BitIterator& Bv::BitIterator::operator++() // prefix increment
 {
     if (mask_ind & 1) // end bit reached, go to next byte
     {

@@ -1,22 +1,19 @@
 
 #pragma once
 
+#include <cassert>
+
 #include <string>
 
 #include <iostream>
 
-#include "minisat.hxx"
-
-using string = std::string;
-
 //=================================================================================================
 // Bit vector type
 //
-struct Bv;
 struct Bv
 {
     Bv (size_t len); // construct 0s bv of length `len`
-    Bv (string bs); // construct bv corresponding to `bs`
+    Bv (std::string bs); // construct bv corresponding to `bs`
     ~Bv ();
 
     size_t len () const; // get length
@@ -24,13 +21,13 @@ struct Bv
     void setter (size_t ind, bool val); // set ind to val
     void flipper (size_t ind); // flip value of ind
 
-    void setter (string bs); // set to bs
+    void setter (std::string bs); // set to bs
 
     struct BitIterator;
     BitIterator begin() const;
     BitIterator end() const;
 
-    string to_string () const; // pretty printing
+    std::string to_string () const; // pretty printing
 
 private:
     size_t length;
@@ -40,7 +37,6 @@ private:
 //=================================================================================================
 // Iterate over bits
 //
-using BitIterator = Bv::BitIterator;
 struct Bv::BitIterator
 {
     BitIterator (unsigned char* ptr, size_t ind);
@@ -51,17 +47,17 @@ struct Bv::BitIterator
     void setbit (bool val);  // write with this method
 
     inline friend bool operator== (const BitIterator& a, const BitIterator& b)
-    { return a.p == b.p && a.i == b.i; };
+        { return a.p == b.p && a.i == b.i; };
     inline friend bool operator!= (const BitIterator& a, const BitIterator& b)
-    { return a.p != b.p || a.i != b.i; };
+        { return a.p != b.p || a.i != b.i; };
 
 private:
     unsigned char* p;
     size_t i;
     unsigned char mask_ind;
 };
-inline BitIterator Bv::begin() const { return BitIterator(data, 0); }
-inline BitIterator Bv::end() const { return BitIterator(data, length); } 
+inline Bv::BitIterator Bv::begin() const { return BitIterator(data, 0); }
+inline Bv::BitIterator Bv::end() const { return BitIterator(data, length); } 
 
 inline std::ostream& operator<<(std::ostream &out, const Bv& bv)
 {
