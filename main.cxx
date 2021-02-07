@@ -3,6 +3,7 @@
 
 #include "bv.hxx"
 #include "mana.hxx"
+#include "bf.hxx"
 
 using std::cout;
 using namespace Minisat;
@@ -10,51 +11,12 @@ using namespace Minisat;
 int main()
 {
     cout << std::boolalpha;
-    Mana m;
 
-    Var s1 = m.newSw();
-    Var x = m.newVar(), y = m.newVar(), z = m.newVar();
-
-    m.addClause(s1, mkLit(x));
-
-    m.solve(mkLit(y), mkLit(z));
-    assert (m.sat());
-
-    assert (m.val(x) == true);
-    assert (m.val(y) == true);
-    assert (m.val(z) == true);
-
-    m.releaseSw(s1);
     
-    Var s2 = m.newSw();
-    vec<Lit> ls1, ls2;
+    Bf_ptr x = v(1) & v(2);
+    Bf_ptr y = v(3) | v(4);
     
-    ls1.push(mkLit(y));
-    ls1.push(mkLit(z));
-    m.addClause(s2, ls1);
-
-    ls2.push(~mkLit(y));
-    ls2.push(~mkLit(z));
-    m.addClause(s2, ls2);
-
-    vec<Lit> assump;
-    assump.push(mkLit(x));
-    assump.push(~mkLit(z));
-    m.addClause(s2, assump);
-
-    m.solve(assump);
-    assert (m.sat());
-
-    assert (m.val(x) == true);
-    assert (m.val(y) == true);
-    assert (m.val(z) == false);
-
-    assert (m.nVars() == 5);
-
-    m.releaseSw(s2);
-    m.releaseVar(x);
-    m.releaseVar(y);
-    m.releaseVar(z);
+    cout << (x |= ~v(true) != y == ~v(false)) << '\n';
 
     return 0;
 }
