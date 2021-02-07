@@ -11,7 +11,9 @@ using std::set;
 using std::same_as;
 
 using namespace Minisat;
-using LitVec = vec<Lit>;
+
+template <typename T> concept isLit = same_as<T, Lit>;
+template <typename... Ts> concept areLits = (isLit<Ts> && ...);
 
 //=================================================================================================
 // Minisat manager
@@ -32,13 +34,13 @@ struct Mana
     Var newVar (bool dvar = true); // default is decision variable
     void releaseVar (Var v);
 
-    template <typename... Ts> requires (same_as<Ts, Lit> && ...)
+    template <typename... Ts> requires areLits<Ts...>
     bool addClause (Var sw, Ts... lits);
-    bool addClause (Var sw, const LitVec& ps);
+    bool addClause (Var sw, const vec<Lit>& ps);
 
-    template <typename... Ts> requires (same_as<Ts, Lit> && ...)
+    template <typename... Ts> requires areLits<Ts...>
     bool solve (Ts... lits); // solve assuming lits
-    bool solve (const LitVec& ps); // solve assuming ps
+    bool solve (const vec<Lit>& ps); // solve assuming ps
 
     bool sat () const;
     bool val (Var x) const;
@@ -57,9 +59,9 @@ private:
         { return s.newVar(upol, dvar); }
     inline void _releaseVar (Lit l)
         { return s.releaseVar(l); }
-    inline bool _addClause (LitVec& ps)
+    inline bool _addClause (vec<Lit>& ps)
         { return s.addClause_(ps); }
-    inline bool _solve (LitVec& ps)
+    inline bool _solve (vec<Lit>& ps)
         { return s.solve(ps); }
     inline bool _okay () const
         { return s.okay(); }
@@ -71,16 +73,16 @@ private:
         { return s.nVars(); }
 };
 
-template <typename... Ts> requires (same_as<Ts, Lit> && ...)
+template <typename... Ts> requires areLits<Ts...>
 inline bool Mana::addClause (Var sw, Ts... lits)
 {
-    LitVec ps; (ps.push(lits), ...);
+    vec<Lit> ps; (ps.push(lits), ...);
     return addClause(sw, ps);
 }
 
-template <typename... Ts> requires (same_as<Ts, Lit> && ...)
+template <typename... Ts> requires areLits<Ts...>
 inline bool Mana::solve (Ts... lits)
 {
-    LitVec ps; (ps.push(lits), ...);
+    vec<Lit> ps; (ps.push(lits), ...);
     return solve(ps);
 }

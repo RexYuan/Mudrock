@@ -3,8 +3,8 @@
 
 CXX := g++-10
 
-CXXFLAGS := -std=c++20 -I.
-HXXFLAGS := -std=c++20 -I.
+CXXFLAGS := -std=c++20 -I. -Wall
+HXXFLAGS := -std=c++20 -I. -w
 
 LIBS := -L. -lminisat
 OBJS := bv.o mana.o
@@ -31,9 +31,8 @@ run:
 
 .PHONY: clean
 clean:
-	@-trash *.o || :
-	@-trash *.gch || :
-	@-trash *.dSYM || :
+	@echo "trash-ing builds"
+	-trash *.o *.gch *.dSYM 2>/dev/null || :
 
 %.o: %.cxx %.hxx
 	$(CXX) $(CXXFLAGS) -c $< $(LIBS) -o $@

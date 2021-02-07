@@ -7,13 +7,15 @@
 
 #include <iostream>
 
+using std::string;
+
 //=================================================================================================
 // Bit vector type
 //
 struct Bv
 {
     Bv (size_t len); // construct 0s bv of length `len`
-    Bv (std::string bs); // construct bv corresponding to `bs`
+    Bv (string bs); // construct bv corresponding to `bs`
     ~Bv ();
 
     size_t len () const; // get length
@@ -21,13 +23,13 @@ struct Bv
     void setter (size_t ind, bool val); // set ind to val
     void flipper (size_t ind); // flip value of ind
 
-    void setter (std::string bs); // set to bs
+    void setter (string bs); // set to bs
 
     struct BitIterator;
     BitIterator begin() const;
     BitIterator end() const;
 
-    std::string to_string () const; // pretty printing
+    string to_string () const; // pretty printing
 
 private:
     size_t length;

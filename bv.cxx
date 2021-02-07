@@ -106,7 +106,7 @@ Bv::Bv (size_t len)
     assert (data);
 }
 
-Bv::Bv (std::string bs)
+Bv::Bv (string bs)
 {
     for (const auto& b : bs) assert (b == '0' || b == '1');
     length = bs.length();
@@ -165,7 +165,7 @@ void Bv::flipper (size_t ind)
         get_index_mask(get_index_suffix(ind));
 }
 
-void Bv::setter (std::string bs)
+void Bv::setter (string bs)
 {
     /*
      * set by bit string.
@@ -176,9 +176,9 @@ void Bv::setter (std::string bs)
         bit.setbit(*sit == '1');
 }
 
-std::string Bv::to_string () const
+string Bv::to_string () const
 {
-    std::string s = "";
+    string s = "";
     for (bool b : *this)
         s += (b ? "1" : "0");
     return s;

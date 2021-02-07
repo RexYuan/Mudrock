@@ -4,12 +4,12 @@
 #include "bv.hxx"
 #include "mana.hxx"
 
-using namespace std;
+using std::cout;
 using namespace Minisat;
 
 int main()
 {
-    cout << boolalpha;
+    cout << std::boolalpha;
     Mana m;
 
     Var s1 = m.newSw();
@@ -27,7 +27,7 @@ int main()
     m.releaseSw(s1);
     
     Var s2 = m.newSw();
-    LitVec ls1, ls2;
+    vec<Lit> ls1, ls2;
     
     ls1.push(mkLit(y));
     ls1.push(mkLit(z));
@@ -37,7 +37,7 @@ int main()
     ls2.push(~mkLit(z));
     m.addClause(s2, ls2);
 
-    LitVec assump;
+    vec<Lit> assump;
     assump.push(mkLit(x));
     assump.push(~mkLit(z));
     m.addClause(s2, assump);

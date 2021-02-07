@@ -46,16 +46,16 @@ void Mana::releaseVar (Var v)
     return _releaseVar(mkLit(v));
 }
 
-bool Mana::addClause (Var sw, const LitVec& ps)
+bool Mana::addClause (Var sw, const vec<Lit>& ps)
 {
-    LitVec tmp; ps.copyTo(tmp);
+    vec<Lit> tmp; ps.copyTo(tmp);
     tmp.push(mkLit(sw));
     return _addClause(tmp);
 }
 
-bool Mana::solve (const LitVec& ps)
+bool Mana::solve (const vec<Lit>& ps)
 {
-    LitVec tmp; ps.copyTo(tmp);
+    vec<Lit> tmp; ps.copyTo(tmp);
     for (auto sw :   activeSw) tmp.push(~mkLit(sw));
     for (auto sw : inactiveSw) tmp.push( mkLit(sw));
     return _solve(tmp);
