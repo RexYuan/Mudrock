@@ -92,7 +92,7 @@ int Bf::get_int ()
 Bf_ptr Bf::get_sub ()
 {
     assert(t == Conn::Not);
-    return get<vector<Bf_ptr>>(sub)[0];
+    return get<Bf_ptr>(sub);
 }
 
 vector<Bf_ptr> Bf::get_subs ()

@@ -49,22 +49,33 @@ struct Bf
 //DEBUG: the following cannot be private since that'd break smart pointers
 //private:
     Conn t;
-    variant<monostate, int, vector<Bf_ptr>> sub;
+    variant<monostate, int, Bf_ptr, vector<Bf_ptr>> sub;
 
     //=============================================================================================
     // Private constructors. Do not call directly
     //
     // construct bool constant valued `b`
-    inline Bf (bool b) : sub {monostate{}} { if (b) t=Conn::Top; else t=Conn::Bot; };
+    inline Bf (bool b) : sub {monostate{}} { if (b) t=Conn::Top; else t=Conn::Bot; }
     // construct variable numbered `i`
-    inline Bf (int i) : t {Conn::Base}, sub {int{i}} {};
-    // construct n-ary(n>=2) uninitialized formula node of type `c`
-    inline Bf (Conn c) : t {c}, sub {vector<Bf_ptr>{}} {};
+    inline Bf (int i) : t {Conn::Base}, sub {int{i}} {}
     // construct unary formula node of type `c` containing `bf`
-    inline Bf (Conn c, Bf_ptr bf) : t {c}, sub {vector<Bf_ptr>{bf}} {};
+    inline Bf (Conn c, Bf_ptr bf) : t {c}, sub {Bf_ptr{bf}} {}
     // construct n-ary formula node of type `c` containing `bfs`
     template <typename... Ts> requires are_Bf_ptrs<Ts...>
     inline Bf (Conn c, Ts... bfs) : t {c}, sub {vector<Bf_ptr>{bfs...}} {}
+    // construct uninitialized formula node of type `c`
+    inline Bf (Conn c) : t {c}
+    {
+        switch (t)
+        {
+        case Conn::Top: [[fallthrough]];
+        case Conn::Bot: sub = monostate{}; break;
+        case Conn::Base: sub = int{}; break;
+        case Conn::Not: sub = Bf_ptr{}; break;
+        case Conn::And: [[fallthrough]];
+        case Conn::Or: sub = vector<Bf_ptr>{}; break;
+        }
+    }
 };
 
 Bf_ptr v (bool b);
@@ -73,12 +84,12 @@ Bf_ptr neg (Bf_ptr bf);
 Bf_ptr conj (Bf_ptr bf1, Bf_ptr bf2);
 Bf_ptr disj (Bf_ptr bf1, Bf_ptr bf2);
 
-inline Bf_ptr operator~(Bf_ptr bf) { return neg(bf); };
-inline Bf_ptr operator&(Bf_ptr bf1, Bf_ptr bf2) { return conj(bf1,bf2); };
-inline Bf_ptr operator|(Bf_ptr bf1, Bf_ptr bf2) { return disj(bf1,bf2); };
-inline Bf_ptr operator|=(Bf_ptr bf1, Bf_ptr bf2) { return ~bf1 | bf2; };
-inline Bf_ptr operator==(Bf_ptr bf1, Bf_ptr bf2) { return (~bf1 | bf2) & ( bf1 | ~bf2); };
-inline Bf_ptr operator!=(Bf_ptr bf1, Bf_ptr bf2) { return ( bf1 | bf2) & (~bf1 | ~bf2); };
+inline Bf_ptr operator~(Bf_ptr bf) { return neg(bf); }
+inline Bf_ptr operator&(Bf_ptr bf1, Bf_ptr bf2) { return conj(bf1,bf2); }
+inline Bf_ptr operator|(Bf_ptr bf1, Bf_ptr bf2) { return disj(bf1,bf2); }
+inline Bf_ptr operator|=(Bf_ptr bf1, Bf_ptr bf2) { return ~bf1 | bf2; }
+inline Bf_ptr operator==(Bf_ptr bf1, Bf_ptr bf2) { return (~bf1 | bf2) & ( bf1 | ~bf2); }
+inline Bf_ptr operator!=(Bf_ptr bf1, Bf_ptr bf2) { return ( bf1 | bf2) & (~bf1 | ~bf2); }
 
 inline std::ostream& operator<<(std::ostream &out, const Bf_ptr& bf)
 {
