@@ -31,26 +31,20 @@ Bf_ptr conj(Bf_ptr bf1, Bf_ptr bf2)
         bf2->t == Conn::Bot) return v(false);
     else if (bf1->t == Conn::Top) return bf2;
     else if (bf2->t == Conn::Top) return bf1;
-    else if (bf1->t == Conn::And &&
-             bf2->t == Conn::And)
-    {
-        for (auto s : bf2->get_subs())
-            bf1->push_sub(s);
-        return bf1;
-    }
-    else if (bf1->t == Conn::And)
-    {
-        bf1->push_sub(bf2);
-        return bf1;
-    }
-    else if (bf2->t == Conn::And)
-    {
-        bf2->push_sub(bf1);
-        return bf2;
-    }
     else
     {
-        return make_shared<Bf>(Conn::And, bf1, bf2);
+        Bf_ptr tmp = make_shared<Bf>(Conn::And);
+        if (bf1->t == Conn::And)
+            for (auto s : bf1->get_subs())
+                tmp->push_sub(s);
+        else
+            tmp->push_sub(bf1);
+        if (bf2->t == Conn::And)
+            for (auto s : bf2->get_subs())
+                tmp->push_sub(s);
+        else
+            tmp->push_sub(bf2);
+        return tmp;
     }
 }
 
@@ -60,26 +54,20 @@ Bf_ptr disj(Bf_ptr bf1, Bf_ptr bf2)
         bf2->t == Conn::Top) return v(true);
     else if (bf1->t == Conn::Bot) return bf2;
     else if (bf2->t == Conn::Bot) return bf1;
-    else if (bf1->t == Conn::Or &&
-             bf2->t == Conn::Or)
-    {
-        for (auto s : bf2->get_subs())
-            bf1->push_sub(s);
-        return bf1;
-    }
-    else if (bf1->t == Conn::Or)
-    {
-        bf1->push_sub(bf2);
-        return bf1;
-    }
-    else if (bf2->t == Conn::Or)
-    {
-        bf2->push_sub(bf1);
-        return bf2;
-    }
     else
     {
-        return make_shared<Bf>(Conn::Or, bf1, bf2);
+        Bf_ptr tmp = make_shared<Bf>(Conn::Or);
+        if (bf1->t == Conn::Or)
+            for (auto s : bf1->get_subs())
+                tmp->push_sub(s);
+        else
+            tmp->push_sub(bf1);
+        if (bf2->t == Conn::Or)
+            for (auto s : bf2->get_subs())
+                tmp->push_sub(s);
+        else
+            tmp->push_sub(bf2);
+        return tmp;
     }
 }
 

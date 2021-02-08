@@ -8,15 +8,27 @@
 using std::cout;
 using namespace Minisat;
 
+struct S
+{
+    S ()
+    {
+        cout << "created" << '\n';
+    }
+    ~S ()
+    {
+        cout << "deleted" << '\n';
+    }
+};
+
 int main()
 {
     cout << std::boolalpha;
 
     
     Bf_ptr x = v(1) & v(2);
-    Bf_ptr y = v(3) | v(4);
-    
-    cout << (x |= ~v(true) != y == ~v(false)) << '\n';
+    cout << (x & ~x) << '\n';
+    x = v(1) | v(2);
+    cout << (x | ~x) << '\n';
 
     return 0;
 }
