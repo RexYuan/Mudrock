@@ -1,6 +1,18 @@
 
 #include "mana.hxx"
 
+Mana::Mana ()
+{
+    _constTrue = s.newVar(); _constFalse = s.newVar();
+    s.addClause(mkLit(_constTrue)); s.addClause(~mkLit(_constFalse));
+}
+
+// Constants
+//
+Var Mana::constTrue () { return _constTrue; }
+Var Mana::constFalse () { return _constFalse; }
+Var Mana::fixedSw () { return _constFalse; }
+
 //=================================================================================================
 // Switch management
 //
@@ -18,6 +30,12 @@ void Mana::releaseSw (Var sw)
     activeSw.erase(sw);
     inactiveSw.erase(sw);
     s.addClause(mkLit(sw)); 
+}
+
+void Mana::releaseAll ()
+{
+    for (auto s : activeSw) releaseSw(s);
+    for (auto s : inactiveSw) releaseSw(s);
 }
 
 void Mana::activateSw (Var sw)

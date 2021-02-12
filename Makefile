@@ -7,7 +7,7 @@ CXXFLAGS := -std=c++20 -I. -Wall
 HXXFLAGS := -std=c++20 -I. -w
 
 LIBS := -L. -lminisat
-OBJS := bv.o mana.o bf.o
+OBJS := bv.o mana.o bf.o ora.o
 HDRS := minisat.hxx.gch
 MAIN := main.cxx
 DEP := $(HDRS) $(OBJS) $(MAIN)

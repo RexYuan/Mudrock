@@ -49,9 +49,9 @@ struct Bv::BitIterator
     void setbit (bool val);  // write with this method
 
     inline friend bool operator== (const BitIterator& a, const BitIterator& b)
-        { return a.p == b.p && a.i == b.i; };
+        { return a.p == b.p && a.i == b.i; }
     inline friend bool operator!= (const BitIterator& a, const BitIterator& b)
-        { return a.p != b.p || a.i != b.i; };
+        { return a.p != b.p || a.i != b.i; }
 
 private:
     unsigned char* p;

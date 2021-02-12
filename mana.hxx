@@ -20,11 +20,19 @@ template <typename... Ts> concept areLits = (isLit<Ts> && ...);
 //
 struct Mana
 {
+    Mana ();
+    // Constants
+    //
+    Var constTrue ();
+    Var constFalse ();
+    Var fixedSw ();
+
     //=============================================================================================
     // Switch management
     //
     Var newSw (); // new switches default to active
     void releaseSw (Var sw);
+    void releaseAll ();
     void activateSw (Var sw);
     void deactivateSw (Var sw);
     
@@ -51,6 +59,8 @@ private:
 
     set<Var> activeSw;
     set<Var> inactiveSw;
+
+    Var _constTrue, _constFalse;
 
     //=============================================================================================
     // Internal solver interface
