@@ -7,92 +7,36 @@
 // local only functions. not to be used outside this file
 namespace
 {
-    // how many bytes are needed to store `bits` bits.
-    //
-    // n bits need (n-1)/8+1 bytes to store.
-    // (n-1)/8+1 = (n/8 - 1/8 + 8/8) = (n/8 + 7/8) = (n+7)/8
-    // x >> 3 is x/8.
-    inline size_t bits_in_bytes (size_t bits)
+    // how many bits a data unit contains
+    inline constexpr size_t data_unit_bits = sizeof(data_unit)*8;
+
+    // mask of 1000...
+    inline constexpr data_unit one_zeros_mask = 1 << (data_unit_bits-1);
+
+    // how many units are needed to store `bits` bits
+    inline constexpr size_t bits_in_units (size_t bits)
     {
-        /*
-        * 1~8 minus 1
-        * 1 | 0000
-        * 2 | 0001
-        * 3 | 0010
-        * 4 | 0011
-        * 5 | 0100
-        * 6 | 0101
-        * 7 | 0110
-        * 8 | 0111
-        *     0
-        * 1~8 minus 1 right shift 3 is 0
-        * and requires 1 byte to store.
-        * 
-        * 9~16 minus 1
-        * 9 | 1000
-        * 10| 1001
-        * 11| 1010
-        * 12| 1011
-        * 13| 1100
-        * 14| 1101
-        * 15| 1110
-        * 16| 1111
-        *     1
-        * 9~16 minus 1 right shift 3 is 1
-        * and requires 2 byte to store.
-        * 
-        * 17~24 minus 1
-        * 17| 1 0000
-        * 18| 1 0001
-        * 19| 1 0010
-        * 20| 1 0011
-        * 21| 1 0100
-        * 22| 1 0101
-        * 23| 1 0110
-        * 24| 1 0111
-        *     1 0
-        * 17~24 minus 1 right shift 3 is 2
-        * and requires 3 byte to store.
-        */
         assert (bits > 0);
-        assert ((bits+7)>>3 > 0);
-        return (bits+7) >> 3;
+        return (bits+data_unit_bits-1) / data_unit_bits;
     }
 
-    // which byte is `index`th bit stored
-    //
-    // x is stored at byte x/8.
-    // x >> 3 is x/8.
-    inline size_t get_index_prefix (size_t index)
+    // which unit is `index`th bit stored
+    inline constexpr size_t get_index_prefix (size_t index)
     {
-        /*
-        * 0~ 7 is stored at byte 0
-        * 8~15 is stored at byte 1
-        */
-        return index >> 3;
+        return index / data_unit_bits;
     }
 
-    // which bit is `index`th bit stored in its byte
-    //
-    // x is stored at index x%8 of byte x/8
-    // x & 7 is x%8.
-    inline size_t get_index_suffix (size_t index)
+    // which bit is `index`th bit stored in its unit
+    inline constexpr size_t get_index_suffix (size_t index)
     {
-        /*
-        * 0~ 7 is stored at index 0~7 of byte 0
-        * 8~15 is stored at index 0~7 of byte 1
-        */
-        return index & 7;
+        return index % data_unit_bits;
     }
 
-    // mask for extracting `index`th bit from its byte
-    //
-    // the index counts from left to right.
-    // generate a bitmask for extracting indexed bit.
-    inline size_t get_index_mask (size_t index)
+    // mask for extracting `index`th bit from its unit
+    inline constexpr size_t get_index_mask (size_t index)
     {
-        assert (0 <= index && index <= 7);
-        return 0b10000000 >> index;
+        assert (0 <= index && index <= data_unit_bits);
+        return one_zeros_mask >> index;
     }
 }
 
@@ -102,7 +46,7 @@ namespace
 Bv::Bv (size_t len)
 {
     length = len;
-    data = new unsigned char [bits_in_bytes(length)]{}; // init to zeros
+    data = new data_unit [bits_in_units(length)]{}; // init to zeros
     assert (data);
 }
 
@@ -110,7 +54,7 @@ Bv::Bv (string bs)
 {
     for (const auto& b : bs) assert (b == '0' || b == '1');
     length = bs.length();
-    data = new unsigned char [bits_in_bytes(length)]{};
+    data = new data_unit [bits_in_units(length)]{};
     assert (data);
     setter(bs);
 }
@@ -187,7 +131,7 @@ string Bv::to_string () const
 //=================================================================================================
 // Iterate over bits
 //
-Bv::BitIterator::BitIterator (unsigned char* ptr, size_t ind) : p(ptr), i(ind)
+Bv::BitIterator::BitIterator (data_unit* ptr, size_t ind) : p(ptr), i(ind)
 {
     for (size_t n=0; n<get_index_prefix(i); n++, p++);
     mask_ind = get_index_mask(get_index_suffix(i));
@@ -197,7 +141,7 @@ Bv::BitIterator& Bv::BitIterator::operator++() // prefix increment
 {
     if (mask_ind & 1) // end bit reached, go to next byte
     {
-        mask_ind = 0b10000000;
+        mask_ind = one_zeros_mask;
         p++;
     }
     else // move mask right by 1
