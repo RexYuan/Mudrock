@@ -9,53 +9,26 @@
 using std::cout;
 using namespace Minisat;
 
+#include <type_traits>
+#include <cstring>
+#include <utility>
+#include <exception>
+#include <string>
+
 int main()
 {
-    //cout << std::boolalpha;
+    cout << std::boolalpha;
 
     Bv b ("11110000");
+    Bv p = b;
+    Bv q ("00000000");
+    q = b;
 
-    assert (b.getter(0) == true);
-    assert (b.getter(1) == true);
-    assert (b.getter(2) == true);
-    assert (b.getter(3) == true);
-    assert (b.getter(4) == false);
-    assert (b.getter(5) == false);
-    assert (b.getter(6) == false);
-    assert (b.getter(7) == false);
-
-    cout << b.to_string() << '\n';
-
-    b.setter(0, false);
-    b.flipper(3);
-    b.setter(7, 1);
-
-    assert (b.getter(0) == false);
-    assert (b.getter(1) == true);
-    assert (b.getter(2) == true);
-    assert (b.getter(3) == false);
-    assert (b.getter(4) == false);
-    assert (b.getter(5) == false);
-    assert (b.getter(6) == false);
-    assert (b.getter(7) == true);
-    
-    cout << b.to_string() << '\n';
-
-    for (auto i : b) cout << i;
-    cout << '\n';
-
+    cout << b.to_string() << ' ' << p.to_string() << ' ' << p.to_string() << '\n';
     for (auto it=b.begin(); it!=b.end(); ++it) it.setbit(!*it);
+    cout << b.to_string() << ' ' << p.to_string() << ' ' << p.to_string() << '\n';
 
-    assert (b.getter(0) == true);
-    assert (b.getter(1) == false);
-    assert (b.getter(2) == false);
-    assert (b.getter(3) == true);
-    assert (b.getter(4) == true);
-    assert (b.getter(5) == true);
-    assert (b.getter(6) == true);
-    assert (b.getter(7) == false);
 
-    cout << b.to_string() << '\n';
     return 0;
 
 

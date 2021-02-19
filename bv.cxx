@@ -7,33 +7,36 @@
 // local only functions. not to be used outside this file
 namespace
 {
+    // how many bits a byte contains
+    inline consteval const size_t bits_in_bytes (size_t bytes) { return bytes*CHAR_BIT; }
+
     // how many bits a data unit contains
-    inline constexpr size_t data_unit_bits = sizeof(data_unit)*8;
+    inline constinit const size_t data_unit_bits = bits_in_bytes(sizeof(Bv::data_unit));
 
     // mask of 1000...
-    inline constexpr data_unit one_zeros_mask = 1 << (data_unit_bits-1);
+    inline constinit const Bv::data_unit one_zeros_mask = 1 << (data_unit_bits-1);
 
     // how many units are needed to store `bits` bits
-    inline constexpr size_t bits_in_units (size_t bits)
+    inline constexpr const size_t bits_in_units (size_t bits)
     {
         assert (bits > 0);
         return (bits+data_unit_bits-1) / data_unit_bits;
     }
 
     // which unit is `index`th bit stored
-    inline constexpr size_t get_index_prefix (size_t index)
+    inline constexpr const size_t get_index_prefix (size_t index)
     {
         return index / data_unit_bits;
     }
 
     // which bit is `index`th bit stored in its unit
-    inline constexpr size_t get_index_suffix (size_t index)
+    inline constexpr const size_t get_index_suffix (size_t index)
     {
         return index % data_unit_bits;
     }
 
     // mask for extracting `index`th bit from its unit
-    inline constexpr size_t get_index_mask (size_t index)
+    inline constexpr const size_t get_index_mask (size_t index)
     {
         assert (0 <= index && index <= data_unit_bits);
         return one_zeros_mask >> index;
@@ -62,6 +65,44 @@ Bv::Bv (string bs)
 Bv::~Bv ()
 {
     delete [] data;
+}
+
+Bv::Bv (const Bv& bv2)
+{
+    length = bv2.length;
+    data = new data_unit [bits_in_units(length)]{};
+    assert (data);
+    for (size_t i=0; i<bits_in_units(length); i++)
+        data[i] = bv2.data[i];
+}
+
+Bv& Bv::operator=(const Bv& bv2)
+{
+    delete [] data;
+    length = bv2.length;
+    data = new data_unit [bits_in_units(length)]{};
+    assert (data);
+    for (size_t i=0; i<bits_in_units(length); i++)
+        data[i] = bv2.data[i];
+    return *this;
+}
+
+Bv::Bv (Bv&& bv2)
+{
+    length = bv2.length;
+    data = bv2.data;
+    bv2.length = 0;
+    bv2.data = nullptr;
+}
+
+Bv& Bv::operator=(Bv&& bv2)
+{
+    length = bv2.length;
+    data = bv2.data;
+    assert (data);
+    bv2.length = 0;
+    bv2.data = nullptr;
+    return *this;
 }
 
 size_t Bv::len () const

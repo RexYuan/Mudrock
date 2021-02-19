@@ -3,19 +3,13 @@
 
 #include <cassert>
 #include <cstdint>
+#include <climits>
 
 #include <string>
 
 #include <iostream>
 
 using std::string;
-
-// Data unit store
-//
-// fastest type with at least 32 bits
-using data_unit = std::uint_fast32_t;
-// make sure it's index-able
-static_assert(sizeof(size_t) >= sizeof(data_unit));
 
 //=================================================================================================
 // Bit vector type
@@ -25,6 +19,12 @@ struct Bv
     Bv (size_t len); // construct 0s bv of length `len`
     Bv (string bs); // construct bv corresponding to `bs`
     ~Bv ();
+
+    Bv (const Bv& bv2); // copy constructor
+    Bv& operator=(const Bv& bv2); // copy assignment
+
+    Bv (Bv&& bv2); // move constructor
+    Bv& operator=(Bv&& bv2); // move assignment
 
     size_t len () const; // get length
     bool getter (size_t ind) const; // return value of ind
@@ -38,6 +38,11 @@ struct Bv
     BitIterator end() const;
 
     string to_string () const; // pretty printing
+
+    // data unit store
+    using data_unit = std::uint_fast32_t;
+    // make sure it's index-able
+    static_assert(sizeof(size_t) >= sizeof(data_unit));
 
 private:
     size_t length;
