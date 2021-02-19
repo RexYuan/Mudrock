@@ -33,6 +33,22 @@ struct Bv
 
     void setter (string bs); // set to bs
 
+    bool operator [] (size_t ind) const;
+
+    friend bool operator == (const Bv& bv1, const Bv& bv2);
+    friend bool operator != (const Bv& bv1, const Bv& bv2);
+    friend bool operator <  (const Bv& bv1, const Bv& bv2);
+    friend bool operator <= (const Bv& bv1, const Bv& bv2);
+
+    Bv& operator &= (const Bv& bv2);
+    Bv& operator |= (const Bv& bv2);
+    Bv& operator ^= (const Bv& bv2);
+
+    friend Bv operator ~ (Bv bv);
+    friend Bv operator & (Bv bv1, Bv bv2);
+    friend Bv operator | (Bv bv1, Bv bv2);
+    friend Bv operator ^ (Bv bv1, Bv bv2);
+
     struct BitIterator;
     BitIterator begin() const;
     BitIterator end() const;
@@ -40,7 +56,7 @@ struct Bv
     string to_string () const; // pretty printing
 
     // data unit store
-    using data_unit = std::uint_fast32_t;
+    using data_unit = std::uint_fast8_t;
     // make sure it's index-able
     static_assert(sizeof(size_t) >= sizeof(data_unit));
 
@@ -73,6 +89,16 @@ private:
 };
 inline Bv::BitIterator Bv::begin() const { return BitIterator(data, 0); }
 inline Bv::BitIterator Bv::end() const { return BitIterator(data, length); } 
+
+bool operator == (const Bv& bv1, const Bv& bv2);
+bool operator != (const Bv& bv1, const Bv& bv2);
+bool operator <  (const Bv& bv1, const Bv& bv2);
+bool operator <= (const Bv& bv1, const Bv& bv2);
+
+Bv operator ~ (Bv bv);
+Bv operator & (Bv bv1, Bv bv2);
+Bv operator | (Bv bv1, Bv bv2);
+Bv operator ^ (Bv bv1, Bv bv2);
 
 inline std::ostream& operator<<(std::ostream &out, const Bv& bv)
 {

@@ -28,6 +28,26 @@ int main()
     for (auto it=b.begin(); it!=b.end(); ++it) it.setbit(!*it);
     cout << b.to_string() << ' ' << p.to_string() << ' ' << p.to_string() << '\n';
 
+    Bv x1 ("11111");
+    Bv x2 ("10101");
+    Bv x3 ("10000");
+    
+    assert((x1&x2) == x2);
+    assert((x1|x2) == x1);
+    assert((x1^x2) == ~x2);
+    assert((x3^~x3) == x1);
+    assert((Bv("01011")^Bv("01011")) == ~x1);
+
+    assert(x1!=x2);
+    assert(x1!=x3);
+    assert(x2!=x3);
+    
+    assert(x2<x1);
+    assert(x3<x1);
+    assert(x3<x2);
+    assert((x3&x2) < (x2&x1));
+    assert((x1^x2) < ~x3);
+    assert(x1 <= x1);
 
     return 0;
 

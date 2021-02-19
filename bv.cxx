@@ -16,6 +16,9 @@ namespace
     // mask of 1000...
     inline constinit const Bv::data_unit one_zeros_mask = 1 << (data_unit_bits-1);
 
+    // mask of 1111...
+    inline constinit const Bv::data_unit ones_mask = ~0;
+
     // how many units are needed to store `bits` bits
     inline constexpr const size_t bits_in_units (size_t bits)
     {
@@ -40,6 +43,19 @@ namespace
     {
         assert (0 <= index && index <= data_unit_bits);
         return one_zeros_mask >> index;
+    }
+
+    // mask for removing the rightmost n bits
+    inline constexpr const size_t get_right_zeros_mask (size_t len)
+    {
+        assert (0 <= len && len <= data_unit_bits);
+        return ones_mask << len;
+    }
+
+    // reset data trail to zeros
+    inline constexpr Bv::data_unit reset_data_trail (Bv::data_unit u, size_t total_bit_len)
+    {
+        return u & get_right_zeros_mask(data_unit_bits-total_bit_len%data_unit_bits);
     }
 }
 
@@ -167,6 +183,93 @@ string Bv::to_string () const
     for (bool b : *this)
         s += (b ? "1" : "0");
     return s;
+}
+
+bool Bv::operator [] (size_t ind) const
+{
+    return getter(ind);
+}
+
+bool operator == (const Bv& bv1, const Bv& bv2)
+{
+    assert(bv1.length == bv2.length);
+    auto it1=bv1.data, it2=bv2.data;
+    for ([[maybe_unused]] size_t i=0; i<bits_in_units(bv1.length); i++, it1++, it2++)
+        if (*it1 != *it2)
+            return false;
+    return true;
+}
+
+bool operator != (const Bv& bv1, const Bv& bv2)
+{
+    return !(bv1 == bv2);
+}
+
+bool operator <  (const Bv& bv1, const Bv& bv2)
+{
+    assert(bv1.length == bv2.length);
+    auto it1=bv1.data, it2=bv2.data;
+    for ([[maybe_unused]] size_t i=0; i<bits_in_units(bv1.length); i++, it1++, it2++)
+        if ((*it1 & *it2) != *it1)
+            return false;
+    return true;
+} 
+
+bool operator <= (const Bv& bv1, const Bv& bv2)
+{
+    return (bv1 == bv2) || (bv1 < bv2);
+}
+
+Bv& Bv::operator &= (const Bv& bv2)
+{
+    assert(length == bv2.length);
+    auto it=data, it2=bv2.data;
+    for ([[maybe_unused]] size_t i=0; i<bits_in_units(length); i++, it++, it2++)
+        *it &= *it2;
+    return *this;
+}
+
+Bv& Bv::operator |= (const Bv& bv2)
+{
+    assert(length == bv2.length);
+    auto it=data, it2=bv2.data;
+    for ([[maybe_unused]] size_t i=0; i<bits_in_units(length); i++, it++, it2++)
+        *it |= *it2;
+    return *this;
+}
+
+Bv& Bv::operator ^= (const Bv& bv2)
+{
+    assert(length == bv2.length);
+    auto it=data, it2=bv2.data;
+    for ([[maybe_unused]] size_t i=0; i<bits_in_units(length); i++, it++, it2++)
+        *it ^= *it2;
+    return *this;
+}
+
+Bv operator ~ (Bv bv)
+{
+    auto it=bv.data;
+    for ([[maybe_unused]] size_t i=0; i<bits_in_units(bv.length); i++, it++)
+        *it = ~*it;
+    // reset trailing garbage bits to zeros; this is the only place where it could be set to ones
+    it--; *it = reset_data_trail(*it, bv.length);
+    return bv;
+}
+
+Bv operator & (Bv bv1, Bv bv2)
+{
+    return bv1 &= bv2;
+}
+
+Bv operator | (Bv bv1, Bv bv2)
+{
+    return bv1 |= bv2;
+}
+
+Bv operator ^ (Bv bv1, Bv bv2)
+{
+    return bv1 ^= bv2;
 }
 
 //=================================================================================================
