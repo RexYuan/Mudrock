@@ -16,6 +16,7 @@ using std::string;
 //
 struct Bv
 {
+    Bv () = default;
     Bv (size_t len); // construct 0s bv of length `len`
     Bv (string bs); // construct bv corresponding to `bs`
     ~Bv ();
@@ -53,7 +54,9 @@ struct Bv
     BitIterator begin() const;
     BitIterator end() const;
 
-    string to_string () const; // pretty printing
+    explicit operator bool () const; // check if its degen
+    string to_string () const;
+    string to_string_pretty () const;
 
     // data unit store
     using data_unit = std::uint_fast8_t;

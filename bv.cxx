@@ -177,11 +177,33 @@ void Bv::setter (string bs)
         bit.setbit(*sit == '1');
 }
 
+Bv::operator bool () const
+{
+    return (len() > 0) && (data != nullptr);
+}
+
 string Bv::to_string () const
 {
     string s = "";
     for (bool b : *this)
         s += (b ? "1" : "0");
+    return s;
+}
+
+string Bv::to_string_pretty () const
+{
+    constexpr size_t segment = 4;
+    string s = "";
+    for (size_t i=1; auto b : *this)
+    {
+        s += (b ? "1" : "0");
+        if (i%segment == 0)
+        {
+            s += ' ';
+        }
+        i++;
+    }
+    s += '\n';
     return s;
 }
 
