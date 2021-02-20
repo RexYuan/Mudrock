@@ -23,9 +23,9 @@ struct Mana
     Mana ();
     // Constants
     //
-    Var constTrue ();
-    Var constFalse ();
-    Var fixedSw ();
+    const Var constTrue () const;
+    const Var constFalse () const;
+    const Var fixedSw () const;
 
     //=============================================================================================
     // Switch management
@@ -35,6 +35,9 @@ struct Mana
     void releaseAll ();
     void activateSw (Var sw);
     void deactivateSw (Var sw);
+
+    const set<Var>& get_activeSw () const;
+    const set<Var>& get_inactiveSw () const;
     
     //=============================================================================================
     // External solver interface
@@ -60,7 +63,7 @@ private:
     set<Var> activeSw;
     set<Var> inactiveSw;
 
-    Var _constTrue, _constFalse;
+    Var _constTrue{var_Undef}, _constFalse{var_Undef};
 
     //=============================================================================================
     // Internal solver interface

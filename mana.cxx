@@ -9,9 +9,9 @@ Mana::Mana ()
 
 // Constants
 //
-Var Mana::constTrue () { return _constTrue; }
-Var Mana::constFalse () { return _constFalse; }
-Var Mana::fixedSw () { return _constFalse; }
+const Var Mana::constTrue () const { return _constTrue; }
+const Var Mana::constFalse () const { return _constFalse; }
+const Var Mana::fixedSw () const { return _constFalse; }
 
 //=================================================================================================
 // Switch management
@@ -48,6 +48,16 @@ void Mana::deactivateSw (Var sw)
 {
     activeSw.erase(sw);
     inactiveSw.insert(sw);
+}
+
+const set<Var>& Mana::get_activeSw () const
+{
+    return activeSw;
+}
+
+const set<Var>& Mana::get_inactiveSw () const
+{
+    return inactiveSw;
 }
 
 //=================================================================================================
