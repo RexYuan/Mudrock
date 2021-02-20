@@ -6,8 +6,12 @@ CXX := g++-10
 CXXFLAGS := -std=c++20 -I. -Wall
 HXXFLAGS := -std=c++20 -I. -w
 
+DATAS := bv.o bf.o face.o
+SOLVERS := mana.o ora.o
+LEARNERS :=
+
 LIBS := -L. -lminisat
-OBJS := bv.o mana.o bf.o ora.o
+OBJS := $(DATAS) $(SOLVERS) $(LEARNERS)
 HDRS := minisat.hxx.gch
 MAIN := main.cxx
 DEP := $(HDRS) $(OBJS) $(MAIN)

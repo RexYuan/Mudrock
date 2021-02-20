@@ -5,6 +5,7 @@
 #include "mana.hxx"
 #include "bf.hxx"
 #include "ora.hxx"
+#include "face.hxx"
 
 using std::cout;
 using namespace Minisat;
@@ -19,35 +20,24 @@ int main()
 {
     cout << std::boolalpha;
 
-    Bv b ("11110000");
-    Bv p = b;
-    Bv q ("00000000");
-    q = b;
+    Face f{Bv{"0000"}};
+    Face f2{move(f)};
+    cout << f2 << '\n';
+    Bv lo{"1111"};
+    f2.push(move(lo));
+    cout << f2 << '\n';
+    f2.push(Bv{"0111"});
+    cout << f2 << '\n';
+    f2.push(Bv{"1110"});
+    cout << f2 << '\n';
+    f2.push(Bv{"0110"});
+    cout << f2 << '\n';
 
-    cout << b.to_string() << ' ' << p.to_string() << ' ' << p.to_string() << '\n';
-    for (auto it=b.begin(); it!=b.end(); ++it) it.setbit(!*it);
-    cout << b.to_string() << ' ' << p.to_string() << ' ' << p.to_string() << '\n';
-
-    Bv x1 ("11111");
-    Bv x2 ("10101");
-    Bv x3 ("10000");
-    
-    assert((x1&x2) == x2);
-    assert((x1|x2) == x1);
-    assert((x1^x2) == ~x2);
-    assert((x3^~x3) == x1);
-    assert((Bv("01011")^Bv("01011")) == ~x1);
-
-    assert(x1!=x2);
-    assert(x1!=x3);
-    assert(x2!=x3);
-    
-    assert(x2<x1);
-    assert(x3<x1);
-    assert(x3<x2);
-    assert((x3&x2) < (x2&x1));
-    assert((x1^x2) < ~x3);
-    assert(x1 <= x1);
+    assert(f2(Bv{"1111"}));
+    assert(f2(Bv{"1110"}));
+    assert(f2(Bv{"0111"}));
+    assert(f2(Bv{"0110"}));
+    assert(!f2(Bv{"1101"}));
 
     return 0;
 
