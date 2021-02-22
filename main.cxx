@@ -1,11 +1,12 @@
 
 #include "minisat.hxx"
 
-#include "bv.hxx"
-#include "mana.hxx"
+#include "aig.hxx"
 #include "bf.hxx"
-#include "ora.hxx"
+#include "bv.hxx"
 #include "face.hxx"
+#include "mana.hxx"
+#include "ora.hxx"
 
 using std::cout;
 using namespace Minisat;
@@ -20,6 +21,10 @@ int main()
 {
     cout << std::boolalpha;
 
+    Aig aig{"aag/pdtvisgray0.aag"};
+    cout << (bool)aig << '\n';
+
+#if 0
     Face f{Bv{"0000"}};
     Face f2{move(f)};
     cout << f2 << '\n';
@@ -42,7 +47,7 @@ int main()
     return 0;
 
 
-#if 0
+
     size_t le = 2;
     Ora o(le);
     o.addState();

@@ -101,6 +101,7 @@ string Ora::tabulation ()
 {
     assert(nStates() > 0);
     string table = "listing truth table:\n";
+    table.reserve(table.size() + (nStates()*l+nStates()+2) * pow(2,l*nStates()));
 
     auto to_bs = [&](unsigned num) -> string
     {

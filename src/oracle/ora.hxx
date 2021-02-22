@@ -11,9 +11,9 @@
 
 #include "minisat.hxx"
 
-#include "mana.hxx"
 #include "bf.hxx"
 #include "bv.hxx"
+#include "mana.hxx"
 
 using std::vector;
 using std::string;

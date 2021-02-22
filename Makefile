@@ -1,45 +1,82 @@
 
 .DEFAULT_GOAL := all
 
-CXX := g++-10
+###############################################################################
+# Filenames                                                                   #
+###############################################################################
+SRC_ROOT := src
+OBJ_ROOT := build
 
-CXXFLAGS := -std=c++20 -I. -Wall
-HXXFLAGS := -std=c++20 -I. -w
+SUB_DIRS := $(patsubst $(SRC_ROOT)/%/, %, $(wildcard $(SRC_ROOT)/*/))
+SRC_DIRS := $(addprefix $(SRC_ROOT)/, $(SUB_DIRS))
+OBJ_DIRS := $(addprefix $(OBJ_ROOT)/, $(SUB_DIRS))
+	
+SRCS := $(foreach d, $(SRC_DIRS), $(wildcard $(d)/*.cxx))
+OBJS := $(patsubst $(SRC_ROOT)/%.cxx, $(OBJ_ROOT)/%.o, $(SRCS))
 
-DATAS := bv.o bf.o face.o
-SOLVERS := mana.o ora.o
-LEARNERS :=
+###############################################################################
+# Minisat                                                                     #
+###############################################################################
+MINISAT_DIR := lib
+MINISAT_HDR := $(MINISAT_DIR)/minisat.hxx
+MINISAT_PCH := $(OBJ_ROOT)/minisat.hxx.gch
+MINISAT_AR  := minisat
 
-LIBS := -L. -lminisat
-OBJS := $(DATAS) $(SOLVERS) $(LEARNERS)
-HDRS := minisat.hxx.gch
-MAIN := main.cxx
-DEP := $(HDRS) $(OBJS) $(MAIN)
+###############################################################################
+# Compile options                                                             #
+###############################################################################
+CXX     := g++-10
+CXX_STD := -std=c++20
+CXX_W   := -Wall
 
-OUT := mudk.o
+CXX_INCS  := $(addprefix -I, $(dir $(SRCS)) $(MINISAT_DIR))
+CXX_LINKS := -L$(MINISAT_DIR) -l$(MINISAT_AR)
 
-.PHONY: all
-all: build run
+CXX_FLAGS := $(CXX_STD) $(CXX_W) $(CXX_INCS)
 
-.PHONY: debug
-debug: CXXFLAGS += -g -O0
-debug: build
+MAIN     := main.cxx
+MAIN_DEP := $(MAIN) $(OBJS) $(MINISAT_PCH)
+OUT      := $(OBJ_ROOT)/mudk.o
 
-.PHONY: build
-build: $(DEP)
-	$(CXX) $(CXXFLAGS) $(OBJS) $(MAIN) $(LIBS) -o $(OUT)
+###############################################################################
+# Canned                                                                      #
+###############################################################################
+define Silence
+-$(1) 2>/dev/null || :
+endef
 
-.PHONY: run
+define RecipeFactory
+$(OBJ_ROOT)/$(1)/%.o: $(SRC_ROOT)/$(1)/%.cxx $(SRC_ROOT)/$(1)/%.hxx | $(OBJ_ROOT)/$(1)
+	$$(CXX) $$(CXX_FLAGS) -c $$< $$(CXX_LINKS) -o $$@
+endef
+
+###############################################################################
+# Recipes                                                                     #
+###############################################################################
+.PHONY: all main run
+all: main run
+main: $(MAIN_DEP) | $(OBJ_ROOT)
+	$(CXX) $(CXX_FLAGS) $(OBJS) $(MAIN) $(CXX_LINKS) -o $(OUT)
 run:
 	./$(OUT)
+
+.PHONY: debug 
+debug: CXX_FLAGS += -g -O0
+debug:
+	lldb $(OUT)
 
 .PHONY: clean
 clean:
 	@echo "trash-ing builds"
-	-trash *.o *.gch *.dSYM 2>/dev/null || :
+	$(call Silence, trash $(OBJ_ROOT))
 
-%.o: %.cxx %.hxx
-	$(CXX) $(CXXFLAGS) -c $< $(LIBS) -o $@
+$(OBJ_ROOT):
+	mkdir $@
 
-minisat.hxx.gch: minisat.hxx
-	$(CXX) $(HXXFLAGS) -c minisat.hxx
+$(OBJ_DIRS): | $(OBJ_ROOT)
+	mkdir $@
+
+$(MINISAT_PCH): $(MINISAT_HDR) | $(OBJ_ROOT)
+	$(CXX) $(CXX_STD) -w -I$(MINISAT_DIR) -c $< -o $@
+
+$(foreach d, $(SUB_DIRS), $(eval $(call RecipeFactory,$(d))))
