@@ -198,12 +198,10 @@ string Bv::to_string_pretty () const
     {
         s += (b ? "1" : "0");
         if (i%segment == 0)
-        {
-            s += ' ';
-        }
+            s += " ";
         i++;
     }
-    s += '\n';
+    s += "\n";
     return s;
 }
 
@@ -216,7 +214,7 @@ bool operator == (const Bv& bv1, const Bv& bv2)
 {
     assert(bv1.length == bv2.length);
     auto it1=bv1.data, it2=bv2.data;
-    for ([[maybe_unused]] size_t i=0; i<bits_in_units(bv1.length); i++, it1++, it2++)
+    for (size_t i=0; i<bits_in_units(bv1.length); i++, it1++, it2++)
         if (*it1 != *it2)
             return false;
     return true;
@@ -231,7 +229,7 @@ bool operator <  (const Bv& bv1, const Bv& bv2)
 {
     assert(bv1.length == bv2.length);
     auto it1=bv1.data, it2=bv2.data;
-    for ([[maybe_unused]] size_t i=0; i<bits_in_units(bv1.length); i++, it1++, it2++)
+    for (size_t i=0; i<bits_in_units(bv1.length); i++, it1++, it2++)
         if ((*it1 & *it2) != *it1)
             return false;
     return true;
@@ -246,7 +244,7 @@ Bv& Bv::operator &= (const Bv& bv2)
 {
     assert(length == bv2.length);
     auto it=data, it2=bv2.data;
-    for ([[maybe_unused]] size_t i=0; i<bits_in_units(length); i++, it++, it2++)
+    for (size_t i=0; i<bits_in_units(length); i++, it++, it2++)
         *it &= *it2;
     return *this;
 }
@@ -255,7 +253,7 @@ Bv& Bv::operator |= (const Bv& bv2)
 {
     assert(length == bv2.length);
     auto it=data, it2=bv2.data;
-    for ([[maybe_unused]] size_t i=0; i<bits_in_units(length); i++, it++, it2++)
+    for (size_t i=0; i<bits_in_units(length); i++, it++, it2++)
         *it |= *it2;
     return *this;
 }
@@ -264,7 +262,7 @@ Bv& Bv::operator ^= (const Bv& bv2)
 {
     assert(length == bv2.length);
     auto it=data, it2=bv2.data;
-    for ([[maybe_unused]] size_t i=0; i<bits_in_units(length); i++, it++, it2++)
+    for (size_t i=0; i<bits_in_units(length); i++, it++, it2++)
         *it ^= *it2;
     return *this;
 }
@@ -272,7 +270,7 @@ Bv& Bv::operator ^= (const Bv& bv2)
 Bv operator ~ (Bv bv)
 {
     auto it=bv.data;
-    for ([[maybe_unused]] size_t i=0; i<bits_in_units(bv.length); i++, it++)
+    for (size_t i=0; i<bits_in_units(bv.length); i++, it++)
         *it = ~*it;
     // reset trailing garbage bits to zeros; this is the only place where it could be set to ones
     it--; *it = reset_data_trail(*it, bv.length);
@@ -316,6 +314,13 @@ Bv::BitIterator& Bv::BitIterator::operator++() // prefix increment
     }
     i++;
     return *this;
+}
+
+Bv::BitIterator Bv::BitIterator::operator++(int) // postfix increment
+{
+    BitIterator tmp = *this;
+    ++(*this);
+    return tmp;
 }
 
 // returned is read-only, do not assign to it
