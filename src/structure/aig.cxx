@@ -60,25 +60,26 @@ Aig& Aig::operator=(Aig&& aig2)
 
 // Getters
 //
-const string Aig::title() const { return _title; }
-const size_t Aig::maxvar() const { return _maxvar; }
-const size_t Aig::num_inputs() const { return _num_inputs; }
-const size_t Aig::num_latches() const { return _num_latches; }
-const size_t Aig::num_outputs() const { return _num_outputs; }
-const size_t Aig::num_ands() const { return _num_ands; }
-const vector<AigVar>&   Aig::inputs() const { return _inputs; }
-const vector<AigLatch>& Aig::latches() const { return _latches; }
-const vector<AigLit>&   Aig::outputs() const { return _outputs; }
-const vector<AigAnd>&   Aig::ands() const { return _ands; }
+const string Aig::title       () const { return _title; }
+const size_t Aig::maxvar      () const { return _maxvar; }
+const size_t Aig::num_inputs  () const { return _num_inputs; }
+const size_t Aig::num_latches () const { return _num_latches; }
+const size_t Aig::num_outputs () const { return _num_outputs; }
+const size_t Aig::num_ands    () const { return _num_ands; }
+
+const vector<AigVar>&   Aig::inputs  () const { return _inputs; }
+const vector<AigLatch>& Aig::latches () const { return _latches; }
+const vector<AigLit>&   Aig::outputs () const { return _outputs; }
+const vector<AigAnd>&   Aig::ands    () const { return _ands; }
 
 // Aiger file raw lit operations
 //
 namespace
 {
-    inline constexpr bool get_sign (unsigned raw) { return (raw&1)==0; }
-    inline constexpr AigVar get_var (unsigned raw) { return raw>>1; }
-    inline constexpr bool is_const_t (unsigned raw) { return raw==1; }
-    inline constexpr bool is_const_f (unsigned raw) { return raw==0; }
+    inline constexpr bool   get_sign   (unsigned raw) { return (raw&1)==0; }
+    inline constexpr AigVar get_var    (unsigned raw) { return raw>>1; }
+    inline constexpr bool   is_const_t (unsigned raw) { return raw==1; }
+    inline constexpr bool   is_const_f (unsigned raw) { return raw==0; }
 }
 
 // Read inputs
@@ -164,10 +165,11 @@ void Aig::readAigerAndLine ()
     assert(get_var(left_child) <= _maxvar);
     assert(get_var(right_child) <= _maxvar);
     assert(!is_const_t(parent) && !is_const_f(parent));
+    assert(parent > left_child && parent > right_child); // assumed ordered
 
-    AigLit left_lit = is_const_t(left_child) ? AigTrue  :
-                      is_const_f(left_child) ? AigFalse :
-                      AigLit{get_sign(left_child), get_var(left_child)};
+    AigLit left_lit  = is_const_t(left_child) ? AigTrue  :
+                       is_const_f(left_child) ? AigFalse :
+                       AigLit{get_sign(left_child), get_var(left_child)};
     AigLit right_lit = is_const_t(right_child) ? AigTrue  :
                        is_const_f(right_child) ? AigFalse :
                        AigLit{get_sign(right_child), get_var(right_child)};
@@ -177,14 +179,8 @@ void Aig::readAigerAndLine ()
 
 Aig::operator bool () const
 {
-    return title().size()   +
-           maxvar()         +
-           num_inputs()     +
-           num_latches()    +
-           num_outputs()    +
-           num_ands()       +
-           inputs().size()  +
+    return inputs() .size() +
            latches().size() +
            outputs().size() +
-           ands().size()    > 0;
+           ands()   .size() > 0;
 }

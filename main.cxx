@@ -13,12 +13,6 @@ using std::cout;
 
 int main()
 {
-    Bv b ("1010101");
-   
-    cout << b.to_string() << "\n";
-
-    for (auto it=b.begin(); it!=b.end();) cout << *(++it);
-    cout << "\n";
-    for (auto it=b.begin(); it!=b.end();) cout << *(it++);
-    cout << "\n";
+    AigLit g{true,2};
+    cout << (bool)g;
 }

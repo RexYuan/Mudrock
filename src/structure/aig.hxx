@@ -4,33 +4,55 @@
 #include <cassert>
 
 #include <vector>
+using std::vector;
 #include <string>
+using std::string;
 
 #include <fstream>
-#include <utility>
-
-using std::string;
-using std::vector;
 using std::ifstream;
+#include <utility>
 using std::move;
+
+//=================================================================================================
+// Circuit Nodes
+//
+using AigVar = unsigned; // in accordance to aiger.h
+
+struct AigLit // TODO: use lifted literals
+{
+    bool sign;
+    AigVar var;
+    
+    explicit operator bool () const { return sign; }
+};
+inline constinit AigLit AigTrue  { true, 0};
+inline constinit AigLit AigFalse {false, 0};
+
+struct AigLatch
+{
+    AigVar curr;
+    AigLit next;
+};
+
+struct AigAnd
+{
+    AigVar var;
+    AigLit l,r;
+};
 
 //=================================================================================================
 // And-Inverter Graphs
 //
-using AigVar = unsigned;
-struct AigLit;
-struct AigLatch;
-struct AigAnd;
 struct Aig
 {
-    Aig () = default;
-    Aig (const string& filename);
+    Aig  () = default;
+    Aig  (const string& filename);
     ~Aig () = default;
     
-    Aig (const Aig& aig2) = delete; // disallow copy
+    Aig           (const Aig& aig2) = delete; // disallow copy
     Aig& operator=(const Aig& aig2) = delete; // disallow copy
     
-    Aig (Aig&& aig2); // use move
+    Aig           (Aig&& aig2); // use move
     Aig& operator=(Aig&& aig2); // use move
 
     // Getters
@@ -72,27 +94,4 @@ private:
     void readAigerLatchLine  ();
     void readAigerOutputLine ();
     void readAigerAndLine    ();
-};
-
-//=================================================================================================
-// Circuit Nodes
-//
-struct AigLit // TODO: use lifted literals
-{
-    bool sign;
-    AigVar var;
-};
-inline constinit AigLit AigTrue  { true, 0};
-inline constinit AigLit AigFalse {false, 0};
-
-struct AigLatch
-{
-    AigVar curr;
-    AigLit next;
-};
-
-struct AigAnd
-{
-    AigVar var;
-    AigLit l,r;
 };
