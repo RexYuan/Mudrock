@@ -76,14 +76,14 @@ Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& to)
     {
         Bf_ptr tmp = v(true);//make_shared<Bf>(Conn::And);
         for (Bf_ptr s : bf->get_subs())
-            tmp &= subst(s, to);//tmp->push_sub(subst(s, to));
+            tmp = tmp & subst(s, to);//tmp->push_sub(subst(s, to));
         return tmp;
     }
     case Conn::Or:
     {
         Bf_ptr tmp = v(false);//make_shared<Bf>(Conn::Or);
         for (Bf_ptr s : bf->get_subs())
-            tmp |= subst(s, to);//tmp->push_sub(subst(s, to));
+            tmp = tmp | subst(s, to);//tmp->push_sub(subst(s, to));
         return tmp;
     }
     }

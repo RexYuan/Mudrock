@@ -16,7 +16,7 @@ template <typename T>     concept isLit   = same_as<T, Lit>;
 template <typename... Ts> concept areLits = (isLit<Ts> && ...);
 
 //=================================================================================================
-// Minisat manager
+// Minisat adapter
 //
 using Sw = Var;
 struct Mana

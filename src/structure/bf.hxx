@@ -100,7 +100,4 @@ inline Bf_ptr operator |= (const Bf_ptr& bf1, const Bf_ptr& bf2) { return ~bf1 |
 inline Bf_ptr operator == (const Bf_ptr& bf1, const Bf_ptr& bf2) { return (~bf1 | bf2) & ( bf1 | ~bf2); }
 inline Bf_ptr operator != (const Bf_ptr& bf1, const Bf_ptr& bf2) { return ( bf1 | bf2) & (~bf1 | ~bf2); }
 
-inline Bf_ptr& operator &= (Bf_ptr& bf1, const Bf_ptr& bf2) { return bf1 = (bf1 & bf2); }
-inline Bf_ptr& operator |= (Bf_ptr& bf1, const Bf_ptr& bf2) { return bf1 = (bf1 | bf2); }
-
 inline ostream& operator << (ostream& out, const Bf_ptr& bf) { out << bf->to_string(); return out; }
