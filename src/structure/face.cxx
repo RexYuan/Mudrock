@@ -38,6 +38,16 @@ void Face::push (Bv&& b)
     _primes.push_back(move(b));
 }
 
+bool Face::size () const
+{
+    return primes().size();
+}
+
+bool Face::empty () const
+{
+    return primes().empty();
+}
+
 bool Face::operator () (const Bv& b) const
 {
     for (Bv p : primes())
@@ -87,7 +97,7 @@ string Face::to_string_pretty () const
     {
         s += "null";
     }
-    s += '\n';
+    s += "\n";
 
     return s;
 }

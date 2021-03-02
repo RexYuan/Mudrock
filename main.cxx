@@ -13,6 +13,8 @@ using std::cout;
 
 int main()
 {
-    AigLit g{true,2};
-    cout << (bool)g;
+    Face f{Bv{"1001"}};
+    assert(f.empty());
+    f.push(Bv{"1111"});
+    assert(f.size() == 1);
 }
