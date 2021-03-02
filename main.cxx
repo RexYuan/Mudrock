@@ -6,15 +6,15 @@
 #include "bv.hxx"
 #include "face.hxx"
 #include "mana.hxx"
-#include "ora.hxx"
 
 #include <iostream>
 using std::cout;
 
 int main()
 {
-    Face f{Bv{"1001"}};
-    assert(f.empty());
-    f.push(Bv{"1111"});
-    assert(f.size() == 1);
+    Mana m{};
+    Var v = m.newVar();
+    m.addClause(m.fixedSw(), mkLit(v));
+    m.solve();
+    assert(m.val(v));
 }
