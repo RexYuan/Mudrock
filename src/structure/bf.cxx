@@ -4,15 +4,8 @@
 //=================================================================================================
 // Pointer manipulation helpers
 //
-Bf_ptr v (bool b)
-{
-    return make_shared<Bf>(b);
-}
-
-Bf_ptr v (int i)
-{
-    return make_shared<Bf>(i);
-}
+Bf_ptr v (bool b) { return make_shared<Bf>(b); }
+Bf_ptr v (int i)  { return make_shared<Bf>(i); }
 
 Bf_ptr neg (Bf_ptr bf)
 {
@@ -21,14 +14,14 @@ Bf_ptr neg (Bf_ptr bf)
     case Conn::Top: return v(false);
     case Conn::Bot: return v(true);
     case Conn::Not: return bf->get_sub();
-    default: return make_shared<Bf>(Conn::Not, bf);
+    default:        return make_shared<Bf>(Conn::Not, bf);
     }
 }
 
-Bf_ptr conj(Bf_ptr bf1, Bf_ptr bf2)
+Bf_ptr conj (Bf_ptr bf1, Bf_ptr bf2)
 {
-    if (bf1->t == Conn::Bot ||
-        bf2->t == Conn::Bot) return v(false);
+    if      (bf1->t == Conn::Bot ||
+             bf2->t == Conn::Bot) return v(false);
     else if (bf1->t == Conn::Top) return bf2;
     else if (bf2->t == Conn::Top) return bf1;
     else
@@ -48,10 +41,10 @@ Bf_ptr conj(Bf_ptr bf1, Bf_ptr bf2)
     }
 }
 
-Bf_ptr disj(Bf_ptr bf1, Bf_ptr bf2)
+Bf_ptr disj (Bf_ptr bf1, Bf_ptr bf2)
 {
-    if (bf1->t == Conn::Top ||
-        bf2->t == Conn::Top) return v(true);
+    if      (bf1->t == Conn::Top ||
+             bf2->t == Conn::Top) return v(true);
     else if (bf1->t == Conn::Bot) return bf2;
     else if (bf2->t == Conn::Bot) return bf1;
     else
@@ -71,31 +64,60 @@ Bf_ptr disj(Bf_ptr bf1, Bf_ptr bf2)
     }
 }
 
-bool Bf::get_bool ()
+Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& to)
+{
+    switch (bf->t)
+    {
+    case Conn::Top:  return v(true);
+    case Conn::Bot:  return v(false);
+    case Conn::Base: return v(to.at(bf->get_int()));
+    case Conn::Not:  return ~subst(bf->get_sub(), to);
+    case Conn::And:
+    {
+        Bf_ptr tmp = v(true);//make_shared<Bf>(Conn::And);
+        for (Bf_ptr s : bf->get_subs())
+            tmp &= subst(s, to);//tmp->push_sub(subst(s, to));
+        return tmp;
+    }
+    case Conn::Or:
+    {
+        Bf_ptr tmp = v(false);//make_shared<Bf>(Conn::Or);
+        for (Bf_ptr s : bf->get_subs())
+            tmp |= subst(s, to);//tmp->push_sub(subst(s, to));
+        return tmp;
+    }
+    }
+    assert(false);
+}
+
+//=================================================================================================
+// Boolean formula type
+//
+const bool Bf::get_bool () const
 {
     assert(t == Conn::Top || t == Conn::Bot);
     switch (t)
     {
         case Conn::Top: return true;
         case Conn::Bot: return false;
-        default: break;
+        default:        break;
     }
     assert(false);
 }
 
-int Bf::get_int ()
+const int Bf::get_int () const
 {
     assert(t == Conn::Base);
     return get<int>(sub);
 }
 
-Bf_ptr Bf::get_sub ()
+const Bf_ptr& Bf::get_sub () const
 {
     assert(t == Conn::Not);
     return get<Bf_ptr>(sub);
 }
 
-vector<Bf_ptr> Bf::get_subs ()
+const vector<Bf_ptr>& Bf::get_subs () const
 {
     assert(t == Conn::And || t == Conn::Or);
     return get<vector<Bf_ptr>>(sub);
@@ -111,15 +133,15 @@ string Bf::to_string ()
 {
     switch (t)
     {
-    case Conn::Top: return "t";
-    case Conn::Bot: return "f";
+    case Conn::Top:  return "T";
+    case Conn::Bot:  return "F";
     case Conn::Base: return std::to_string(get_int());
-    case Conn::Not: return "~"+get_sub()->to_string();
+    case Conn::Not:  return "~" + get_sub()->to_string();
     case Conn::And:
     {
         string tmp = "(";
         for (Bf_ptr s : get_subs())
-            tmp.append( s->to_string() + "&" );
+            tmp.append(s->to_string() + "&");
         tmp.pop_back();
         tmp.append(")");
         return tmp;
@@ -128,7 +150,7 @@ string Bf::to_string ()
     {
         string tmp = "(";
         for (Bf_ptr s : get_subs())
-            tmp.append( s->to_string() + "|" );
+            tmp.append(s->to_string() + "|");
         tmp.pop_back();
         tmp.append(")");
         return tmp;

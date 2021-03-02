@@ -4,19 +4,20 @@
 #include <cassert>
 
 #include <vector>
-#include <string>
-
-#include <iostream>
-#include <variant>
-#include <memory>
-
-#include "minisat.hxx"
-
 using std::vector;
-using std::string;
-using std::shared_ptr; using std::make_shared;
-using std::variant; using std::monostate; using std::get; using std::holds_alternative;
+#include <string>
+using std::string; using std::to_string;
+#include <map>
+using std::map;
+
+#include <concepts>
 using std::same_as;
+#include <iostream>
+using std::ostream;
+#include <variant>
+using std::variant; using std::monostate; using std::get; using std::holds_alternative;
+#include <memory>
+using std::shared_ptr; using std::make_shared;
 
 // boolean connectives
 enum class Conn {Top, Bot, Base, Not, And, Or};
@@ -26,23 +27,26 @@ enum class Conn {Top, Bot, Base, Not, And, Or};
 //
 struct Bf;
 using Bf_ptr = shared_ptr<Bf>;
-template <typename T> concept is_Bf_ptr = same_as<T, Bf_ptr>;
+template <typename T>     concept is_Bf_ptr   = same_as<T, Bf_ptr>;
 template <typename... Ts> concept are_Bf_ptrs = (is_Bf_ptr<Ts> && ...);
 struct Bf
 {
     //=============================================================================================
     // Pointer manipulation helpers. Use these as constructors
     //
-    friend Bf_ptr v (bool b); // return bool constant valued `b`
-    friend Bf_ptr v (int i); // return variable numbered `i`
-    friend Bf_ptr neg (Bf_ptr bf); // return `not bf`
+    friend Bf_ptr v    (bool b);                 // return bool constant valued `b`
+    friend Bf_ptr v    (int i);                  // return variable numbered `i`
+    friend Bf_ptr neg  (Bf_ptr bf);              // return `not bf`
     friend Bf_ptr conj (Bf_ptr bf1, Bf_ptr bf2); // return `bf1 and bf2`
     friend Bf_ptr disj (Bf_ptr bf1, Bf_ptr bf2); // return `bf1 or bf2`
 
-    bool get_bool ();
-    int get_int ();
-    Bf_ptr get_sub ();
-    vector<Bf_ptr> get_subs ();
+    // substitute var space
+    friend Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& to);
+
+    const bool            get_bool () const;
+    const int             get_int  () const;
+    const Bf_ptr&         get_sub  () const;
+    const vector<Bf_ptr>& get_subs () const;
 
     void push_sub (Bf_ptr bf);
 
@@ -80,21 +84,23 @@ struct Bf
     }
 };
 
-Bf_ptr v (bool b);
-Bf_ptr v (int i);
-Bf_ptr neg (Bf_ptr bf);
+Bf_ptr v    (bool b);
+Bf_ptr v    (int i);
+Bf_ptr neg  (Bf_ptr bf);
 Bf_ptr conj (Bf_ptr bf1, Bf_ptr bf2);
 Bf_ptr disj (Bf_ptr bf1, Bf_ptr bf2);
 
-inline Bf_ptr operator~(Bf_ptr bf) { return neg(bf); }
-inline Bf_ptr operator&(Bf_ptr bf1, Bf_ptr bf2) { return conj(bf1,bf2); }
-inline Bf_ptr operator|(Bf_ptr bf1, Bf_ptr bf2) { return disj(bf1,bf2); }
-inline Bf_ptr operator|=(Bf_ptr bf1, Bf_ptr bf2) { return ~bf1 | bf2; }
-inline Bf_ptr operator==(Bf_ptr bf1, Bf_ptr bf2) { return (~bf1 | bf2) & ( bf1 | ~bf2); }
-inline Bf_ptr operator!=(Bf_ptr bf1, Bf_ptr bf2) { return ( bf1 | bf2) & (~bf1 | ~bf2); }
+// substitute var space
+Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& to);
 
-inline std::ostream& operator<<(std::ostream &out, const Bf_ptr& bf)
-{
-    out << bf->to_string();
-    return out;
-}
+inline Bf_ptr operator ~  (const Bf_ptr& bf)                     { return neg(bf); }
+inline Bf_ptr operator &  (const Bf_ptr& bf1, const Bf_ptr& bf2) { return conj(bf1, bf2); }
+inline Bf_ptr operator |  (const Bf_ptr& bf1, const Bf_ptr& bf2) { return disj(bf1, bf2); }
+inline Bf_ptr operator |= (const Bf_ptr& bf1, const Bf_ptr& bf2) { return ~bf1 | bf2; }
+inline Bf_ptr operator == (const Bf_ptr& bf1, const Bf_ptr& bf2) { return (~bf1 | bf2) & ( bf1 | ~bf2); }
+inline Bf_ptr operator != (const Bf_ptr& bf1, const Bf_ptr& bf2) { return ( bf1 | bf2) & (~bf1 | ~bf2); }
+
+inline Bf_ptr& operator &= (Bf_ptr& bf1, const Bf_ptr& bf2) { return bf1 = (bf1 & bf2); }
+inline Bf_ptr& operator |= (Bf_ptr& bf1, const Bf_ptr& bf2) { return bf1 = (bf1 | bf2); }
+
+inline ostream& operator << (ostream& out, const Bf_ptr& bf) { out << bf->to_string(); return out; }
