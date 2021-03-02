@@ -1,5 +1,5 @@
 
-#include "comm.hxx"
+#include "to_minisat.hxx"
 
 //=================================================================================================
 // Bf => Minisat
@@ -9,8 +9,8 @@ Var addBf (const Bf_ptr& bf, Mana& m, optional<Sw> swopt)
     Sw sw = swopt ? swopt.value() : m.fixedSw();
     switch (bf->t)
     {
-    case Conn::Top: return m.constTrue();
-    case Conn::Bot: return m.constFalse();
+    case Conn::Top:  return m.constTrue();
+    case Conn::Bot:  return m.constFalse();
     case Conn::Base: return bf->get_int();
     case Conn::Not:
     {
