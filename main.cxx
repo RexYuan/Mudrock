@@ -14,9 +14,9 @@ using std::cout;
 
 int main()
 {
-    Face f{Bv{"11"}};
-    f.push(Bv{"10"});
-    f.push(Bv{"01"});
-    auto f_bf = toBf(f);
-    cout << f_bf << "\n";
+    Mana m;
+    Aig aig{"aag/pdtvisgray0.aag"};
+    auto varmap = addAig(aig, m);
+    for (const auto& [aigvar,var] : varmap)
+        cout << aigvar << " : " << var << "\n";
 }
