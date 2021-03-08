@@ -14,9 +14,15 @@ using std::cout;
 
 int main()
 {
-    Mana m;
-    Aig aig{"aag/pdtvisgray0.aag"};
-    auto varmap = addAig(aig, m);
-    for (const auto& [aigvar,var] : varmap)
-        cout << aigvar << " : " << var << "\n";
+    Bv b ("00101");
+    auto bit = b.begin();
+    for (; bit!=b.end(); bit++)
+        cout << *bit;
+    cout << "\n";
+    assert(bit == b.end());
+
+    for (bit--; bit!=(--b.begin()); bit--)
+        cout << *bit;
+    cout << "\n";
+    assert(bit == (--b.begin()));
 }

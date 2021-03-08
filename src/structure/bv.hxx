@@ -80,21 +80,23 @@ struct Bv::BitIterator
     BitIterator& operator++();    // prefix increment
     BitIterator  operator++(int); // postfix increment
 
+    BitIterator& operator--();    // prefix decrement
+    BitIterator  operator--(int); // postfix decrement
+
     const bool operator * () const; // dereferencing returns a read-only bool
     void setbit (bool val);         // write with this method
 
-    inline friend bool operator == (const BitIterator& a, const BitIterator& b)
-        { return a.p == b.p && a.i == b.i; }
-    inline friend bool operator != (const BitIterator& a, const BitIterator& b)
-        { return a.p != b.p || a.i != b.i; }
+    friend bool operator == (const BitIterator& a, const BitIterator& b);
+    friend bool operator != (const BitIterator& a, const BitIterator& b);
 
 private:
     data_unit* p;
     size_t i;
     data_unit mask_ind;
 };
-inline Bv::BitIterator Bv::begin() const { return BitIterator(data, 0); }
-inline Bv::BitIterator Bv::end()   const { return BitIterator(data, length); } 
+
+bool operator == (const Bv::BitIterator& a, const Bv::BitIterator& b);
+bool operator != (const Bv::BitIterator& a, const Bv::BitIterator& b);
 
 bool operator == (const Bv& bv1, const Bv& bv2);
 bool operator != (const Bv& bv1, const Bv& bv2);

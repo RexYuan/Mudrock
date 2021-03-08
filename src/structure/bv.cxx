@@ -301,6 +301,16 @@ Bv::BitIterator::BitIterator (data_unit* ptr, size_t ind) : p(ptr), i(ind)
     mask_ind = get_index_mask(get_index_suffix(i));
 }
 
+Bv::BitIterator Bv::begin() const
+{
+    return BitIterator(data, 0);
+}
+
+Bv::BitIterator Bv::end() const
+{
+    return BitIterator(data, length);
+}
+
 Bv::BitIterator& Bv::BitIterator::operator++() // prefix increment
 {
     if (mask_ind & 1) // end bit reached, go to next byte
@@ -321,6 +331,39 @@ Bv::BitIterator Bv::BitIterator::operator++(int) // postfix increment
     BitIterator tmp = *this;
     ++(*this);
     return tmp;
+}
+
+Bv::BitIterator& Bv::BitIterator::operator--() // prefix decrement
+{
+    if (mask_ind == one_zeros_mask) // first bit reached, go to previous byte
+    {
+        mask_ind = 1;
+        p--;
+    }
+    else // move mask left by 1
+    {
+        mask_ind <<= 1;
+    }
+    i--;
+    return *this;
+}
+
+Bv::BitIterator Bv::BitIterator::operator--(int) // postfix decrement
+{
+    BitIterator tmp = *this;
+    --(*this);
+    return tmp;
+}
+
+// iterator is at the same location if the data pointer and the index are the same
+bool operator == (const Bv::BitIterator& a, const Bv::BitIterator& b)
+{
+    return a.p == b.p && a.i == b.i;
+}
+
+bool operator != (const Bv::BitIterator& a, const Bv::BitIterator& b)
+{
+    return a.p != b.p || a.i != b.i;
 }
 
 // returned is read-only, do not assign to it
