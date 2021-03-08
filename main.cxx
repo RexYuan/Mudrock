@@ -15,14 +15,6 @@ using std::cout;
 int main()
 {
     Bv b ("00101");
-    auto bit = b.begin();
-    for (; bit!=b.end(); bit++)
-        cout << *bit;
-    cout << "\n";
-    assert(bit == b.end());
-
-    for (bit--; bit!=(--b.begin()); bit--)
-        cout << *bit;
-    cout << "\n";
-    assert(bit == (--b.begin()));
+    Bv p (5, 5);
+    assert(b == p);
 }

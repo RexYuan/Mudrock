@@ -7,6 +7,7 @@
 
 #include <string>
 using std::string;
+using namespace std::string_literals;
 
 #include <iostream>
 using std::ostream;
@@ -19,6 +20,7 @@ struct Bv
     Bv () = default;
     Bv (size_t len); // construct 0s bv of length `len`
     Bv (string bs);  // construct bv corresponding to `bs`
+    Bv (size_t len, unsigned i); // construct bv of length `len` corresponding to `i` (big-endian)
     ~Bv ();
 
     Bv           (const Bv& bv2); // copy constructor
@@ -33,7 +35,8 @@ struct Bv
     void setter  (size_t ind, bool val); // set ind to val
     void flipper (size_t ind);           // flip value of ind
 
-    void setter (string bs); // set to bs
+    void setter (string bs);  // set to bs
+    void setter (unsigned i); // set to i
 
     bool operator [] (size_t ind) const;
 
@@ -86,8 +89,8 @@ struct Bv::BitIterator
     const bool operator * () const; // dereferencing returns a read-only bool
     void setbit (bool val);         // write with this method
 
-    friend bool operator == (const BitIterator& a, const BitIterator& b);
-    friend bool operator != (const BitIterator& a, const BitIterator& b);
+    friend bool operator == (const BitIterator& bit1, const BitIterator& bit2);
+    friend bool operator != (const BitIterator& bit1, const BitIterator& bit2);
 
 private:
     data_unit* p;
@@ -95,8 +98,8 @@ private:
     data_unit mask_ind;
 };
 
-bool operator == (const Bv::BitIterator& a, const Bv::BitIterator& b);
-bool operator != (const Bv::BitIterator& a, const Bv::BitIterator& b);
+bool operator == (const Bv::BitIterator& bit1, const Bv::BitIterator& bit2);
+bool operator != (const Bv::BitIterator& bit1, const Bv::BitIterator& bit2);
 
 bool operator == (const Bv& bv1, const Bv& bv2);
 bool operator != (const Bv& bv1, const Bv& bv2);

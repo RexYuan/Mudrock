@@ -69,13 +69,14 @@ Bv::Bv (size_t len)
     assert (data);
 }
 
-Bv::Bv (string bs)
+Bv::Bv (string bs) : Bv{bs.length()}
 {
-    for (const auto& b : bs) assert (b == '0' || b == '1');
-    length = bs.length();
-    data = new data_unit [bits_in_units(length)]{};
-    assert (data);
     setter(bs);
+}
+
+Bv::Bv (size_t len, unsigned i) : Bv{len}
+{
+    setter(i);
 }
 
 Bv::~Bv ()
@@ -166,15 +167,45 @@ void Bv::flipper (size_t ind)
         get_index_mask(get_index_suffix(ind));
 }
 
+namespace
+{
+    inline void validate_bitstring (size_t bv_len, const string& bs)
+    {
+        assert (bv_len == bs.length());
+        for (const auto& b : bs)
+            assert(b == '0' || b == '1');
+    }
+}
 void Bv::setter (string bs)
 {
     /*
      * set by bit string.
      */
-    assert (bs.length() == length);
+    validate_bitstring(len(), bs);
+
     auto bit=begin(); auto sit=bs.begin();
     for (;bit!=end(); ++bit, ++sit)
         bit.setbit(*sit == '1');
+}
+
+namespace
+{
+    inline void validate_unsigned_setter (size_t bv_len, unsigned i)
+    {
+        size_t size = 0;
+        for (; i>0; size++, i>>=1);
+        assert(bv_len >= size);
+    }
+}
+void Bv::setter (unsigned i)
+{
+    /*
+     * set by unsigned int.
+     */
+    validate_unsigned_setter(len(), i);
+
+    for (auto rbit=(--end()); rbit!=(--begin()); --rbit, i>>=1)
+        rbit.setbit(1&i);
 }
 
 Bv::operator bool () const
@@ -184,24 +215,24 @@ Bv::operator bool () const
 
 string Bv::to_string () const
 {
-    string s = "";
+    string s = ""s;
     for (bool b : *this)
-        s += (b ? "1" : "0");
+        s += (b ? '1' : '0');
     return s;
 }
 
 string Bv::to_string_pretty () const
 {
     constexpr size_t segment = 4;
-    string s = "";
+    string s = ""s;
     for (size_t i=1; auto b : *this)
     {
-        s += (b ? "1" : "0");
+        s += (b ? '1' : '0');
         if (i%segment == 0)
             s += " ";
         i++;
     }
-    s += "\n";
+    s += '\n';
     return s;
 }
 
@@ -295,20 +326,13 @@ Bv operator ^ (Bv bv1, Bv bv2)
 //=================================================================================================
 // Iterate over bits
 //
+Bv::BitIterator Bv::begin() const { return BitIterator(data, 0); }
+Bv::BitIterator Bv::end()   const { return BitIterator(data, length); }
+
 Bv::BitIterator::BitIterator (data_unit* ptr, size_t ind) : p(ptr), i(ind)
 {
     for (size_t n=0; n<get_index_prefix(i); n++, p++);
     mask_ind = get_index_mask(get_index_suffix(i));
-}
-
-Bv::BitIterator Bv::begin() const
-{
-    return BitIterator(data, 0);
-}
-
-Bv::BitIterator Bv::end() const
-{
-    return BitIterator(data, length);
 }
 
 Bv::BitIterator& Bv::BitIterator::operator++() // prefix increment
@@ -356,14 +380,14 @@ Bv::BitIterator Bv::BitIterator::operator--(int) // postfix decrement
 }
 
 // iterator is at the same location if the data pointer and the index are the same
-bool operator == (const Bv::BitIterator& a, const Bv::BitIterator& b)
+bool operator == (const Bv::BitIterator& bit1, const Bv::BitIterator& bit2)
 {
-    return a.p == b.p && a.i == b.i;
+    return bit1.p == bit2.p && bit1.i == bit2.i;
 }
 
-bool operator != (const Bv::BitIterator& a, const Bv::BitIterator& b)
+bool operator != (const Bv::BitIterator& bit1, const Bv::BitIterator& bit2)
 {
-    return a.p != b.p || a.i != b.i;
+    return bit1.p != bit2.p || bit1.i != bit2.i;
 }
 
 // returned is read-only, do not assign to it
