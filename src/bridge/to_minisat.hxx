@@ -16,6 +16,7 @@ using namespace Minisat;
 #include "mana.hxx"
 #include "bf.hxx"
 #include "aig.hxx"
+#include "to_bf.hxx"
 
 //=================================================================================================
 // Bf => Minisat

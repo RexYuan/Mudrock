@@ -27,3 +27,27 @@ Bf_ptr toBf (const Face& face)
     }
     return disj;
 }
+
+//=================================================================================================
+// Aig types => Bf
+//
+Bf_ptr toBf (const AigVar& aigvar)
+{
+    return v(static_cast<int>(aigvar));
+}
+
+Bf_ptr toBf (const AigLit& aiglit)
+{
+    return aiglit.sign ? toBf(aiglit.var) : ~toBf(aiglit.var);
+}
+
+//=================================================================================================
+// (Aig => Minisat) map => Bf map
+//
+map<int,int> toBfmap (const map<AigVar,Var>& varmap)
+{
+    map<int,int> tmp;
+    for (const auto& [aigvar,var] : varmap)
+        tmp[static_cast<int>(aigvar)] = static_cast<int>(var);
+    return tmp;
+}

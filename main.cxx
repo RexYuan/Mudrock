@@ -16,13 +16,26 @@ using std::cout;
 int main()
 {
     Mana m;
-    auto v1 = m.newVar();
-    auto v2 = m.newVar();
-    auto v3 = m.newVar();
+    Aig aig{"aag/test.aag"};
+    auto varmap1 = addAig(aig, m);
+    auto varmap2 = addAig(aig, m);
 
-    fixBf(v(v1) != v(v2), m);
-    fixBf(v(v2) != v(v3), m);
-    
-    vector<Var> tmp{v1,v3};
+    vector<Var> tmp;
+    for (auto [aigvar,aiglit] : aig.latches())
+        tmp.push_back(varmap1[aigvar]);
+    for (auto [aigvar,aiglit] : aig.latches())
+        tmp.push_back(varmap2[aigvar]);
+
+    for (auto [aigvar,aiglit] : aig.latches())
+    {
+        Bf_ptr next = toBf(aigvar),
+               curr = toBf(aiglit);
+
+        next = subst(next, toBfmap(varmap2));
+        curr = subst(curr, toBfmap(varmap1));
+
+        fixBf(next == curr, m);
+    }
+
     cout << tabulate(m, tmp);
 }

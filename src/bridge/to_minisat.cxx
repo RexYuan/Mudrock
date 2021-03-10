@@ -120,15 +120,8 @@ map<AigVar,Var> addAig (const Aig& aig, Mana& m)
         assert(varmap.contains(aiglit1.var) && // assuming ordered
                varmap.contains(aiglit2.var));
 
-        Lit parent = mkLit(varmap[aigvar] = m.newVar(false)), // tseitin nodes
-            left   = aiglit1.sign ? mkLit(varmap[aiglit1.var]) :
-                                   ~mkLit(varmap[aiglit1.var]),
-            right  = aiglit2.sign ? mkLit(varmap[aiglit2.var]) :
-                                   ~mkLit(varmap[aiglit2.var]);
-
-        m.addClause(m.fixedSw(), ~parent, left);
-        m.addClause(m.fixedSw(), ~parent, right);
-        m.addClause(m.fixedSw(), ~left, ~right, parent);
+        Bf_ptr tmpbf = subst(toBf(aiglit1) & toBf(aiglit2), toBfmap(varmap));
+        varmap[aigvar] = addBf(tmpbf, m);
     }
 
     validate_varmap(varmap, aig);
