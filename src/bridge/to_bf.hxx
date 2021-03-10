@@ -16,7 +16,7 @@ using namespace Minisat;
 //=================================================================================================
 // Face => Bf
 //
-Bf_ptr toBf (const Face& face);
+Bf_ptr toBf (const Face& face); // convert to dnf; note that vars are numbered from 0
 
 //=================================================================================================
 // Aig types => Bf

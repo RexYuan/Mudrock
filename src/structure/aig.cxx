@@ -7,6 +7,11 @@
 Aig::Aig (const string& filename)
 {
     readAiger (filename);
+
+    assert(inputs() .size() == num_inputs() );
+    assert(latches().size() == num_latches());
+    assert(outputs().size() == num_outputs());
+    assert(ands()   .size() == num_ands()   );
 }
 
 Aig::Aig (Aig&& aig2)
