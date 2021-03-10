@@ -8,6 +8,7 @@
 #include "mana.hxx"
 #include "to_minisat.hxx"
 #include "to_bf.hxx"
+#include "more_mana.hxx"
 
 #include <iostream>
 using std::cout;
@@ -21,6 +22,7 @@ int main()
 
     fixBf(v(v1) != v(v2), m);
     fixBf(v(v2) != v(v3), m);
-
-    assert(hold(v(v1) == v(v3), m));
+    
+    vector<Var> tmp{v1,v3};
+    cout << tabulate(m, tmp);
 }
