@@ -54,6 +54,13 @@ Var addBf (const Bf_ptr& bf, Mana& m, optional<Sw> swopt)
     assert(false);
 }
 
+void fixBf (const Bf_ptr& bf, Mana& m)
+{
+    Var tmp = addBf(bf, m);
+    bool ret = m.addClause(m.fixedSw(), mkLit(tmp));
+    assert(ret);
+}
+
 bool sat (const Bf_ptr& bf, Mana& m)
 {
     Var tmpSw = m.newSw();
@@ -73,7 +80,6 @@ bool hold (const Bf_ptr& bf, Mana& m)
 //
 namespace
 {
-    // every single
     inline void validate_varmap (const map<AigVar,Var>& varmap, const Aig& aig)
     {
         // every nodes are mapped
@@ -102,7 +108,6 @@ map<AigVar,Var> addAig (const Aig& aig, Mana& m)
     {
         assert(aigvar > 0);               // must not be constant
         assert(!varmap.contains(aigvar)); // must be fresh number
-        // add previous state here?
 
         varmap[aigvar] = m.newVar();
     }

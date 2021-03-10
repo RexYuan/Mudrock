@@ -64,26 +64,26 @@ Bf_ptr disj (Bf_ptr bf1, Bf_ptr bf2)
     }
 }
 
-Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& to)
+Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& varmap)
 {
     switch (bf->t)
     {
     case Conn::Top:  return v(true);
     case Conn::Bot:  return v(false);
-    case Conn::Base: return v(to.at(bf->get_int()));
-    case Conn::Not:  return ~subst(bf->get_sub(), to);
+    case Conn::Base: return v(varmap.at(bf->get_int()));
+    case Conn::Not:  return ~subst(bf->get_sub(), varmap);
     case Conn::And:
     {
-        Bf_ptr tmp = v(true);//make_shared<Bf>(Conn::And);
+        Bf_ptr tmp = v(true);
         for (Bf_ptr s : bf->get_subs())
-            tmp = tmp & subst(s, to);//tmp->push_sub(subst(s, to));
+            tmp = tmp & subst(s, varmap);
         return tmp;
     }
     case Conn::Or:
     {
-        Bf_ptr tmp = v(false);//make_shared<Bf>(Conn::Or);
+        Bf_ptr tmp = v(false);
         for (Bf_ptr s : bf->get_subs())
-            tmp = tmp | subst(s, to);//tmp->push_sub(subst(s, to));
+            tmp = tmp | subst(s, varmap);
         return tmp;
     }
     }

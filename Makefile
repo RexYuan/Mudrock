@@ -53,15 +53,14 @@ endef
 ###############################################################################
 # Recipes                                                                     #
 ###############################################################################
-.PHONY: all main run
-all: main run
-main: $(MAIN_DEP) | $(OBJ_ROOT)
-	$(CXX) $(CXX_FLAGS) $(OBJS) $(MAIN) $(CXX_LINKS) -o $(OUT)
+.PHONY: all run
+all: $(OUT) run
 run:
 	./$(OUT)
 
 .PHONY: debug 
 debug: CXX_FLAGS += -g -O0
+debug: $(OUT)
 debug:
 	lldb $(OUT)
 
@@ -78,5 +77,8 @@ $(OBJ_DIRS): | $(OBJ_ROOT)
 
 $(MINISAT_PCH): $(MINISAT_HDR) | $(OBJ_ROOT)
 	$(CXX) $(CXX_STD) -w -I$(MINISAT_DIR) -c $< -o $@
+
+$(OUT): $(MAIN_DEP) | $(OBJ_ROOT)
+	$(CXX) $(CXX_FLAGS) $(OBJS) $(MAIN) $(CXX_LINKS) -o $@
 
 $(foreach d, $(SUB_DIRS), $(eval $(call RecipeFactory,$(d))))

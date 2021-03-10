@@ -3,12 +3,12 @@
 
 #include <cassert>
 
-#include <vector>
 #include <map>
 using std::map;
 
 #include <optional>
-using std::optional; using std::nullopt;
+using std::optional;
+using std::nullopt;
 
 #include "minisat.hxx"
 using namespace Minisat;
@@ -22,6 +22,9 @@ using namespace Minisat;
 //
 // import bf and return formula root; base nodes must already be in m
 Var addBf (const Bf_ptr& bf, Mana& m, optional<Sw> swopt=nullopt);
+
+// handy shortcuts
+void fixBf (const Bf_ptr& bf, Mana& m); // addBf then addClause
 
 // handy queries
 bool sat  (const Bf_ptr& bf, Mana& m);

@@ -14,7 +14,13 @@ using std::cout;
 
 int main()
 {
-    Bv b ("00101");
-    Bv p (5, 5);
-    assert(b == p);
+    Mana m;
+    auto v1 = m.newVar();
+    auto v2 = m.newVar();
+    auto v3 = m.newVar();
+
+    fixBf(v(v1) != v(v2), m);
+    fixBf(v(v2) != v(v3), m);
+
+    assert(hold(v(v1) == v(v3), m));
 }
