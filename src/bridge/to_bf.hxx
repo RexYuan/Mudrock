@@ -10,8 +10,14 @@ using std::map;
 using namespace Minisat;
 
 #include "bf.hxx"
+#include "bv.hxx"
 #include "face.hxx"
 #include "aig.hxx"
+
+//=================================================================================================
+// Bv => Bf
+//
+Bf_ptr toBf (const Bv& bv); // return the characteristic conjunction of `bv`; vars numbered from 0
 
 //=================================================================================================
 // Face => Bf
