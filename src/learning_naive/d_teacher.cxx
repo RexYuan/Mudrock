@@ -62,7 +62,7 @@ namespace
 
         // zip range{0, ..., num_latches} to Vars corresponding to latches AigVars in varmap
         for (size_t i=0; const auto& [aigvar,aiglit] : aig.latches())
-            tmp[i] = varmap.at(static_cast<int>(aigvar));
+            tmp[i++] = varmap.at(static_cast<int>(aigvar));
 
         return tmp;
     }
