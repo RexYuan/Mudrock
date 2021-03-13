@@ -13,21 +13,33 @@ using std::vector;
 #include <iostream>
 using std::cout;
 
+#include "more_bf.hxx"
+
+inline Bf_ptr mk_cdnf (const vector<Face>& faces)
+{
+    Bf_ptr tmp = v(true);
+    for (const auto& face : faces)
+        tmp = tmp & toBf(face);
+    return tmp;
+}
+
 int main()
 {
-    // start=00, bad=11
-    D_Teacher t{"aag/test.aag"};
-
-    vector<Face> degen_true{};
-    assert(D_Types::Feedback::TooBig == t.consider(degen_true));
-
-    vector<Face> degen_false{};
-    degen_false.emplace_back(Bv{"11"});
-    assert(D_Types::Feedback::TooSmall == t.consider(degen_false));
-
-    // one step before refutation
+    Face f1{Bv{"11"}}, f2{Bv{"00"}};
+    f1.push(Bv{"01"}); f2.push(Bv{"01"});
+    f1.push(Bv{"10"}); f2.push(Bv{"10"});
     vector<Face> tmp;
-    tmp.emplace_back(Bv{"11"});
-    tmp[0].push(Bv{"00"});
-    assert(D_Types::Feedback::Refuted == t.consider(tmp));
+    tmp.push_back(move(f1)); tmp.push_back(move(f2));
+    Bf_ptr cdnf = mk_cdnf(tmp);
+
+    assert(contains(cdnf, 0));
+    assert(contains(cdnf, 1));
+    assert(!contains(cdnf, 2));
+
+    assert(false == evaluate(cdnf, Bv{"00"}));
+    assert(true  == evaluate(cdnf, Bv{"01"}));
+    assert(true  == evaluate(cdnf, Bv{"10"}));
+    assert(false == evaluate(cdnf, Bv{"11"}));
+
+    cout << tabulate(cdnf, 2);
 }
