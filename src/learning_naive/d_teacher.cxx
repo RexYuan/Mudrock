@@ -95,8 +95,18 @@ namespace
             tmp = tmp & toBf(face);
         return tmp;
     }
+
+    // extract the valuation Bv in the range of `index_varmap`
+    inline Bv mk_ce (const map<int,int>& index_varmap, const Mana& m)
+    {
+        Bv tmp{index_varmap.size()};
+        auto bit = tmp.begin();
+        for (const auto& [i,v] : index_varmap)
+            bit.setbit(m.val(v));
+        return tmp;
+    }
 }
-D_Teacher::Feedback D_Teacher::consider (const vector<Face>& faces)
+D_Types::Feedback D_Teacher::consider (const vector<Face>& faces)
 {
     assert(curr_index_varmap.size() > 0 && next_index_varmap.size() > 0);
 
@@ -110,30 +120,79 @@ D_Teacher::Feedback D_Teacher::consider (const vector<Face>& faces)
 
     // Init(I,X) => Hypt(X)
     if (!hold(init |= hypt, m))
-        return Feedback::TooSmall;
+    {
+        // X is positive counterexample
+        ce = mk_ce(curr_index_varmap, m);
+        return (state = TooSmall);
+    }
     // Hypt(X) => ~Bad(I,X)
-    else if (!hold(hypt |= ~bad, m)) 
-        return Feedback::TooBig;
+    else if (!hold(hypt |= ~bad, m))
+    {
+        // X is negative counterexample
+        ce = mk_ce(curr_index_varmap, m);
+        return (state = TooBig);
+    }
     // Hypt(X), Trans(I,X,X') => Hypt(X')
     else if (!hold(hypt & trans |= hyptp, m))
-        return judge(faces); // by heuristic
+    {
+        // determine by heuristic
+        return (state = judge(faces));
+    }
     // invariant found
     else
-        return Feedback::Perfect;
-}
-
-D_Teacher::Feedback D_Teacher::judge (const vector<Face>& faces)
-{
-    return Feedback::Perfect;
-}
-
-ostream& operator << (ostream& out, const D_Teacher::Feedback& feedback)
-{
-    switch (feedback)
     {
-        case D_Teacher::Feedback::Perfect:  out << "Perfect";  break;
-        case D_Teacher::Feedback::TooBig:   out << "TooBig";   break;
-        case D_Teacher::Feedback::TooSmall: out << "TooSmall"; break;
+        return (state = Perfect);
     }
-    return out;
+}
+
+namespace
+{
+    // face1.basis | face2.basis ...
+    inline Bf_ptr mk_char_dnf (const vector<Face>& faces)
+    {
+        vector<Bv> previous_negs;
+        for (const Face& face : faces)
+            previous_negs.push_back(face.basis());
+
+        Bf_ptr disj = v(false);
+        for (const Bv& neg : previous_negs)
+            disj = disj | toBf(neg);
+
+        return disj;
+    }
+}
+/*
+ * heuristic:
+ *     if Hypt(X), Trans(I,X,X'), ~Hypt(X') is sat and X' is a previous negative counterexample,
+ *     then X is a negative counterexample; else, X is a positive counterexample.
+ *
+ *     if X is a negative counterexample and Init(I,X) is sat, then a refutation is found.
+ */
+D_Types::Feedback D_Teacher::judge (const vector<Face>& faces)
+{
+    Bf_ptr dead_endsp = subst(mk_char_dnf(faces), next_index_varmap);
+    if (sat(hypt & trans & ~hyptp & dead_endsp, m))
+    {
+        // X is negative counterexample
+        ce = mk_ce(curr_index_varmap, m);
+
+        // check refutation
+        Bf_ptr is_ce = subst(toBf(ce), curr_index_varmap);
+        if (sat(is_ce & init, m))
+            return Refuted;
+
+        return TooBig;
+    }
+    else
+    {
+        // X' is positive counterexample
+        ce = mk_ce(next_index_varmap, m);
+        return TooSmall;
+    }
+}
+
+Bv D_Teacher::counterexample () const
+{
+    assert(state != Refuted && state != Perfect);
+    return ce;
 }

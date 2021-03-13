@@ -11,8 +11,11 @@ using std::map;
 #include <iostream>
 using std::ostream;
 
+#include "d_types.hxx"
+
 #include "aig.hxx"
 #include "bf.hxx"
+#include "bv.hxx"
 #include "face.hxx"
 
 #include "mana.hxx"
@@ -23,12 +26,18 @@ using std::ostream;
 //
 struct D_Teacher
 {
-    enum class Feedback {Perfect, TooBig, TooSmall};
+    using Feedback = D_Types::Feedback;
+    // using enum D_Types::Feedback; needs g++-11
+    Feedback Refuted  = Feedback::Refuted;
+    Feedback Perfect  = Feedback::Perfect;
+    Feedback TooBig   = Feedback::TooBig;
+    Feedback TooSmall = Feedback::TooSmall;
 
     D_Teacher  (const string& filename);
     ~D_Teacher () = default;
 
     Feedback consider (const vector<Face>& faces); // add `hypts` and check if invariant is found
+    Bv counterexample () const;
 
 //private:
     Mana m;
@@ -49,11 +58,11 @@ struct D_Teacher
     Bf_ptr InitCond,  // Init(I,X) => Hypt(X)
            BadCond,   // Hypt(X) => ~Bad(I,X)
            TransCond; // Hypt(X), Trans(I,X,X') => Hypt(X')
-    
+
+    Feedback state;
+    Bv ce;
     // Learning apparatuses
     //
-    void     setup (); // prepare learning environment
-    Feedback judge (const vector<Face>& faces); // heuristic to determine feedback
+    void     setup  (); // prepare learning environment
+    Feedback judge  (const vector<Face>& faces); // heuristic to determine feedback
 };
-
-ostream& operator << (ostream& out, const D_Teacher::Feedback& feedback);
