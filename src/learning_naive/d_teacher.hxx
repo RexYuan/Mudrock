@@ -28,16 +28,18 @@ struct D_Teacher
 {
     using Feedback = D_Types::Feedback;
     // using enum D_Types::Feedback; needs g++-11
-    Feedback Refuted  = Feedback::Refuted;
-    Feedback Perfect  = Feedback::Perfect;
-    Feedback TooBig   = Feedback::TooBig;
-    Feedback TooSmall = Feedback::TooSmall;
+    static const Feedback Refuted  = Feedback::Refuted;
+    static const Feedback Perfect  = Feedback::Perfect;
+    static const Feedback TooBig   = Feedback::TooBig;
+    static const Feedback TooSmall = Feedback::TooSmall;
+    static const Feedback Unknown  = Feedback::Unknown;
 
     D_Teacher  (const string& filename);
     ~D_Teacher () = default;
 
     Feedback consider (const vector<Face>& faces); // add `hypts` and check if invariant is found
     Bv counterexample () const;
+    const Feedback& check_state () const;
 
 //private:
     Mana m;
@@ -59,8 +61,8 @@ struct D_Teacher
            BadCond,   // Hypt(X) => ~Bad(I,X)
            TransCond; // Hypt(X), Trans(I,X,X') => Hypt(X')
 
-    Feedback state;
     Bv ce;
+    Feedback state = Unknown;
     // Learning apparatuses
     //
     void     setup  (); // prepare learning environment

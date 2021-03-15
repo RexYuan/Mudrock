@@ -196,3 +196,8 @@ Bv D_Teacher::counterexample () const
     assert(state != Refuted && state != Perfect);
     return ce;
 }
+
+const D_Types::Feedback& D_Teacher::check_state () const
+{
+    return state;
+}
