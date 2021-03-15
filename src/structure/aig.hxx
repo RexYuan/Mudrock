@@ -22,7 +22,7 @@ struct AigLit // TODO: use lifted literals
 {
     bool sign;
     AigVar var;
-    
+
     explicit operator bool () const { return sign; }
 };
 inline constinit AigLit AigTrue  { true, 0};
@@ -48,10 +48,10 @@ struct Aig
     Aig  () = default;
     Aig  (const string& filename);
     ~Aig () = default;
-    
+
     Aig           (const Aig& aig2) = delete; // disallow copy
     Aig& operator=(const Aig& aig2) = delete; // disallow copy
-    
+
     Aig           (Aig&& aig2); // use move
     Aig& operator=(Aig&& aig2); // use move
 

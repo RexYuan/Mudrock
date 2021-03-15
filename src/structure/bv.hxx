@@ -17,7 +17,7 @@ using std::ostream;
 //
 struct Bv
 {
-    Bv () = default;
+    Bv ();
     Bv (size_t len); // construct 0s bv of length `len`
     Bv (string bs);  // construct bv corresponding to `bs`
     Bv (size_t len, unsigned i); // construct bv of length `len` corresponding to `i` (big-endian)

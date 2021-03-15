@@ -37,7 +37,7 @@ struct D_Learner
 private:
     D_Teacher& teacher;
     Feedback fb = Unknown;
-    Bv ce;
+    Bv ce = Bv{};
 
     vector<Face> hypts; // cdnf
 };

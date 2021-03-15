@@ -68,8 +68,8 @@ private:
            BadCond,   // Hypt(X) => ~Bad(I,X)
            TransCond; // Hypt(X), Trans(I,X,X') => Hypt(X')
 
-    Bv ce;
     Feedback state = Unknown;
+    Bv ce = Bv{};
     // Learning apparatuses
     //
     void     setup  (); // prepare learning environment

@@ -62,6 +62,12 @@ namespace
 //=================================================================================================
 // Bit vector type
 //
+Bv::Bv ()
+{
+    length = 0;
+    data = nullptr;
+}
+
 Bv::Bv (size_t len)
 {
     length = len;
@@ -264,7 +270,7 @@ bool operator <  (const Bv& bv1, const Bv& bv2)
         if ((*it1 & *it2) != *it1)
             return false;
     return true;
-} 
+}
 
 bool operator <= (const Bv& bv1, const Bv& bv2)
 {

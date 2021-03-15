@@ -197,6 +197,7 @@ D_Types::Feedback D_Teacher::judge (const vector<Face>& faces)
 Bv D_Teacher::counterexample () const
 {
     assert(state != Refuted && state != Perfect);
+    assert(ce);
     return ce;
 }
 
