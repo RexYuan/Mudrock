@@ -92,7 +92,7 @@ map<AigVar,Var> addAig (const Aig& aig, Mana& m)
     map<AigVar,Var> varmap; // mapping from AigVar(unsigned) to Var(int)
 
     // when AigVar has var 0 it is a constant (0=false, 1=true)
-    varmap[0] = var_Undef;
+    varmap[0] = m.constFalse();
 
     // add input
     for (const auto& aigvar : aig.inputs())
@@ -113,15 +113,15 @@ map<AigVar,Var> addAig (const Aig& aig, Mana& m)
     }
 
     // add and
-    for (const auto& [aigvar,aiglit1,aiglit2] : aig.ands())
+    for (auto bmap = toBfmap(varmap); const auto& [aigvar,aiglit1,aiglit2] : aig.ands())
     {
         assert(aigvar > 0);               // must not be constant
         assert(!varmap.contains(aigvar)); // must be fresh number
         assert(varmap.contains(aiglit1.var) && // assuming ordered
                varmap.contains(aiglit2.var));
 
-        Bf_ptr tmpbf = subst(toBf(aiglit1) & toBf(aiglit2), toBfmap(varmap));
-        varmap[aigvar] = addBf(tmpbf, m);
+        Bf_ptr tmpbf = subst(toBf(aiglit1) & toBf(aiglit2), bmap);
+        bmap[aigvar] = varmap[aigvar] = addBf(tmpbf, m);
     }
 
     validate_varmap(varmap, aig);

@@ -48,4 +48,3 @@ string tabulate (Mana& m, vector<Var> range)
 
     return table;
 }
-

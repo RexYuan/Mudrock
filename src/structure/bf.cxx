@@ -70,7 +70,9 @@ Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& varmap)
     {
     case Conn::Top:  return v(true);
     case Conn::Bot:  return v(false);
-    case Conn::Base: return v(varmap.at(bf->get_int()));
+    case Conn::Base:
+        assert(varmap.contains(bf->get_int()));
+        return v(varmap.at(bf->get_int()));
     case Conn::Not:  return ~subst(bf->get_sub(), varmap);
     case Conn::And:
     {
