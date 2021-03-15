@@ -26,6 +26,45 @@ void D_Learner::learn ()
     if (fb == Perfect) // init is empty
         return;
     assert(fb == TooSmall);
+
+    while (true)
+    {
+        switch (fb)
+        {
+            // needs g++-11
+            case Refuted: [[fallthrough]];
+            case Perfect: return; // we're done
+            case Unknown: assert(false); // shouldn't happen
+            case TooBig:
+            {
+                ce = teacher.counterexample(); // negative ce
+                assert(ce);
+                hypts.push_back(Face{ce}); // add a new councillor
+                fb = teacher.consider(hypts);
+                break;
+            }
+            case TooSmall:
+            {
+                ce = teacher.counterexample(); // positive ce
+                for (auto& hypt : hypts)
+                {
+                    if (!evaluate(toBf(hypt), ce))
+                    {
+                        hypt.push(ce); // augment councillor
+                    }
+
+                    // re-align with the council while we're at it
+                    while (!teacher.aligned(hypt))
+                    {
+                        ce = teacher.counterexample();
+                        hypt.push(ce); // positive ce
+                    }
+                }
+                break;
+            }
+        }
+        fb = teacher.consider(hypts);
+    }
 }
 
 const D_Types::Feedback& D_Learner::result () const
