@@ -102,7 +102,10 @@ namespace
         Bv tmp{index_varmap.size()};
         auto bit = tmp.begin();
         for (const auto& [i,v] : index_varmap)
+        {
             bit.setbit(m.val(v));
+            bit++;
+        }
         return tmp;
     }
 }
