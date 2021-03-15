@@ -211,6 +211,25 @@ bool D_Teacher::degen ()
     }
 }
 
+bool D_Teacher::aligned (const Face& face)
+{
+    Sw asw = m.newSw();
+    Bf_ptr dnfp = subst(toBf(face), next_index_varmap);
+    dnfp = v(addBf(dnfp, m, asw));
+
+    bool ret = true;
+    // Hypt(X), Trans(I,X,X'), ~Hypt_i(X')
+    if (sat(hypt & trans & ~dnfp, m))
+    {
+        // X' is positive counterexample
+        ce = mk_ce(next_index_varmap, m);
+        ret = false;
+    }
+
+    m.releaseSw(asw);
+    return ret;
+}
+
 const D_Types::Feedback& D_Teacher::check_state () const
 {
     return state;

@@ -40,11 +40,15 @@ struct D_Teacher
     ~D_Teacher () = default;
 
     bool degen (); // if init intersects bad
+
+    // counterexample populator
     Feedback consider (const vector<Face>& faces); // add `hypts` and check if invariant is found
+    bool aligned (const Face& face); // if `face` prevents `hypt` from being transitive
+
     Bv counterexample () const;
     const Feedback& check_state () const;
 
-//private:
+private:
     Mana m;
     Aig aig;
     map<int,int> curr_index_varmap, next_index_varmap;
