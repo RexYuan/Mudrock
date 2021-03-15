@@ -197,6 +197,20 @@ Bv D_Teacher::counterexample () const
     return ce;
 }
 
+bool D_Teacher::degen ()
+{
+    if (sat(init & bad, m))
+    {
+        state = Refuted;
+        return true;
+    }
+    else
+    {
+        state = Unknown;
+        return false;
+    }
+}
+
 const D_Types::Feedback& D_Teacher::check_state () const
 {
     return state;

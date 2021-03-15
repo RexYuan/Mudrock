@@ -7,6 +7,8 @@
 using std::string;
 #include <map>
 using std::map;
+#include <vector>
+using std::vector;
 
 #include <iostream>
 using std::ostream;
@@ -37,6 +39,7 @@ struct D_Teacher
     D_Teacher  (const string& filename);
     ~D_Teacher () = default;
 
+    bool degen (); // if init intersects bad
     Feedback consider (const vector<Face>& faces); // add `hypts` and check if invariant is found
     Bv counterexample () const;
     const Feedback& check_state () const;
