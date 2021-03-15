@@ -23,10 +23,10 @@ struct Face
     Face () = default;
     Face (const Bv& b);
     ~Face () = default;
-    
+
     Face           (const Face& face2) = delete; // disallow copy
     Face& operator=(const Face& face2) = delete; // disallow copy
-    
+
     Face           (Face&& face2); // use move
     Face& operator=(Face&& face2); // use move
 
@@ -34,8 +34,7 @@ struct Face
     const vector<Bv>& primes () const; // get primes
 
     // use move to push into primes
-    void push (const Bv& b) = delete;
-    void push (Bv&& b);
+    void push (const Bv& b);
 
     bool size  () const; // number of primes
     bool empty () const; // if primes is empty

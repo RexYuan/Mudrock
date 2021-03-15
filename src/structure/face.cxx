@@ -26,16 +26,18 @@ const vector<Bv>& Face::primes () const
     return _primes;
 }
 
-void Face::push (Bv&& b)
+void Face::push (const Bv& b)
 {
     assert(b);
+    if ((*this)(b)) return;
+
     for (auto pit=_primes.begin(); pit!=_primes.end();)
         // absorb greater primes to avoid redundancy
         if ((b^basis()) < (*pit^basis()))
             _primes.erase(pit);
         else pit++;
 
-    _primes.push_back(move(b));
+    _primes.push_back(b);
 }
 
 bool Face::size () const
