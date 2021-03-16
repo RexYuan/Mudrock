@@ -20,40 +20,42 @@ using std::cout;
 
 #include "more_mana.hxx"
 #include "to_minisat.hxx"
-struct S
-{
-    int data =0;
-};
+#include <vector>
+using std::vector;
+#include "face.hxx"
+#include "bf.hxx"
+#include "bv.hxx"
+#include <utility>
+using std::move;
+
 int main()
 {
     M_Teacher t{"aag/linear.aag"};
-    t.unroll();
 
-    vector<Var> range;
-    for (auto [i,j] : t.first_index_varmap)
-    {
-        //cout << i << " " << j << "\n";
-        range.push_back(j);
-    }
-    for (auto [i,j] : t.second_index_varmap)
-    {
-        //cout << i << " " << j << "\n";
-        range.push_back(j);
-    }
-    for (auto [i,j] : t.last_index_varmap)
-    {
-        //cout << i << " " << j << "\n";
-        range.push_back(j);
-    }
-    t.unroll();
-    for (auto [i,j] : t.last_index_varmap)
-    {
-        //cout << i << " " << j << "\n";
-        range.push_back(j);
-    }
+    vector<Face> tmp{};
+    assert(M_Types::Feedback::TooBig == t.consider(tmp));
+    tmp.clear();
 
-    fixBf (t.trans, t.m);
-    cout << tabulate (t.m, range);
+    tmp.emplace_back(Bv{"11"});
+    assert(M_Types::Feedback::TooSmall == t.consider(tmp));
+    tmp.clear();
+
+    Face f{Bv{"11"}};
+    f.push(Bv{"00"});
+    tmp.push_back(move(f));
+    // foresight 0:
+    // H(X), T(X,X') => ~B(X), ~B(X')
+    assert(M_Types::Feedback::TooSmall == t.consider(tmp));
+
+    t.unroll();
+    // foresight 1:
+    // H(X), T(X,X'), T(X',X'') => ~B(X), ~B(X'), ~B(X'')
+    assert(M_Types::Feedback::TooSmall == t.consider(tmp));
+
+    t.unroll();
+    // foresight 2:
+    // H(X), T(X,X'), T(X',X''), T(X'',X''') => ~B(X), ~B(X'), ~B(X''), ~B(X''')
+    assert(M_Types::Feedback::TooBig == t.consider(tmp));
 
     /*assert(test("linear.aag", true));
     // state size

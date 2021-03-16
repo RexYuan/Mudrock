@@ -76,9 +76,9 @@ void M_Teacher::setup ()
     first_aig_varmap  = toBfmap(addAig(aig, m));
     second_aig_varmap = toBfmap(addAig(aig, m));
 
-    // set up Init(I,X), Bad_{0}(I,X), Trans_{0}(I)
+    // set up Init(I,X), Bad_{0}(I,X), Bad_{1}(I,X'), Trans_{0}(I,X,X')
     auto f_init   = mk_init(aig, first_aig_varmap);
-    auto f_bad    = mk_bad(aig, first_aig_varmap);
+    auto f_bad    = mk_bad(aig, first_aig_varmap) | mk_bad(aig, second_aig_varmap);
     auto f_trans  = mk_trans(aig, first_aig_varmap, second_aig_varmap);
     // set up Trans0(I,X,X')
     auto f_trans0 = f_trans;
@@ -144,7 +144,47 @@ namespace
 M_Types::Feedback M_Teacher::consider (const vector<Face>& faces)
 {
     assert(first_index_varmap.size() > 0 && last_index_varmap.size() > 0);
-    return (state = Perfect);
+
+    Bf_ptr cdnf = mk_cdnf(faces);
+    Bf_ptr first_cdnf  = subst(cdnf, first_index_varmap),
+           second_cdnf = subst(cdnf, second_index_varmap);
+    m.releaseSw(sw);
+    sw = m.newSw();
+    hypt  = v(addBf(first_cdnf, m, sw));
+    hyptp = v(addBf(second_cdnf, m, sw));
+
+    // correctness criterion
+    //=========================================================================
+    // Init(I,X) => Hypt(X)
+    if (!hold(init |= hypt, m))
+    {
+        // X is positive counterexample
+        ce = mk_ce(first_index_varmap, m);
+        return (state = TooSmall);
+    }
+    // correctness criterion with foresight
+    //=========================================================================
+    // Hypt(X), Trans(I,X,X'), Trans(I,X,X'), ... => ~Bad(I,X), ~Bad(I,X'), ...
+    else if (!hold(hypt & trans |= ~bad, m))
+    {
+        // X is negative counterexample
+        ce = mk_ce(first_index_varmap, m);
+        return (state = TooBig);
+    }
+    // progress criterion
+    //=========================================================================
+    // Init(I,X), Trans(I,X,X') => Hypt(X')
+    else if (!hold(init & trans0 |= hyptp, m))
+    {
+        // X' is positive counterexample
+        ce = mk_ce(second_index_varmap, m);
+        return (state = TooSmall);
+    }
+    // done
+    else
+    {
+        return (state = Perfect);
+    }
 }
 
 Bv M_Teacher::counterexample () const

@@ -42,7 +42,9 @@ struct M_Teacher
     bool degen (); // if init intersects bad
 
     // counterexample populator
-    Feedback consider (const vector<Face>& faces); // add `hypts` and check if invariant is found
+    //
+    // if `faces` is (1) over one step after `init` and (2) under `bad`
+    Feedback consider (const vector<Face>& faces);
 
     Bv counterexample () const;
     const Feedback& check_state () const;
