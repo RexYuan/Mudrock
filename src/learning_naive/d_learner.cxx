@@ -40,7 +40,6 @@ void D_Learner::learn ()
                 ce = teacher.counterexample(); // negative ce
                 assert(ce);
                 hypts.push_back(Face{ce}); // add a new councillor
-                fb = teacher.consider(hypts);
                 break;
             }
             case TooSmall:
