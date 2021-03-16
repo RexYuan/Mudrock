@@ -1,26 +1,61 @@
 
 #include <cassert>
 
-#include "d_types.hxx"
-#include "d_teacher.hxx"
-#include "d_learner.hxx"
-#include "d_context.hxx"
+#include "m_types.hxx"
+#include "m_teacher.hxx"
+//#include "m_learner.hxx"
+//#include "m_context.hxx"
 
 #include <iostream>
 using std::cout;
 
-bool test(string filename, bool sat)
+/*bool test(string filename, bool sat)
 {
     string tmp = "aag/";
     tmp += filename;
     D_Context c{tmp};
     c.check();
     return c.sat() == sat;
-}
+}*/
 
+#include "more_mana.hxx"
+#include "to_minisat.hxx"
+struct S
+{
+    int data =0;
+};
 int main()
 {
-    assert(test("linear.aag", true));
+    M_Teacher t{"aag/linear.aag"};
+    t.unroll();
+
+    vector<Var> range;
+    for (auto [i,j] : t.first_index_varmap)
+    {
+        //cout << i << " " << j << "\n";
+        range.push_back(j);
+    }
+    for (auto [i,j] : t.second_index_varmap)
+    {
+        //cout << i << " " << j << "\n";
+        range.push_back(j);
+    }
+    for (auto [i,j] : t.last_index_varmap)
+    {
+        //cout << i << " " << j << "\n";
+        range.push_back(j);
+    }
+    t.unroll();
+    for (auto [i,j] : t.last_index_varmap)
+    {
+        //cout << i << " " << j << "\n";
+        range.push_back(j);
+    }
+
+    fixBf (t.trans, t.m);
+    cout << tabulate (t.m, range);
+
+    /*assert(test("linear.aag", true));
     // state size
     // 3
     assert(test("bj08aut1.aag", false));
@@ -74,6 +109,6 @@ int main()
     //assert(test("pdtpmsudc8.aag", false));
     // 25
     assert(test("ringp0.aag", true));
-    assert(test("ringp0neg.aag", true));
-    //assert(test("visbakery.aag", true));
+    //assert(test("ringp0neg.aag", true));
+    //assert(test("visbakery.aag", true));*/
 }
