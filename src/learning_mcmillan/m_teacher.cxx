@@ -72,6 +72,19 @@ namespace
  */
 void M_Teacher::setup ()
 {
+    // set up variables over I,X
+    first_aig_varmap = toBfmap(addAig(aig, m));
+
+    // set up Init(I,X), Bad_{0}(I,X), Trans_{0}(I)
+    auto f_init  = mk_init(aig, first_aig_varmap);
+    auto f_bad   = mk_bad(aig, first_aig_varmap);
+    auto f_trans = v(true);
+
+    init  = v(addBf(f_init, m));
+    bad   = v(addBf(f_bad, m));
+    trans = v(addBf(f_trans, m));
+
+    last_index_varmap = first_index_varmap = mk_index_varmap(aig, first_aig_varmap);
 }
 
 /*
@@ -79,6 +92,21 @@ void M_Teacher::setup ()
  */
 void M_Teacher::unroll ()
 {
+    // set up variables over I,X_{k+1}
+    auto tmp_aig_varmap = toBfmap(addAig(aig, m));
+    auto tmp_index_varmap = mk_index_varmap(aig, tmp_aig_varmap);
+
+    // set up Bad_{k+1}(I, X_{k+1})
+    auto f_bad   = mk_bad(aig, tmp_aig_varmap);
+    // set up Trans_{k+1}(I, X_{k}, X_{k+1})
+    auto f_trans = mk_trans(aig, last_aig_varmap, tmp_aig_varmap);
+
+    // set up Bad(I, X_{0}, X_{1}, ..., X_{k+1})
+    bad   = v(addBf(bad | f_bad, m));
+    // set up Trans(I, X_{0}, X_{1}, ..., X_{k+1})
+    trans = v(addBf(trans & f_trans, m));
+
+    last_index_varmap = tmp_index_varmap;
 }
 
 namespace
