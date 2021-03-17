@@ -2,6 +2,13 @@
 .DEFAULT_GOAL := all
 
 ###############################################################################
+# Utilities                                                                   #
+###############################################################################
+RM  := trash
+CXX := g++-10
+CPP := cpp-10 -E
+
+###############################################################################
 # Filenames                                                                   #
 ###############################################################################
 SRC_ROOT := src
@@ -18,6 +25,16 @@ DEPS := $(patsubst $(SRC_ROOT)/%.cxx, $(DEP_ROOT)/%.d, $(SRCS))
 OBJS := $(patsubst $(SRC_ROOT)/%.cxx, $(OBJ_ROOT)/%.o, $(SRCS))
 
 ###############################################################################
+# Source search paths                                                         #
+###############################################################################
+null  :=
+space := $(null) #
+colon := :
+COLON_SEP_SRC_DIRS := $(subst $(space),$(colon),$(strip $(SRC_DIRS)))
+vpath %.cxx $(COLON_SEP_SRC_DIRS)
+vpath %.hxx $(COLON_SEP_SRC_DIRS)
+
+###############################################################################
 # Minisat                                                                     #
 ###############################################################################
 MINISAT_DIR := lib
@@ -28,12 +45,15 @@ MINISAT_AR  := minisat
 ###############################################################################
 # Compile options                                                             #
 ###############################################################################
-CXX     := g++-10
 CXX_STD := -std=c++20
 CXX_W   := -Wall
 
-CXX_INCS  := $(addprefix -I, $(dir $(SRCS)) $(MINISAT_DIR))
-CXX_LINKS := -L$(MINISAT_DIR) -l$(MINISAT_AR)
+CPP_FLAGS := $(addprefix -I, $(dir $(SRCS)) $(MINISAT_DIR))
+CXX_INCS  := $(CPP_FLAGS)
+
+LD_FLAGS  := -L$(MINISAT_DIR)
+LD_LIBS   := -l$(MINISAT_AR)
+CXX_LINKS := $(LD_FLAGS) $(LD_LIBS)
 
 CXX_FLAGS := $(CXX_STD) $(CXX_W) $(CXX_INCS)
 
@@ -50,12 +70,12 @@ define Silence
 endef
 
 define DepFactory
-$(DEP_ROOT)/$(1)/%.d: $(SRC_ROOT)/$(1)/%.cxx $(SRC_ROOT)/$(1)/%.hxx | $(DEP_ROOT)/$(1)
-	$$(CXX) $$(CXX_FLAGS) -MM -MT$$@ -MT$(OBJ_ROOT)/$(1)/$$*.o $$< -MF$$@
+$(DEP_ROOT)/$(1)/%.d: %.cxx %.hxx | $(DEP_ROOT)/$(1)
+	$$(CPP) $$(CXX_FLAGS) -MM -MT$$@ -MT$(OBJ_ROOT)/$(1)/$$*.o $$< -MF$$@
 endef
 
 define ObjFactory
-$(OBJ_ROOT)/$(1)/%.o: $(SRC_ROOT)/$(1)/%.cxx $(SRC_ROOT)/$(1)/%.hxx | $(OBJ_ROOT)/$(1)
+$(OBJ_ROOT)/$(1)/%.o: %.cxx %.hxx | $(OBJ_ROOT)/$(1)
 	$$(CXX) $$(CXX_FLAGS) -c $$< $$(CXX_LINKS) -o $$@
 endef
 
@@ -76,8 +96,8 @@ debug:
 
 .PHONY: clean
 clean:
-	@echo "trash-ing builds"
-	@$(call Silence, trash $(OBJ_ROOT))
+	@echo "deleting builds"
+	@$(call Silence, $(RM) $(OBJ_ROOT))
 
 $(OBJ_DIRS): | $(OBJ_ROOT)
 $(DEP_DIRS): | $(DEP_ROOT)
