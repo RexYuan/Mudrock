@@ -8,8 +8,6 @@ sw{m.newSw()}
 {
     assert(aig);
     assert(aig.num_outputs() == 1);
-
-    setup();
 }
 
 namespace
@@ -67,55 +65,101 @@ namespace
         return tmp;
     }
 }
-/*
- * prepare the first step of 0
- */
+//=================================================================================================
+// Higher order commands for context
+//
 void M_Teacher::setup ()
 {
-    // set up variables over I,X,X'
+    // set up variables over X,X'
     first_aig_varmap  = toBfmap(addAig(aig, m));
     second_aig_varmap = toBfmap(addAig(aig, m));
 
-    // set up Init(I,X), Bad_{0}(I,X), Bad_{1}(I,X'), Trans_{0}(I,X,X')
-    auto f_init   = mk_init(aig, first_aig_varmap);
-    auto f_bad    = mk_bad(aig, first_aig_varmap) | mk_bad(aig, second_aig_varmap);
-    auto f_trans  = mk_trans(aig, first_aig_varmap, second_aig_varmap);
-    // set up Trans0(I,X,X')
-    auto f_trans0 = f_trans;
+    // set up Init(X), Bad(X,X'), Trans(X,X'), Trans()
+    auto f_init     = mk_init(aig, first_aig_varmap);
+    auto f_bad      = mk_bad(aig, first_aig_varmap) | mk_bad(aig, second_aig_varmap);
+    auto f_trans_hd = mk_trans(aig, first_aig_varmap, second_aig_varmap);
+    auto f_trans_tl = v(true);
 
-    init   = v(addBf(f_init, m));
-    bad    = v(addBf(f_bad, m));
-    trans  = v(addBf(f_trans, m));
-    trans0 = v(addBf(f_trans0, m));
+    init     = v(addBf(f_init, m));
+    bad      = v(addBf(f_bad, m));
+    trans_hd = v(addBf(f_trans_hd, m));
+    trans_tl = v(addBf(f_trans_tl, m));
 
     first_index_varmap  = mk_index_varmap(aig, first_aig_varmap);
     second_index_varmap = mk_index_varmap(aig, second_aig_varmap);
 
-    last_aig_varmap   = second_aig_varmap;
+    last_aig_varmap = second_aig_varmap;
     last_index_varmap = second_index_varmap;
+
+    // prep frontiers
+    restart();
 }
 
-/*
- * unroll one step to k+1 when the foresight is of length k
- */
-void M_Teacher::unroll ()
+// unroll bad by `n` step
+void M_Teacher::unroll (size_t n)
 {
-    // set up variables over I,X_{k+1}
+    // set up variables over X''
     auto tmp_aig_varmap = toBfmap(addAig(aig, m));
 
-    // set up Bad_{k+1}(I, X_{k+1})
-    auto f_bad   = mk_bad(aig, tmp_aig_varmap);
-    // set up Trans_{k+1}(I, X_{k}, X_{k+1})
-    auto f_trans = mk_trans(aig, last_aig_varmap, tmp_aig_varmap);
+    // set up Bad(X''), Trans(X',X'')
+    auto f_bad      = mk_bad(aig, tmp_aig_varmap);
+    auto f_trans_tl = mk_trans(aig, last_aig_varmap, tmp_aig_varmap);
 
-    // set up Bad(I, X_{0}, X_{1}, ..., X_{k+1})
-    bad   = v(addBf(bad | f_bad, m));
-    // set up Trans(I, X_{0}, X_{1}, ..., X_{k+1})
-    trans = v(addBf(trans & f_trans, m));
+    bad      = v(addBf(bad | f_bad, m));
+    trans_tl = v(addBf(trans_tl & f_trans_tl, m));
 
-    auto tmp_index_varmap = mk_index_varmap(aig, tmp_aig_varmap);
-    last_index_varmap = tmp_index_varmap;
     last_aig_varmap = tmp_aig_varmap;
+    last_index_varmap = mk_index_varmap(aig, tmp_aig_varmap);
+}
+
+// if init meets bad
+bool M_Teacher::degen ()
+{
+    // I(X), T(X,X'), T(X',X'',...), B(X,X',...)
+    if (sat(init & trans_hd & trans_tl & bad, m))
+    {
+        state = Refuted;
+        return true;
+    }
+    else
+    {
+        state = Unknown;
+        return false;
+    }
+}
+
+// if frontier image doesn't meet bad
+bool M_Teacher::advanceable ()
+{
+    // H(X), T(X,X'), T(X',X'',...), B(X,X',...)
+    if (sat(frnt & trans_hd & trans_tl & bad, m))
+        return false;
+    return true;
+}
+
+// reset frontier back to init
+void M_Teacher::restart ()
+{
+    last_frnt  = init;
+    last_frntp = init;
+    frnt  = v(true);
+    frntp = v(true);
+}
+
+// if current frontier > last frontier
+bool M_Teacher::progressed ()
+{
+    // H(X) => last H(X)
+    if (hold(frnt |= last_frnt, m))
+        return true;
+    return false;
+}
+
+// advance frontier
+void M_Teacher::advance ()
+{
+    last_frnt  = frnt;
+    last_frntp = frntp;
 }
 
 namespace
@@ -141,44 +185,49 @@ namespace
         return tmp;
     }
 }
+//=================================================================================================
+// Query commands for learner
+//
+// if frontier image < `faces` < bad
 M_Types::Feedback M_Teacher::consider (const vector<Face>& faces)
 {
     assert(first_index_varmap.size() > 0 && last_index_varmap.size() > 0);
 
     Bf_ptr cdnf = mk_cdnf(faces);
+    // H(X), H(X')
     Bf_ptr first_cdnf  = subst(cdnf, first_index_varmap),
            second_cdnf = subst(cdnf, second_index_varmap);
     m.releaseSw(sw);
     sw = m.newSw();
-    hypt  = v(addBf(first_cdnf, m, sw));
-    hyptp = v(addBf(second_cdnf, m, sw));
+    frnt  = v(addBf(first_cdnf, m, sw));
+    frntp = v(addBf(second_cdnf, m, sw));
 
-    // correctness criterion
+    // induction criterion (a fortiori, init correctness)
     //=========================================================================
-    // Init(I,X) => Hypt(X)
-    if (!hold(init |= hypt, m))
+    // last H(X) => H(X)
+    if (!hold(last_frnt |= frnt, m))
     {
         // X is positive counterexample
         ce = mk_ce(first_index_varmap, m);
         return (state = TooSmall);
     }
-    // correctness criterion with foresight
+    // progress criterion (forward image over-approximation)
     //=========================================================================
-    // Hypt(X), Trans(I,X,X'), Trans(I,X,X'), ... => ~Bad(I,X), ~Bad(I,X'), ...
-    else if (!hold(hypt & trans |= ~bad, m))
-    {
-        // X is negative counterexample
-        ce = mk_ce(first_index_varmap, m);
-        return (state = TooBig);
-    }
-    // progress criterion
-    //=========================================================================
-    // Init(I,X), Trans(I,X,X') => Hypt(X')
-    else if (!hold(init & trans0 |= hyptp, m))
+    // last H(X), T(X,X') => H(X')
+    else if (!hold(last_frnt & trans_hd |= frnt, m))
     {
         // X' is positive counterexample
         ce = mk_ce(second_index_varmap, m);
         return (state = TooSmall);
+    }
+    // soundness criterion with foresight (unrolled bad under-approximation)
+    //=========================================================================
+    // H(X), T(X,X'), T(X',X'',...) => ~B(X,X',X'',...)
+    else if (!hold(frnt & trans_hd & trans_tl |= ~bad, m))
+    {
+        // X is negative counterexample
+        ce = mk_ce(first_index_varmap, m);
+        return (state = TooBig);
     }
     // done
     else
@@ -192,20 +241,6 @@ Bv M_Teacher::counterexample () const
     assert(state != Refuted && state != Perfect);
     assert(ce);
     return ce;
-}
-
-bool M_Teacher::degen ()
-{
-    if (sat(init & bad, m))
-    {
-        state = Refuted;
-        return true;
-    }
-    else
-    {
-        state = Unknown;
-        return false;
-    }
 }
 
 const M_Types::Feedback& M_Teacher::check_state () const

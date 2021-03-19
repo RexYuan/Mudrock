@@ -31,31 +31,38 @@ using std::move;
 int main()
 {
     M_Teacher t{"aag/linear.aag"};
+    // 00 -> 01 -> 10 -> 11
+    // ^init             ^bad
+    t.setup();
 
-    vector<Face> tmp{};
+    vector<Face> tmp{}; // true
     assert(M_Types::Feedback::TooBig == t.consider(tmp));
     tmp.clear();
 
-    tmp.emplace_back(Bv{"11"});
+    tmp.emplace_back(Bv{"11"}); // false
     assert(M_Types::Feedback::TooSmall == t.consider(tmp));
     tmp.clear();
 
-    Face f{Bv{"11"}};
+    Face f{Bv{"11"}}; // {00}
     f.push(Bv{"00"});
     tmp.push_back(move(f));
-    // foresight 0:
-    // H(X), T(X,X') => ~B(X), ~B(X')
-    assert(M_Types::Feedback::TooSmall == t.consider(tmp));
+    // foresight 0: bad=10 11
+    // H(X), T(X,X'), true, B(X,X')
+    //   ^10     ^11            ^11 furthest unsat
+    assert(M_Types::Feedback::Perfect == t.consider(tmp));
 
     t.unroll();
-    // foresight 1:
-    // H(X), T(X,X'), T(X',X'') => ~B(X), ~B(X'), ~B(X'')
-    assert(M_Types::Feedback::TooSmall == t.consider(tmp));
+    // foresight 1: bad=01 10 11
+    // H(X), T(X,X'), T(X',X''), B(X,X',X'')
+    //   ^01     ^10       ^11          ^11 furthest unsat
+    assert(M_Types::Feedback::Perfect == t.consider(tmp));
 
     t.unroll();
-    // foresight 2:
-    // H(X), T(X,X'), T(X',X''), T(X'',X''') => ~B(X), ~B(X'), ~B(X''), ~B(X''')
+    // foresight 2: bad=00 01 10 11
+    // H(X), T(X,X'), T(X',X'',X''') => ~B(X,X',X'',X''')
+    //   ^00     ^01       ^10 ^11                  ^11 furthest sat
     assert(M_Types::Feedback::TooBig == t.consider(tmp));
+    assert(t.degen());
 
     /*assert(test("linear.aag", true));
     // state size

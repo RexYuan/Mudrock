@@ -24,7 +24,7 @@ using std::ostream;
 #include "to_minisat.hxx"
 
 //=================================================================================================
-// Classic Teacher for stepwise over-approximation
+// Classic Teacher for stepwise over/under-approximation with unrolling
 //
 struct M_Teacher
 {
@@ -39,39 +39,47 @@ struct M_Teacher
     M_Teacher  (const string& filename);
     ~M_Teacher () = default;
 
-    bool degen (); // if init intersects bad
-
-    // counterexample populator
+    //=============================================================================================
+    // Higher order commands for context
     //
-    // if `faces` is (1) over one step after `init` and (2) under `bad`
-    Feedback consider (const vector<Face>& faces);
+    void setup       ();           // prepare learning environment
+    bool degen       ();           // if init meets bad
+    bool advanceable ();           // if frontier image doesn't meet bad
+    void unroll      (size_t n=1); // unroll bad by `n` step
+    void restart     ();           // reset frontier back to init
+    bool progressed  ();           // if current frontier > last frontier
+    void advance     ();           // advance frontier
+
+    //=============================================================================================
+    // Query commands for learner
+    //
+    // counterexample populators
+    //
+    Feedback consider (const vector<Face>& faces); // if frontier image < `faces` < bad
 
     Bv counterexample () const;
     const Feedback& check_state () const;
 
-private:
+//private:
     Mana m;
     Aig aig;
-    map<int,int> first_aig_varmap, second_aig_varmap, last_aig_varmap;
+    map<int,int> first_aig_varmap,   second_aig_varmap,   last_aig_varmap;
     map<int,int> first_index_varmap, second_index_varmap, last_index_varmap;
 
     Sw sw;
     // Working with bf formulae
     //
     // formulae for given conditions
-    Bf_ptr init,      // Init(I,X)
-           bad,       // Bad(I,X,...)
-           trans;     // Trans(I,X,X',...)
+    Bf_ptr init,      // I(X)
+           bad,       // B(X,X',...)
+           trans_hd,  // T(X,X')
+           trans_tl;  // T(X',X'',...)
     // formulae for hypotheses to be tested
-    Bf_ptr hypt,      // Hypt(X)
-           hyptp;     // Hypt(X')
-    // formulae to ensure progress
-    Bf_ptr trans0;    // Trans(I,X,X')
+    Bf_ptr last_frnt,  // H-1(X)  last frontier
+           last_frntp, // H-1(X') last frontier
+           frnt,       // H(X)    current frontier
+           frntp;      // H(X')   current frontier
 
     Feedback state = Unknown;
     Bv ce = Bv{};
-    // Learning apparatuses
-    //
-    void setup   (); // prepare learning environment
-    void unroll  (); // enlarge foresight by one step
 };
