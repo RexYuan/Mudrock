@@ -131,8 +131,8 @@ bool M_Teacher::degen ()
 // if frontier image doesn't meet bad
 bool M_Teacher::advanceable ()
 {
-    // H(X), T(X,X'), T(X',X'',...), B(X,X',...)
-    if (sat(frnt & trans_hd & trans_tl & bad, m))
+    // last H(X), T(X,X'), T(X',X'',...), B(X',X'',...)
+    if (sat(last_frnt & trans_hd & trans_tl & bad, m))
         return false;
     return true;
 }
