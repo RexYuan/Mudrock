@@ -74,9 +74,9 @@ void M_Teacher::setup ()
     first_aig_varmap  = toBfmap(addAig(aig, m));
     second_aig_varmap = toBfmap(addAig(aig, m));
 
-    // set up Init(X), Bad(X,X'), Trans(X,X'), Trans()
+    // set up Init(X), Bad(X'), Trans(X,X'), Trans()
     auto f_init     = mk_init(aig, first_aig_varmap);
-    auto f_bad      = mk_bad(aig, first_aig_varmap) | mk_bad(aig, second_aig_varmap);
+    auto f_bad      = mk_bad(aig, second_aig_varmap);
     auto f_trans_hd = mk_trans(aig, first_aig_varmap, second_aig_varmap);
     auto f_trans_tl = v(true);
 
@@ -115,7 +115,7 @@ void M_Teacher::unroll (size_t n)
 // if init meets bad
 bool M_Teacher::degen ()
 {
-    // I(X), T(X,X'), T(X',X'',...), B(X,X',...)
+    // I(X), T(X,X'), T(X',X'',...), B(X',X'',...)
     if (sat(init & trans_hd & trans_tl & bad, m))
     {
         state = Refuted;
@@ -221,13 +221,13 @@ M_Types::Feedback M_Teacher::consider (const vector<Face>& faces)
         ce = mk_ce(second_index_varmap, m);
         return (state = TooSmall);
     }
-    // soundness criterion with foresight (unrolled bad under-approximation)
+    // soundness criterion with foresight (unrolled ~bad under-approximation)
     //=========================================================================
-    // H(X), T(X,X'), T(X',X'',...) => ~B(X,X',X'',...)
-    else if (!hold(frnt & trans_hd & trans_tl |= ~bad, m))
+    // H(X'), T(X',X'',...) => ~B(X',X'',...)
+    else if (!hold(frntp & trans_tl |= ~bad, m))
     {
-        // X is negative counterexample
-        ce = mk_ce(first_index_varmap, m);
+        // X' is negative counterexample
+        ce = mk_ce(second_index_varmap, m);
         return (state = TooBig);
     }
     // done

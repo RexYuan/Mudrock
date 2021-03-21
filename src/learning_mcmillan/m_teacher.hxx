@@ -71,7 +71,7 @@ struct M_Teacher
     //
     // formulae for given conditions
     Bf_ptr init,      // I(X)
-           bad,       // B(X,X',...)
+           bad,       // B(X',X''...)
            trans_hd,  // T(X,X')
            trans_tl;  // T(X',X'',...)
     // formulae for hypotheses to be tested
