@@ -44,10 +44,11 @@ void D_Learner::learn ()
             }
             case TooSmall:
             {
+                // TODO: optimizable by sat solving strict order constraint
                 ce = teacher.counterexample(); // positive ce
                 for (auto& hypt : hypts)
                 {
-                    if (!evaluate(toBf(hypt), ce))
+                    if (!hypt(ce))
                     {
                         hypt.push(ce); // augment councillor
                     }

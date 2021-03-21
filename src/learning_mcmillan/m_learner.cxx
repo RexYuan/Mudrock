@@ -48,7 +48,7 @@ void M_Learner::learn ()
                 ce = teacher.counterexample(); // positive ce
                 for (auto& hypt : hypts)
                 {
-                    if (!evaluate(toBf(hypt), ce))
+                    if (!hypt(ce))
                     {
                         ce = minimize(ce, hypt);
                         hypt.push(ce); // augment councillor
