@@ -71,6 +71,9 @@ struct Bv
 private:
     size_t length;
     data_unit* data;
+
+    inline void validate () { length > 0      ? assert(data)        : assert(data == nullptr);
+                              data == nullptr ? assert(length == 0) : assert(length > 0); }
 };
 
 //=================================================================================================

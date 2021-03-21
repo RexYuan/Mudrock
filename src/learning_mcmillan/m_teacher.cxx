@@ -238,7 +238,7 @@ M_Types::Feedback M_Teacher::consider (const vector<Face>& faces)
 
 Bv M_Teacher::counterexample () const
 {
-    assert(state != Refuted && state != Perfect);
+    assert(state != Refuted && state != Perfect && state != Unknown);
     assert(ce);
     return ce;
 }

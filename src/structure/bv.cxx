@@ -66,23 +66,26 @@ Bv::Bv ()
 {
     length = 0;
     data = nullptr;
+    validate();
 }
 
 Bv::Bv (size_t len)
 {
     length = len;
     data = new data_unit [bits_in_units(length)]{}; // init to zeros
-    assert (data);
+    validate();
 }
 
 Bv::Bv (string bs) : Bv{bs.length()}
 {
     setter(bs);
+    validate();
 }
 
 Bv::Bv (size_t len, unsigned i) : Bv{len}
 {
     setter(i);
+    validate();
 }
 
 Bv::~Bv ()
@@ -94,7 +97,7 @@ Bv::Bv (const Bv& bv2)
 {
     length = bv2.length;
     data = new data_unit [bits_in_units(length)]{};
-    assert (data);
+    validate();
     for (size_t i=0; i<bits_in_units(length); i++)
         data[i] = bv2.data[i];
 }
@@ -104,7 +107,7 @@ Bv& Bv::operator=(const Bv& bv2)
     delete [] data;
     length = bv2.length;
     data = new data_unit [bits_in_units(length)]{};
-    assert (data);
+    validate();
     for (size_t i=0; i<bits_in_units(length); i++)
         data[i] = bv2.data[i];
     return *this;
@@ -122,7 +125,7 @@ Bv& Bv::operator=(Bv&& bv2)
 {
     length = bv2.length;
     data = bv2.data;
-    assert (data);
+    validate();
     bv2.length = 0;
     bv2.data = nullptr;
     return *this;

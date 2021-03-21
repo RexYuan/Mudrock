@@ -89,7 +89,7 @@ run:
 	./$(OUT)
 
 .PHONY: debug
-debug: CXX_FLAGS += -g -O0 -DPRINT
+debug: CXX_FLAGS += -g -O0 -D PRINT
 debug: $(OUT)
 debug:
 	lldb $(OUT)
