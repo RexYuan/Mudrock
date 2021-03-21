@@ -140,19 +140,22 @@ bool M_Teacher::advanceable ()
 // reset frontier back to init
 void M_Teacher::restart ()
 {
+    m.releaseSw(sw);
+    sw = m.newSw();
+
     last_frnt  = init;
     last_frntp = init;
-    frnt  = v(true);
-    frntp = v(true);
+    frnt  = v(false);
+    frntp = v(false);
 }
 
 // if current frontier > last frontier
 bool M_Teacher::progressed ()
 {
-    // H(X) => last H(X)
-    if (hold(frnt |= last_frnt, m))
-        return true;
-    return false;
+    // H(X) <= last H(X) and H is non-empty means no progress
+    if (hold(frnt |= last_frnt, m) && sat(frnt, m))
+        return false;
+    return true;
 }
 
 // advance frontier
@@ -197,8 +200,6 @@ M_Types::Feedback M_Teacher::consider (const vector<Face>& faces)
     // H(X), H(X')
     Bf_ptr first_cdnf  = subst(cdnf, first_index_varmap),
            second_cdnf = subst(cdnf, second_index_varmap);
-    m.releaseSw(sw);
-    sw = m.newSw();
     frnt  = v(addBf(first_cdnf, m, sw));
     frntp = v(addBf(second_cdnf, m, sw));
 
