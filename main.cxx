@@ -3,20 +3,20 @@
 
 #include "m_types.hxx"
 #include "m_teacher.hxx"
-//#include "m_learner.hxx"
-//#include "m_context.hxx"
+#include "m_learner.hxx"
+#include "m_context.hxx"
 
 #include <iostream>
 using std::cout;
 
-/*bool test(string filename, bool sat)
+bool test(string filename, bool sat)
 {
     string tmp = "aag/";
     tmp += filename;
-    D_Context c{tmp};
+    M_Context c{tmp};
     c.check();
     return c.sat() == sat;
-}*/
+}
 
 #include "more_mana.hxx"
 #include "to_minisat.hxx"
@@ -34,35 +34,61 @@ int main()
     // 00 -> 01 -> 10 -> 11
     // ^init             ^bad
     t.setup();
+    assert(!t.degen());
 
-    vector<Face> tmp{}; // true
-    assert(M_Types::Feedback::TooBig == t.consider(tmp));
-    tmp.clear();
+    vector<Face> tmp{};
 
-    tmp.emplace_back(Bv{"11"}); // false
+    assert(t.advanceable());
+    tmp.emplace_back(Bv{"11"});
+    tmp[0].push(Bv{"00"}); // 00
+    // induction forces 00
+    // progress forces 01
+    // soundness disallows 11
+    assert(t.advanceable());
     assert(M_Types::Feedback::TooSmall == t.consider(tmp));
+    assert(Bv{"01"} == t.counterexample());
+    tmp[0].push(Bv{"01"}); // 00 01
+    assert(M_Types::Feedback::Perfect == t.consider(tmp));
+    t.advance();
+    // induction forces 00 01
+    // progress forces 10
+    // soundness disallows 11
+    assert(t.advanceable());
+    assert(M_Types::Feedback::TooSmall == t.consider(tmp));
+    assert(Bv{"10"} == t.counterexample());
+    tmp[0].push(Bv{"10"}); // 00 01 10
+    assert(M_Types::Feedback::Perfect == t.consider(tmp));
+    t.advance();
+    // induction forces 00 01 10
+    // progress forces 11
+    // soundness disallows 11
+    assert(!t.advanceable());
+
+    t.unroll();
+    assert(!t.degen());
+    t.restart();
     tmp.clear();
-
-    Face f{Bv{"11"}}; // {00}
-    f.push(Bv{"00"});
-    tmp.push_back(move(f));
-    // foresight 0: bad=10 11
-    // H(X), T(X,X'), true, B(X,X')
-    //   ^10     ^11            ^11 furthest unsat
-    assert(M_Types::Feedback::Perfect == t.consider(tmp));
-
-    t.unroll();
-    // foresight 1: bad=01 10 11
-    // H(X), T(X,X'), T(X',X''), B(X,X',X'')
-    //   ^01     ^10       ^11          ^11 furthest unsat
-    assert(M_Types::Feedback::Perfect == t.consider(tmp));
-
-    t.unroll();
-    // foresight 2: bad=00 01 10 11
-    // H(X), T(X,X'), T(X',X'',X''') => ~B(X,X',X'',X''')
-    //   ^00     ^01       ^10 ^11                  ^11 furthest sat
+    // induction forces 00
+    // progress forces 01
+    // soundness disallows 10 11
+    assert(t.advanceable());
     assert(M_Types::Feedback::TooBig == t.consider(tmp));
+    assert(Bv{"10"} == t.counterexample());
+    tmp.emplace_back(Bv{"10"});
+    assert(M_Types::Feedback::TooSmall == t.consider(tmp));
+    assert(Bv{"00"} == t.counterexample());
+    tmp[0].push(Bv{"00"});
+    assert(M_Types::Feedback::Perfect == t.consider(tmp));
+    t.advance();
+    // induction forces 00 01
+    // progress forces 10
+    // soundness disallows 10 11
+    assert(!t.advanceable());
+
+    t.unroll();
     assert(t.degen());
+
+    return 0;
 
     /*assert(test("linear.aag", true));
     // state size
