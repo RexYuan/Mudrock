@@ -215,7 +215,7 @@ M_Types::Feedback M_Teacher::consider (const vector<Face>& faces)
     // progress criterion (forward image over-approximation)
     //=========================================================================
     // last H(X), T(X,X') => H(X')
-    else if (!hold(last_frnt & trans_hd |= frnt, m))
+    else if (!hold(last_frnt & trans_hd |= frntp, m))
     {
         // X' is positive counterexample
         ce = mk_ce(second_index_varmap, m);
