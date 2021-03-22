@@ -1,10 +1,10 @@
 
 #include <cassert>
 
-#include "m_types.hxx"
-#include "m_teacher.hxx"
-#include "m_learner.hxx"
-#include "m_context.hxx"
+#include "b_types.hxx"
+#include "b_teacher.hxx"
+#include "b_learner.hxx"
+#include "b_context.hxx"
 
 #include <iostream>
 using std::cout;
@@ -34,10 +34,10 @@ bool test(string filename, bool sat)
 {
     string tmp = "aag/";
     tmp += filename;
-    M_Context c{tmp};
+    B_Context c{tmp};
     cout << "#" << c.teacher.aig.num_latches();
 
-    cout << " <" << filename << "> (";
+    cout << " <" << filename << ">" << std::flush << " (";
     timer();
     c.check();
     timer();
@@ -72,7 +72,7 @@ int main()
     assert(test("nusmvsyncarb5p2.aag", false));
     // 13
     assert(test("bobtutt.aag", true));
-    //assert(test("bobcount.aag", false)); // DEBUG: very weird!
+    //assert(test("bobcount.aag", false));
     // 14
     assert(test("shortp0.aag", true));
     assert(test("shortp0neg.aag", true));
@@ -80,7 +80,7 @@ int main()
     assert(test("visemodel.aag", false));
     // 16
     assert(test("counterp0.aag", true));
-    //assert(test("eijks208o.aag", false));
+    assert(test("eijks208o.aag", false));
     assert(test("counterp0neg.aag", true));
     assert(test("pdtvisgigamax0.aag", false));
     assert(test("pdtvisgigamax1.aag", false));
@@ -97,12 +97,12 @@ int main()
     assert(test("neclaftp5001.aag", false));
     assert(test("neclaftp5002.aag", false));
     // 22
-    //assert(test("eijks208.aag", false));
+    assert(test("eijks208.aag", false));
     //assert(test("viseisenberg.aag", true));
-    assert(test("bjrb07amba1andenv.aag", false));
+    //assert(test("bjrb07amba1andenv.aag", false));
     // 23
     //assert(test("eijks208c.aag", false));
-    //assert(test("visarbiter.aag", false));
+    assert(test("visarbiter.aag", false));
     //assert(test("vis4arbitp1.aag", false));
     // 24
     //assert(test("pdtpmsudc8.aag", false));
