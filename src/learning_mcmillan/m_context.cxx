@@ -9,7 +9,7 @@ M_Types::Feedback M_Context::check ()
 {
     teacher.setup();                             // last frnt = false, frnt = init
     if (teacher.degen())                         // if init meets bad
-        return Refuted;                          //     return refuted
+        return (result = Refuted);               //     return refuted
     learner.learn();                             // frnt = frnt image < frnt < bad
     while (true)                                 // loop
     {                                            // {

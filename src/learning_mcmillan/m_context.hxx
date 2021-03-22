@@ -27,7 +27,7 @@ struct M_Context
 
     bool sat () const; // if there's a path from init to bad
 
-private:
+//private:
     M_Teacher teacher;
     M_Learner learner;
 

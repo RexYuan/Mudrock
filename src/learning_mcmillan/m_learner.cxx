@@ -14,7 +14,7 @@ void M_Learner::clear ()
 
 void M_Learner::learn ()
 {
-    assert(hypts.empty()); // call clear() before re-use
+    //assert(hypts.empty()); // call clear() before re-use
 
     fb = teacher.consider(hypts); // empty conj degens to true
     if (fb == Perfect) // bad is empty
