@@ -71,8 +71,20 @@ void M_Learner::learn ()
 
 Bv M_Learner::minimize (const Bv& ce, const Face& f)
 {
-    // TODO: optimizable by walk/skip/jump/whatever
-    return ce;
+    Bv tmp = ce;
+    for (size_t i=0; i<ce.len(); i++)
+    {
+        if (tmp[i] != f.basis()[i])
+        {
+            tmp.flipper(i);
+            if (teacher.consider(tmp))
+                i = 0;
+            else
+                tmp.flipper(i);
+        }
+    }
+
+    return tmp;
 }
 
 const M_Types::Feedback& M_Learner::result () const

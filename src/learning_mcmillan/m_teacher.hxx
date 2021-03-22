@@ -53,6 +53,7 @@ struct M_Teacher
     //=============================================================================================
     // Query commands for learner
     //
+    bool consider (Bv bv);
     // counterexample populators
     //
     Feedback consider (const vector<Face>& faces); // if frontier image < `faces` < bad

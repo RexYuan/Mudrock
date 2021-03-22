@@ -98,18 +98,21 @@ void M_Teacher::setup ()
 // unroll bad by `n` step
 void M_Teacher::unroll (size_t n)
 {
-    // set up variables over X''
-    auto tmp_aig_varmap = toBfmap(addAig(aig, m));
+    for (size_t i=0; i<n; i++)
+    {
+        // set up variables over X''
+        auto tmp_aig_varmap = toBfmap(addAig(aig, m));
 
-    // set up Bad(X''), Trans(X',X'')
-    auto f_bad      = mk_bad(aig, tmp_aig_varmap);
-    auto f_trans_tl = mk_trans(aig, last_aig_varmap, tmp_aig_varmap);
+        // set up Bad(X''), Trans(X',X'')
+        auto f_bad      = mk_bad(aig, tmp_aig_varmap);
+        auto f_trans_tl = mk_trans(aig, last_aig_varmap, tmp_aig_varmap);
 
-    bad      = v(addBf(bad | f_bad, m));
-    trans_tl = v(addBf(trans_tl & f_trans_tl, m));
+        bad      = v(addBf(bad | f_bad, m));
+        trans_tl = v(addBf(trans_tl & f_trans_tl, m));
 
-    last_aig_varmap = tmp_aig_varmap;
-    last_index_varmap = mk_index_varmap(aig, tmp_aig_varmap);
+        last_aig_varmap = tmp_aig_varmap;
+        last_index_varmap = mk_index_varmap(aig, tmp_aig_varmap);
+    }
 }
 
 // if init meets bad
@@ -191,6 +194,17 @@ namespace
 //=================================================================================================
 // Query commands for learner
 //
+bool M_Teacher::consider (Bv bv)
+{
+    vector<Var> range;
+    Bf_ptr tmp = toBf(bv);
+    tmp = subst(tmp, second_index_varmap);
+    // accept all X' that is not in T(X',X'',...), B(X',X'',...)
+    if (sat(tmp & trans_tl & bad, m))
+        return false;
+    return true;
+}
+
 // if frontier image < `faces` < bad
 M_Types::Feedback M_Teacher::consider (const vector<Face>& faces)
 {
