@@ -1,106 +1,104 @@
 #! /usr/local/bin/python3
 
-import time
+import timeit
 import subprocess
+import functools
+import itertools
 
-aags = [
-    'linear.aag',
-    # state size
-    # 3
-    'bj08aut1.aag',
-    'bj08aut5.aag',
-    'bj08aut62.aag',
-    'bj08aut82.aag',
-    # 5
-    'bj08autg3f1.aag',
-    'bj08autg3f2.aag',
-    'bj08autg3f3.aag',
-    'pdtvisgray0.aag',
-    'pdtvisgray1.aag',
-    # 10
-    'pdtvispeterson.aag',
-    'nusmvsyncarb5p2.aag',
-    # 13
-    'bobtutt.aag',
-    'bobcount.aag',
-    # 14
-    'shortp0.aag',
-    'shortp0neg.aag',
-    # 15
-    'visemodel.aag',
-    # 16
-    'counterp0.aag',
-    'eijks208o.aag',
-    'counterp0neg.aag',
-    'pdtvisgigamax0.aag',
-    'pdtvisgigamax1.aag',
-    'pdtvisgigamax2.aag',
-    'pdtvisgigamax3.aag',
-    'pdtvisgigamax4.aag',
-    'pdtvisgigamax5.aag',
-    # 20
-    'mutexp0.aag',
-    'mutexp0neg.aag',
-    'bobuns2p10d20l.aag',
-    'nusmvsyncarb10p2.aag',
-    # 21
-    'neclaftp5001.aag',
-    'neclaftp5002.aag',
-    # 22
-    'eijks208.aag',
-    'viseisenberg.aag',
-    'bjrb07amba1andenv.aag',
-    # 23
-    'eijks208c.aag',
-    'visarbiter.aag',
-    'vis4arbitp1.aag',
-    # 24
-    'pdtpmsudc8.aag',
-    # 25
-    'ringp0.aag',
-    'ringp0neg.aag',
-    'visbakery.aag',
-]
+# prepare test cases
+tests = []
+with open('aag/0test.txt') as f:
+    for line in list(f):
+        aag, state, ret = line.split()
+        tests.append((aag, state, ret))
 
-encoding = 'utf-8'
-timeout = 600
-prog = "./build/main.o"
-mode = "d"
-prefix = "aag/"
+# program options
+prog    = "./build/main.o"
+prefix  = "aag/"
+postfix = ".aag"
 
-aag_width = max(map(len, aags))+1
+# subprocess options
+run_opts = {
+    'capture_output': True,
+    'text':           True,
+    'encoding':       'utf-8',
+    'timeout':        600,
+}
 
-dsuc, msuc = False, False
+# subprocess dispatch
+run = functools.partial(subprocess.run, **run_opts)
+def run_in_mode(mode, aag):
+    command = [prog, mode, prefix+aag+postfix]
+    return run(command)
+def avg_time(func, number):
+    time = timeit.timeit(func, number=number)
+    return time/number
 
-for aag in aags:
-    command = [prog, mode, prefix+aag]
-    print(f'{aag:{aag_width}}', end=' ', flush=True)
+# format parameters
+state_title     = '#state'
+filename_title  = 'filename'
+d_time_title    = 'd time'
+m_time_title    = 'm time'
+diff_time_title = 'diff'
+
+s_width   = max(itertools.starmap(lambda f,s,r : int(s), tests)) // 10
+aag_width = max(itertools.starmap(lambda f,s,r : len(f), tests))
+
+decimal_width  = 3
+time_precision = 2
+
+state_width    = max(len(state_title), s_width)
+filename_width = max(len(filename_title), aag_width)
+time_width     = max(len(d_time_title), decimal_width+time_precision+1)
+
+# output format
+header = f'{state_title:^{state_width}}  ' \
+         f'{filename_title:^{filename_width}} | ' \
+         f'{d_time_title:^{time_width}} | ' \
+         f'{m_time_title:^{time_width}} ({diff_time_title:^{time_width+1}})'
+
+def fmt_filename(aag):
+    return f'{aag:>{filename_width}}'
+def fmt_state(s):
+    return f'{"#"+s:>{state_width}}'
+def fmt_time(t):
+    if type(t) is str:
+        return f'{"to":^{time_width}}'
+    return f'{t:{time_width}.{time_precision}f}'
+def fmt_diff(t1, t2):
+    if type(t1) is str or type(t2) is str:
+        return f'{"-"*(time_width+1):^{time_width+1}}'
+    return f'{t1-t2:+{time_width+1}.{time_precision}f}'
+
+def print_header():
+    print(header, end='\n')
+def print_before_running(s, aag):
+    tmp = f'{fmt_state(s)} ' \
+          f'{fmt_filename(aag)}'
+    print(tmp, end='\r', flush=True)
+def print_after_running(s, aag, d_time, m_time):
+    tmp = f'{fmt_state(s)}  ' \
+          f'{fmt_filename(aag)} | ' \
+          f'{fmt_time(d_time)} | '\
+          f'{fmt_time(m_time)} ({fmt_diff(m_time, d_time)})'
+    print(tmp, end='\n')
+
+#####
+
+runs = 1
+print_header()
+for aag,s,_ in tests:
+    print_before_running(s, aag)
+    d_time = (m_time := "--")
+
     try:
-        dstart = time.time()
-        ret = subprocess.run([prog, "d", prefix+aag], capture_output=True, timeout=timeout)
-        #output = str(ret.stdout, encoding=encoding)
-        #print(output, end=' ')
-        dend = time.time()
-        dtime = dend-dstart
-        dsuc = True
+        d_time = avg_time(lambda: run_in_mode("d", aag), number=runs)
     except subprocess.TimeoutExpired:
-        #print(f'>>> d spent over {timeout} seconds on {aag}')
-        dsuc = False
-    try:
-        mstart = time.time()
-        ret = subprocess.run([prog, "m", prefix+aag], capture_output=True, timeout=timeout)
-        mend = time.time()
-        mtime = mend-mstart
-        msuc = True
-    except subprocess.TimeoutExpired:
-        #print(f'>>> m spent over {timeout} seconds on {aag}')
-        msuc = False
+        d_time = "to"
 
-    if dsuc and msuc:
-        print(f'm-d = {mtime -dtime:3.3}')
-    elif dsuc:
-        print(f'd = {dtime:3.3}; m timed out')
-    elif msuc:
-        print(f'm = {dtime:3.3}; d timed out')
-    else:
-        print(f'both timed out')
+    try:
+        m_time = avg_time(lambda: run_in_mode("m", aag), number=runs)
+    except subprocess.TimeoutExpired:
+        m_time = "to"
+
+    print_after_running(s, aag, d_time, m_time)
