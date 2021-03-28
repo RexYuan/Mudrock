@@ -164,8 +164,11 @@ bool M_Teacher::progressed ()
 // advance frontier
 void M_Teacher::advance ()
 {
-    last_frnt  = frnt;
-    last_frntp = frntp;
+    // induction by
+    // last H(X)_0 = init
+    // last H(X)_k = last H(X)_k-1 | H(X)
+    last_frnt  = v(addBf(frnt | last_frnt, m));
+    last_frntp = v(addBf(frntp | last_frntp, m));
 }
 
 namespace
@@ -217,19 +220,10 @@ M_Types::Feedback M_Teacher::consider (const vector<Face>& faces)
     frnt  = v(addBf(first_cdnf, m, sw));
     frntp = v(addBf(second_cdnf, m, sw));
 
-    // induction criterion (a fortiori, init correctness)
-    //=========================================================================
-    // last H(X) => H(X)
-    if (!hold(last_frnt |= frnt, m))
-    {
-        // X is positive counterexample
-        ce = mk_ce(first_index_varmap, m);
-        return (state = TooSmall);
-    }
     // progress criterion (forward image over-approximation)
     //=========================================================================
     // last H(X), T(X,X') => H(X')
-    else if (!hold(last_frnt & trans_hd |= frntp, m))
+    if (!hold(last_frnt & trans_hd |= frntp, m))
     {
         // X' is positive counterexample
         ce = mk_ce(second_index_varmap, m);
