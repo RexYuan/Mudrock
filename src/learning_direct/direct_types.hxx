@@ -10,9 +10,9 @@ using std::string;
 #include <iostream>
 using std::ostream;
 
-namespace D_Types
+namespace Direct
 {
     enum class Feedback {Refuted, Perfect, TooBig, TooSmall, Unknown};
 }
 
-ostream& operator << (ostream& out, const D_Types::Feedback& feedback);
+ostream& operator << (ostream& out, const Direct::Feedback& feedback);

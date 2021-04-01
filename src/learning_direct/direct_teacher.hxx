@@ -13,7 +13,7 @@ using std::vector;
 #include <iostream>
 using std::ostream;
 
-#include "d_types.hxx"
+#include "direct_types.hxx"
 
 #include "aig.hxx"
 #include "bf.hxx"
@@ -23,21 +23,22 @@ using std::ostream;
 #include "mana.hxx"
 #include "to_minisat.hxx"
 
+namespace Direct
+{
 //=================================================================================================
 // Naive eventually consistent teacher
 //
-struct D_Teacher
+struct Teacher
 {
-    using Feedback = D_Types::Feedback;
-    // using enum D_Types::Feedback; needs g++-11
+    // using enum Feedback; needs g++-11
     static const Feedback Refuted  = Feedback::Refuted;
     static const Feedback Perfect  = Feedback::Perfect;
     static const Feedback TooBig   = Feedback::TooBig;
     static const Feedback TooSmall = Feedback::TooSmall;
     static const Feedback Unknown  = Feedback::Unknown;
 
-    D_Teacher  (const string& filename);
-    ~D_Teacher () = default;
+    Teacher  (const string& filename);
+    ~Teacher () = default;
 
     bool degen (); // if init intersects bad
 
@@ -71,3 +72,5 @@ struct D_Teacher
     void     setup  (); // prepare learning environment
     Feedback judge  (const vector<Face>& faces); // heuristic to determine feedback
 };
+//=================================================================================================
+}

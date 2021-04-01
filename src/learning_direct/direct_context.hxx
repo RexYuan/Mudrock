@@ -3,33 +3,36 @@
 
 #include <cassert>
 
-#include "m_types.hxx"
-#include "m_teacher.hxx"
-#include "m_learner.hxx"
+#include "direct_types.hxx"
+#include "direct_teacher.hxx"
+#include "direct_learner.hxx"
 
-//=================================================================================================
-// Unrolling reset dispatch
-//
-struct M_Context
+namespace Direct
 {
-    using Feedback = M_Types::Feedback;
-    // using enum D_Types::Feedback; needs g++-11
+//=================================================================================================
+// Naive learning dispatch context
+//
+struct Context
+{
+    // using enum Feedback; needs g++-11
     static const Feedback Refuted  = Feedback::Refuted;
     static const Feedback Perfect  = Feedback::Perfect;
     static const Feedback TooBig   = Feedback::TooBig;
     static const Feedback TooSmall = Feedback::TooSmall;
     static const Feedback Unknown  = Feedback::Unknown;
 
-    M_Context  (string filename);
-    ~M_Context () = default;
+    Context  (string filename);
+    ~Context () = default;
 
-    Feedback check ();
+    void check ();
 
     bool sat () const; // if there's a path from init to bad
 
 //private:
-    M_Teacher teacher;
-    M_Learner learner;
+    Teacher teacher;
+    Learner learner;
 
     Feedback result = Unknown;
 };
+//=================================================================================================
+}

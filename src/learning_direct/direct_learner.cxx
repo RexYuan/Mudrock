@@ -1,11 +1,14 @@
 
-#include "d_learner.hxx"
+#include "direct_learner.hxx"
 
-D_Learner::D_Learner (D_Teacher& teacher_) :
+namespace Direct
+{
+//=================================================================================================
+Learner::Learner (Teacher& teacher_) :
 teacher{teacher_},
 hypts{vector<Face>{}} {}
 
-void D_Learner::learn ()
+void Learner::learn ()
 {
     assert(hypts.empty()); // single-use learner
 
@@ -75,7 +78,9 @@ void D_Learner::learn ()
     }
 }
 
-const D_Types::Feedback& D_Learner::result () const
+const Feedback& Learner::result () const
 {
     return fb;
+}
+//=================================================================================================
 }

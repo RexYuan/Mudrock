@@ -1,11 +1,14 @@
 
-#include "m_context.hxx"
+#include "donut_context.hxx"
 
-M_Context::M_Context (string filename) :
-teacher{M_Teacher{filename}},
+namespace Donut
+{
+//=================================================================================================
+Context::Context (string filename) :
+teacher{Teacher{filename}},
 learner{teacher} {}
 
-M_Types::Feedback M_Context::check ()
+Feedback Context::check ()
 {
     teacher.setup();                             // last frnt = false, frnt = init
     if (teacher.degen())                         // if init meets bad
@@ -32,7 +35,7 @@ M_Types::Feedback M_Context::check ()
     }                                            // }
 }
 
-bool M_Context::sat () const
+bool Context::sat () const
 {
     switch (result)
     {
@@ -41,4 +44,6 @@ bool M_Context::sat () const
     default: break;
     }
     assert(false);
+}
+//=================================================================================================
 }

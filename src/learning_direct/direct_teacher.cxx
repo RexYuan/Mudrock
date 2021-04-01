@@ -1,7 +1,10 @@
 
-#include "d_teacher.hxx"
+#include "direct_teacher.hxx"
 
-D_Teacher::D_Teacher (const string& filename) :
+namespace Direct
+{
+//=================================================================================================
+Teacher::Teacher (const string& filename) :
 m{Mana{}},
 aig{Aig{filename}},
 sw{m.newSw()}
@@ -67,7 +70,7 @@ namespace
         return tmp;
     }
 }
-void D_Teacher::setup ()
+void Teacher::setup ()
 {
     // set up variables over I,X and I',X'
     auto curr_aig_varmap = toBfmap(addAig(aig, m));
@@ -109,7 +112,7 @@ namespace
         return tmp;
     }
 }
-D_Types::Feedback D_Teacher::consider (const vector<Face>& faces)
+Feedback Teacher::consider (const vector<Face>& faces)
 {
     assert(curr_index_varmap.size() > 0 && next_index_varmap.size() > 0);
 
@@ -171,10 +174,10 @@ namespace
  *
  *     if X is a negative counterexample and Init(I,X) is sat, then a refutation is found.
  */
-D_Types::Feedback D_Teacher::judge (const vector<Face>& faces)
+Feedback Teacher::judge (const vector<Face>& faces)
 {
-    Bf_ptr dead_endsp = subst(mk_char_dnf(faces), next_index_varmap);
-    if (sat(hypt & trans & ~hyptp & dead_endsp, m))
+    Bf_ptr deadirect_endsp = subst(mk_char_dnf(faces), next_index_varmap);
+    if (sat(hypt & trans & ~hyptp & deadirect_endsp, m))
     {
         // X is negative counterexample
         ce = mk_ce(curr_index_varmap, m);
@@ -194,14 +197,14 @@ D_Types::Feedback D_Teacher::judge (const vector<Face>& faces)
     }
 }
 
-Bv D_Teacher::counterexample () const
+Bv Teacher::counterexample () const
 {
     assert(state != Refuted && state != Perfect);
     assert(ce);
     return ce;
 }
 
-bool D_Teacher::degen ()
+bool Teacher::degen ()
 {
     if (sat(init & bad, m))
     {
@@ -215,7 +218,7 @@ bool D_Teacher::degen ()
     }
 }
 
-bool D_Teacher::aligned (const Face& face)
+bool Teacher::aligned (const Face& face)
 {
     Sw asw = m.newSw();
     Bf_ptr dnfp = subst(toBf(face), next_index_varmap);
@@ -234,7 +237,9 @@ bool D_Teacher::aligned (const Face& face)
     return ret;
 }
 
-const D_Types::Feedback& D_Teacher::check_state () const
+const Feedback& Teacher::check_state () const
 {
     return state;
+}
+//=================================================================================================
 }

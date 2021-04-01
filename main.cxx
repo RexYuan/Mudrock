@@ -2,16 +2,23 @@
 #include <cassert>
 #include <cstdlib>
 
+#include <string>
+using namespace std::string_literals;
+using std::string;
+
+#include <sstream>
+using std::stringstream;
 #include <iostream>
 using std::cout;
+#include <ostream>
+using std::endl;
 
-#include "d_context.hxx"
-#include "m_context.hxx"
-#include "b_context.hxx"
+#include "direct_context.hxx"
+#include "donut_context.hxx"
 
 void print_usage ()
 {
-    cout << "usage: ./main.o d|m|b input.aag\n";
+    cout << "usage: ./main.o d|m input.aag\n"s;
 }
 
 int main(int argc, char** argv)
@@ -23,38 +30,29 @@ int main(int argc, char** argv)
     }
 
     string mode{argv[1]}, filename{argv[2]};
-    if (mode == "d" || mode == "D")
+    stringstream output;
+
+    if (mode == "d"s || mode == "D"s)
     {
-        D_Context c{filename};
+        using namespace Direct;
+        Context c{filename};
         c.check();
-        if (c.sat())
-            cout << "sat";
-        else
-            cout << "unsat";
+        output << (c.sat() ? "sat"s : "unsat"s);
     }
-    else if (mode == "m" || mode == "M")
+    else if (mode == "m"s || mode == "M"s)
     {
-        M_Context c{filename};
+        using namespace Donut;
+        Context c{filename};
         c.check();
-        if (c.sat())
-            cout << "sat";
-        else
-            cout << "unsat";
-    }
-    else if (mode == "b" || mode == "B")
-    {
-        B_Context c{filename};
-        c.check();
-        if (c.sat())
-            cout << "sat";
-        else
-            cout << "unsat";
+        output << (c.sat() ? "sat"s : "unsat"s);
     }
     else
     {
         print_usage();
         return EXIT_FAILURE;
     }
+
+    cout << output.str() << endl;
 
     return EXIT_SUCCESS;
 }

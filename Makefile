@@ -58,7 +58,7 @@ CXX_LINKS := $(LD_FLAGS) $(LD_LIBS)
 CXX_FLAGS := $(CXX_STD) $(CXX_W) $(CXX_INCS)
 
 MAIN_SRC := main.cxx
-MAIN_OBJ := $(OBJ_ROOT)/$(MAIN_SRC:.cxx=.o)
+MAIN_OBJ := $(MAIN_SRC:.cxx=.o)
 
 OUT := $(MAIN_OBJ)
 
@@ -82,11 +82,9 @@ endef
 ###############################################################################
 # Recipes                                                                     #
 ###############################################################################
-.PHONY: all run
-all: $(OUT) run
+.PHONY: all
 all: CXX_FLAGS += -g -O0
-run:
-	./$(OUT)
+all: $(OUT)
 
 .PHONY: debug
 debug: CXX_FLAGS += -g -O0 -D PRINT
@@ -97,7 +95,7 @@ debug:
 .PHONY: clean
 clean:
 	@echo "deleting builds"
-	@$(call Silence, $(RM) $(OBJ_ROOT))
+	@$(call Silence, $(RM) $(OBJ_ROOT) $(MAIN_OBJ))
 
 $(OBJ_DIRS): | $(OBJ_ROOT)
 $(DEP_DIRS): | $(DEP_ROOT)

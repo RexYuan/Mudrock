@@ -13,7 +13,7 @@ with open('aag/0test.txt') as f:
         tests.append((aag, state, ret))
 
 # program options
-prog    = "./build/main.o"
+prog    = "./main.o"
 prefix  = "aag/"
 postfix = ".aag"
 

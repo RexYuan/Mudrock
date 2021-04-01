@@ -13,7 +13,7 @@ using std::vector;
 #include <iostream>
 using std::ostream;
 
-#include "m_types.hxx"
+#include "donut_types.hxx"
 
 #include "aig.hxx"
 #include "bf.hxx"
@@ -23,21 +23,22 @@ using std::ostream;
 #include "mana.hxx"
 #include "to_minisat.hxx"
 
+namespace Donut
+{
 //=================================================================================================
 // Classic Teacher for stepwise over/under-approximation with unrolling
 //
-struct M_Teacher
+struct Teacher
 {
-    using Feedback = M_Types::Feedback;
-    // using enum M_Types::Feedback; needs g++-11
+    // using enum Feedback; needs g++-11
     static const Feedback Refuted  = Feedback::Refuted;
     static const Feedback Perfect  = Feedback::Perfect;
     static const Feedback TooBig   = Feedback::TooBig;
     static const Feedback TooSmall = Feedback::TooSmall;
     static const Feedback Unknown  = Feedback::Unknown;
 
-    M_Teacher  (const string& filename);
-    ~M_Teacher () = default;
+    Teacher  (const string& filename);
+    ~Teacher () = default;
 
     //=============================================================================================
     // Higher order commands for context
@@ -84,3 +85,5 @@ struct M_Teacher
     Feedback state = Unknown;
     Bv ce = Bv{};
 };
+//=================================================================================================
+}

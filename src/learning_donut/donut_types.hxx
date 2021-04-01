@@ -10,9 +10,9 @@ using std::string;
 #include <iostream>
 using std::ostream;
 
-namespace M_Types
+namespace Donut
 {
     enum class Feedback {Refuted, Perfect, TooBig, TooSmall, Unknown};
 }
 
-ostream& operator << (ostream& out, const M_Types::Feedback& feedback);
+ostream& operator << (ostream& out, const Donut::Feedback& feedback);

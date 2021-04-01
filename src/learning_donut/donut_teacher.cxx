@@ -1,7 +1,10 @@
 
-#include "m_teacher.hxx"
+#include "donut_teacher.hxx"
 
-M_Teacher::M_Teacher (const string& filename) :
+namespace Donut
+{
+//=================================================================================================
+Teacher::Teacher (const string& filename) :
 m{Mana{}},
 aig{Aig{filename}},
 sw{m.newSw()}
@@ -68,7 +71,7 @@ namespace
 //=================================================================================================
 // Higher order commands for context
 //
-void M_Teacher::setup ()
+void Teacher::setup ()
 {
     // set up variables over X,X'
     first_aig_varmap  = toBfmap(addAig(aig, m));
@@ -96,7 +99,7 @@ void M_Teacher::setup ()
 }
 
 // unroll bad by `n` step
-void M_Teacher::unroll (size_t n)
+void Teacher::unroll (size_t n)
 {
     for (size_t i=0; i<n; i++)
     {
@@ -116,7 +119,7 @@ void M_Teacher::unroll (size_t n)
 }
 
 // if init meets bad
-bool M_Teacher::degen ()
+bool Teacher::degen ()
 {
     // I(X), T(X,X'), T(X',X'',...), B(X',X'',...)
     if (sat(init & trans_hd & trans_tl & bad, m))
@@ -132,7 +135,7 @@ bool M_Teacher::degen ()
 }
 
 // if frontier image doesn't meet bad
-bool M_Teacher::advanceable ()
+bool Teacher::advanceable ()
 {
     // last H(X), T(X,X'), T(X',X'',...), B(X',X'',...)
     if (sat(last_frnt & trans_hd & trans_tl & bad, m))
@@ -141,7 +144,7 @@ bool M_Teacher::advanceable ()
 }
 
 // reset frontier back to init
-void M_Teacher::restart ()
+void Teacher::restart ()
 {
     m.releaseSw(sw);
     sw = m.newSw();
@@ -153,7 +156,7 @@ void M_Teacher::restart ()
 }
 
 // if current frontier > last frontier
-bool M_Teacher::progressed ()
+bool Teacher::progressed ()
 {
     // H(X) <= last H(X) and H is non-empty means no progress
     if (hold(frnt |= last_frnt, m) && sat(frnt, m))
@@ -162,7 +165,7 @@ bool M_Teacher::progressed ()
 }
 
 // advance frontier
-void M_Teacher::advance ()
+void Teacher::advance ()
 {
     // induction by
     // last H(X)_0 = init
@@ -197,7 +200,7 @@ namespace
 //=================================================================================================
 // Query commands for learner
 //
-bool M_Teacher::consider (Bv bv)
+bool Teacher::consider (Bv bv)
 {
     vector<Var> range;
     Bf_ptr tmp = toBf(bv);
@@ -209,7 +212,7 @@ bool M_Teacher::consider (Bv bv)
 }
 
 // if frontier image < `faces` < bad
-M_Types::Feedback M_Teacher::consider (const vector<Face>& faces)
+Feedback Teacher::consider (const vector<Face>& faces)
 {
     assert(first_index_varmap.size() > 0 && last_index_varmap.size() > 0);
 
@@ -245,14 +248,16 @@ M_Types::Feedback M_Teacher::consider (const vector<Face>& faces)
     }
 }
 
-Bv M_Teacher::counterexample () const
+Bv Teacher::counterexample () const
 {
     assert(state != Refuted && state != Perfect && state != Unknown);
     assert(ce);
     return ce;
 }
 
-const M_Types::Feedback& M_Teacher::check_state () const
+const Feedback& Teacher::check_state () const
 {
     return state;
+}
+//=================================================================================================
 }

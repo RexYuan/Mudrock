@@ -1,18 +1,21 @@
 
-#include "m_learner.hxx"
+#include "donut_learner.hxx"
 
-M_Learner::M_Learner (M_Teacher& teacher_) :
+namespace Donut
+{
+//=================================================================================================
+Learner::Learner (Teacher& teacher_) :
 teacher{teacher_},
 hypts{vector<Face>{}} {}
 
-void M_Learner::clear ()
+void Learner::clear ()
 {
     fb = Unknown;
     ce = Bv{};
     hypts.clear();
 }
 
-void M_Learner::learn ()
+void Learner::learn ()
 {
     //assert(hypts.empty()); // call clear() before re-use
 
@@ -69,7 +72,7 @@ void M_Learner::learn ()
     }
 }
 
-Bv M_Learner::minimize (const Bv& ce, const Face& f)
+Bv Learner::minimize (const Bv& ce, const Face& f)
 {
     Bv tmp = ce;
     for (size_t i=0; i<ce.len(); i++)
@@ -87,7 +90,9 @@ Bv M_Learner::minimize (const Bv& ce, const Face& f)
     return tmp;
 }
 
-const M_Types::Feedback& M_Learner::result () const
+const Feedback& Learner::result () const
 {
     return fb;
+}
+//=================================================================================================
 }

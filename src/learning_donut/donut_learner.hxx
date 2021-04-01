@@ -12,32 +12,40 @@ using std::vector;
 #include "to_bf.hxx"
 #include "more_bf.hxx"
 
-#include "d_types.hxx"
-#include "d_teacher.hxx"
+#include "donut_types.hxx"
+#include "donut_teacher.hxx"
 
-//=================================================================================================
-// Naive greedy persistent learner
-//
-struct D_Learner
+namespace Donut
 {
-    using Feedback = D_Types::Feedback;
-    // using enum D_Types::Feedback; needs g++-11
+//=================================================================================================
+// Classic exact learner for stepwise over/under-approximation
+//
+struct Learner
+{
+    // using enum Feedback; needs g++-11
     static const Feedback Refuted  = Feedback::Refuted;
     static const Feedback Perfect  = Feedback::Perfect;
     static const Feedback TooBig   = Feedback::TooBig;
     static const Feedback TooSmall = Feedback::TooSmall;
     static const Feedback Unknown  = Feedback::Unknown;
 
-    D_Learner  (D_Teacher& teacher_);
-    ~D_Learner () = default;
+    Learner  (Teacher& teacher_);
+    ~Learner () = default;
 
     void learn ();
+    void clear ();
+    inline void relearn () { clear(); learn(); }
+
     const Feedback& result () const;
 
 private:
-    D_Teacher& teacher;
+    Teacher& teacher;
     Feedback fb = Unknown;
     Bv ce = Bv{};
 
+    Bv minimize (const Bv& ce, const Face& f);
+
     vector<Face> hypts; // cdnf
 };
+//=================================================================================================
+}
