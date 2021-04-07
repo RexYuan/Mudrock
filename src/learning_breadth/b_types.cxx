@@ -1,5 +1,5 @@
 
-#include "B_types.hxx"
+#include "b_types.hxx"
 
 ostream& operator << (ostream& out, const B_Types::Feedback& feedback)
 {

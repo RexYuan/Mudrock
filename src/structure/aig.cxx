@@ -4,7 +4,7 @@
 //=================================================================================================
 // And-Inverter Graphs
 //
-Aig::Aig (const string& filename)
+Aig::Aig (const string& filename) : _filename{filename}
 {
     readAiger (filename);
 
@@ -65,6 +65,7 @@ Aig& Aig::operator=(Aig&& aig2)
 
 // Getters
 //
+const string Aig::filename    () const { return _filename; }
 const string Aig::title       () const { return _title; }
 const size_t Aig::maxvar      () const { return _maxvar; }
 const size_t Aig::num_inputs  () const { return _num_inputs; }

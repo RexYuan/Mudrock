@@ -57,6 +57,7 @@ struct Aig
 
     // Getters
     //
+    const string filename         () const;
     const string title            () const;
     const size_t maxvar           () const;
     const size_t num_inputs       () const;
@@ -76,6 +77,8 @@ struct Aig
     explicit operator bool () const; // check if aig is empty
 
 private:
+    string _filename;
+
     string _title;
     size_t _maxvar;
     size_t _num_inputs;
