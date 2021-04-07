@@ -14,6 +14,7 @@ using std::vector;
 using std::ostream;
 
 #include "donut_types.hxx"
+#include "donut_profiler.hxx"
 
 #include "aig.hxx"
 #include "bf.hxx"
@@ -37,7 +38,7 @@ struct Teacher
     static const Feedback TooSmall = Feedback::TooSmall;
     static const Feedback Unknown  = Feedback::Unknown;
 
-    Teacher  (const string& filename);
+    Teacher  (const string& filename, TeacherProfiler& p);
     ~Teacher () = default;
 
     //=============================================================================================
@@ -63,6 +64,8 @@ struct Teacher
     const Feedback& check_state () const;
 
 //private:
+    TeacherProfiler& prof;
+
     Mana m;
     Aig aig;
     map<int,int> first_aig_varmap,   second_aig_varmap,   last_aig_varmap;

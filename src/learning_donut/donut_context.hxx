@@ -4,6 +4,7 @@
 #include <cassert>
 
 #include "donut_types.hxx"
+#include "donut_profiler.hxx"
 #include "donut_teacher.hxx"
 #include "donut_learner.hxx"
 
@@ -29,6 +30,8 @@ struct Context
     bool sat () const; // if there's a path from init to bad
 
 //private:
+    ContextProfiler prof;
+
     Teacher teacher;
     Learner learner;
 

@@ -4,7 +4,8 @@
 namespace Donut
 {
 //=================================================================================================
-Teacher::Teacher (const string& filename) :
+Teacher::Teacher (const string& filename, TeacherProfiler& p) :
+prof{p},
 m{Mana{}},
 aig{Aig{filename}},
 sw{m.newSw()}
@@ -73,6 +74,8 @@ namespace
 //
 void Teacher::setup ()
 {
+    start(prof.teacher_total, prof.setup_time);
+
     // set up variables over X,X'
     first_aig_varmap  = toBfmap(addAig(aig, m));
     second_aig_varmap = toBfmap(addAig(aig, m));
@@ -94,6 +97,8 @@ void Teacher::setup ()
     last_aig_varmap = second_aig_varmap;
     last_index_varmap = second_index_varmap;
 
+    stop(prof.teacher_total, prof.setup_time);
+
     // prep frontiers
     restart();
 }
@@ -101,6 +106,8 @@ void Teacher::setup ()
 // unroll bad by `n` step
 void Teacher::unroll (size_t n)
 {
+    start(prof.teacher_total, prof.unroll_time);
+
     for (size_t i=0; i<n; i++)
     {
         // set up variables over X''
@@ -116,36 +123,57 @@ void Teacher::unroll (size_t n)
         last_aig_varmap = tmp_aig_varmap;
         last_index_varmap = mk_index_varmap(aig, tmp_aig_varmap);
     }
+
+    stop(prof.teacher_total, prof.unroll_time);
 }
 
 // if init meets bad
 bool Teacher::degen ()
 {
+    bool ret, tmp;
+    start(prof.teacher_total, prof.degen_time);
+
     // I(X), T(X,X'), T(X',X'',...), B(X',X'',...)
-    if (sat(init & trans_hd & trans_tl & bad, m))
+    if (start(prof.sat_total, prof.degen_sat),
+        tmp = sat(init & trans_hd & trans_tl & bad, m),
+        stop(prof.sat_total, prof.degen_sat), tmp)
     {
         state = Refuted;
-        return true;
+        ret = true;
     }
     else
     {
         state = Unknown;
-        return false;
+        ret = false;
     }
+
+    stop(prof.teacher_total, prof.degen_time);
+    return ret;
 }
 
 // if frontier image doesn't meet bad
 bool Teacher::advanceable ()
 {
+    bool ret, tmp;
+    start(prof.teacher_total, prof.advanceable_time);
+
     // last H(X), T(X,X'), T(X',X'',...), B(X',X'',...)
-    if (sat(last_frnt & trans_hd & trans_tl & bad, m))
-        return false;
-    return true;
+    if (start(prof.sat_total, prof.advanceable_sat),
+        tmp = sat(last_frnt & trans_hd & trans_tl & bad, m),
+        stop(prof.sat_total, prof.advanceable_sat), tmp)
+        ret = false;
+    else
+        ret = true;
+
+    stop(prof.teacher_total, prof.advanceable_time);
+    return ret;
 }
 
 // reset frontier back to init
 void Teacher::restart ()
 {
+    start(prof.teacher_total, prof.restart_time);
+
     m.releaseSw(sw);
     sw = m.newSw();
 
@@ -153,25 +181,40 @@ void Teacher::restart ()
     last_frntp = init;
     frnt  = v(false);
     frntp = v(false);
+
+    stop(prof.teacher_total, prof.restart_time);
 }
 
 // if current frontier > last frontier
 bool Teacher::progressed ()
 {
+    bool ret, tmp;
+    start(prof.teacher_total, prof.progressed_time);
+
     // H(X) <= last H(X) and H is non-empty means no progress
-    if (hold(frnt |= last_frnt, m) && sat(frnt, m))
-        return false;
-    return true;
+    if (start(prof.sat_total, prof.progressed_sat),
+        tmp = hold(frnt |= last_frnt, m) && sat(frnt, m),
+        stop(prof.sat_total, prof.progressed_sat), tmp)
+        ret = false;
+    else
+        ret = true;
+
+    stop(prof.teacher_total, prof.progressed_time);
+    return ret;
 }
 
 // advance frontier
 void Teacher::advance ()
 {
+    start(prof.teacher_total, prof.advance_time);
+
     // induction by
     // last H(X)_0 = init
     // last H(X)_k = last H(X)_k-1 | H(X)
     last_frnt  = v(addBf(frnt | last_frnt, m));
     last_frntp = v(addBf(frntp | last_frntp, m));
+
+    stop(prof.teacher_total, prof.advance_time);
 }
 
 namespace
@@ -202,18 +245,30 @@ namespace
 //
 bool Teacher::consider (Bv bv)
 {
+    bool ret, tmp;
+    start(prof.teacher_total, prof.membership_time);
+
     vector<Var> range;
-    Bf_ptr tmp = toBf(bv);
-    tmp = subst(tmp, second_index_varmap);
+    Bf_ptr bf = toBf(bv);
+    bf = subst(bf, second_index_varmap);
     // accept all X' that is not in T(X',X'',...), B(X',X'',...)
-    if (sat(tmp & trans_tl & bad, m))
-        return false;
-    return true;
+    if (start(prof.sat_total, prof.membership_sat),
+        tmp = sat(bf & trans_tl & bad, m),
+        stop(prof.sat_total, prof.membership_sat), tmp)
+        ret = false;
+    else
+        ret = true;
+
+    stop(prof.teacher_total, prof.membership_time);
+    return ret;
 }
 
 // if frontier image < `faces` < bad
 Feedback Teacher::consider (const vector<Face>& faces)
 {
+    Feedback ret; bool tmp;
+    start(prof.teacher_total, prof.equivalence_time);
+
     assert(first_index_varmap.size() > 0 && last_index_varmap.size() > 0);
 
     Bf_ptr cdnf = mk_cdnf(faces);
@@ -226,26 +281,33 @@ Feedback Teacher::consider (const vector<Face>& faces)
     // progress criterion (forward image over-approximation)
     //=========================================================================
     // last H(X), T(X,X') => H(X')
-    if (!hold(last_frnt & trans_hd |= frntp, m))
+    if (start(prof.sat_total, prof.equivalence_progress_sat),
+        tmp = !hold(last_frnt & trans_hd |= frntp, m),
+        stop(prof.sat_total, prof.equivalence_progress_sat), tmp)
     {
         // X' is positive counterexample
         ce = mk_ce(second_index_varmap, m);
-        return (state = TooSmall);
+        ret = (state = TooSmall);
     }
     // soundness criterion with foresight (unrolled ~bad under-approximation)
     //=========================================================================
     // H(X'), T(X',X'',...) => ~B(X',X'',...)
-    else if (!hold(frntp & trans_tl |= ~bad, m))
+    else if (start(prof.sat_total, prof.equivalence_soundness_sat),
+             tmp = !hold(frntp & trans_tl |= ~bad, m),
+             stop(prof.sat_total, prof.equivalence_soundness_sat), tmp)
     {
         // X' is negative counterexample
         ce = mk_ce(second_index_varmap, m);
-        return (state = TooBig);
+        ret = (state = TooBig);
     }
     // done
     else
     {
-        return (state = Perfect);
+        ret = (state = Perfect);
     }
+
+    stop(prof.teacher_total, prof.equivalence_time);
+    return ret;
 }
 
 Bv Teacher::counterexample () const

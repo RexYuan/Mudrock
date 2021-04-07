@@ -5,7 +5,7 @@ namespace Donut
 {
 //=================================================================================================
 Context::Context (string filename) :
-teacher{Teacher{filename}},
+teacher{Teacher{filename, prof.tprof}},
 learner{teacher} {}
 
 Feedback Context::check ()
