@@ -76,7 +76,7 @@ namespace
     inline string mk_percentage (double num)
     {
         stringstream tmp;
-        tmp << trunc_trail(num, 2) << "%"s;
+        tmp << trunc_trail(num*100, 2) << "%"s;
         return tmp.str();
     }
 
@@ -147,18 +147,32 @@ ttable TeacherProfiler::get_table () const
 // Learner profiler
 ttable LearnerProfiler::get_table () const
 {
-    return ttable{};
+    ttable ret;
+
+    ret.push_back(fmt_hder(learner_total));
+    for (const Stats& learn_time : learn_times())
+    {
+        assert(learn_time.cumu() > 0.0);
+        ret.push_back(fmt_line(learn_time, learner_total));
+    }
+
+
+    return ret;
 }
 
 // Context profiler
 ttable ContextProfiler::get_table () const
 {
     ttable tmp;
+
     for (auto row : lprof.get_table())
         tmp.push_back(row);
+
     tmp.push_back(fmt_empty());
+
     for (auto row : tprof.get_table())
         tmp.push_back(row);
+
     return tmp;
 }
 

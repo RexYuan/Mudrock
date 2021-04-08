@@ -44,7 +44,7 @@ int main(int argc, char** argv)
         using namespace Donut;
         Context c{filename};
         c.check();
-        cout << c.prof;
+        cout << c.get_prof();
         output << (c.sat() ? "sat"s : "unsat"s);
     }
     else

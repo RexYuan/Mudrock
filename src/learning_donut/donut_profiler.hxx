@@ -154,7 +154,18 @@ struct TeacherProfiler : virtual public Profiler
 // Learner profiler
 struct LearnerProfiler : virtual public Profiler
 {
-    Stats learner_total{"teacher_total"};
+    Stats learner_total{"learner_total"},
+          // learn time
+          toobig_time{"toobig_time"},
+          toosmall_time{"toosmall_time"};
+
+    const vector<Stats> learn_times () const
+    {
+        return vector<Stats>{
+            toobig_time,
+            toosmall_time
+        };
+    }
 
     ttable get_table () const override;
 };
@@ -162,11 +173,20 @@ struct LearnerProfiler : virtual public Profiler
 // Context profiler aggregate
 struct ContextProfiler : virtual public Profiler
 {
+    ContextProfiler (const TeacherProfiler& tp, const LearnerProfiler& lp) : tprof{tp}, lprof{lp} {}
     // teacher time
-    TeacherProfiler tprof;
-    LearnerProfiler lprof;
+    const TeacherProfiler& tprof;
+    const LearnerProfiler& lprof;
 
     ttable get_table () const override;
+};
+
+//=================================================================================================
+// Stuff being profiled
+//
+struct Profiled
+{
+    virtual const Profiler& get_prof () const = 0;
 };
 
 //=================================================================================================

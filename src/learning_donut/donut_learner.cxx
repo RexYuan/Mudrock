@@ -17,18 +17,30 @@ void Learner::clear ()
 
 void Learner::learn ()
 {
-    //assert(hypts.empty()); // call clear() before re-use
+    auto query = [&](const vector<Face>& faces) -> Feedback
+    {
+        Feedback ret;
+        pause(prof.learner_total);
 
-    fb = teacher.consider(hypts); // empty conj degens to true
+        ret = teacher.consider(hypts);
+
+        resume(prof.learner_total);
+        return ret;
+    };
+    start(prof.learner_total);
+
+    assert(hypts.empty()); // call clear() before re-use
+
+    fb = query(hypts); // empty conj degens to true
     if (fb == Perfect) // bad is empty
-        return;
+        goto ret;
     assert(fb == TooBig);
 
     ce = teacher.counterexample(); // get a neg ce
     hypts.push_back(Face{ce}); // init the first dnf
-    fb = teacher.consider(hypts); // empty disj degens to false
+    fb = query(hypts); // empty disj degens to false
     if (fb == Perfect) // init is empty
-        return;
+        goto ret;
     assert(fb == TooSmall);
 
     while (true)
@@ -36,18 +48,24 @@ void Learner::learn ()
         switch (fb)
         {
             // needs g++-11
-            case Perfect: return; // we're done
+            case Perfect: goto ret; // we're done
             case Refuted: [[fallthrough]];
             case Unknown: assert(false); // shouldn't happen
             case TooBig:
             {
+                start(prof.toobig_time);
+
                 ce = teacher.counterexample(); // negative ce
                 assert(ce);
                 hypts.push_back(Face{ce}); // add a new councillor
+
+                stop(prof.toobig_time);
                 break;
             }
             case TooSmall:
             {
+                start(prof.toosmall_time);
+
                 ce = teacher.counterexample(); // positive ce
                 for (auto& hypt : hypts)
                 {
@@ -57,30 +75,39 @@ void Learner::learn ()
                         hypt.push(ce); // augment councillor
                     }
                 }
+
+                stop(prof.toosmall_time);
                 break;
             }
         }
-#ifdef PRINT
-        std::cout << "asking:" << "\n";
-        for (auto& hypt : hypts)
-            std::cout << hypt << "\n";
-#endif
-        fb = teacher.consider(hypts);
-#ifdef PRINT
-        std::cout << "feedback: " << fb << "\n";
-#endif
+        fb = query(hypts);
     }
+
+ret:
+    stop(prof.learner_total);
+    return;
 }
 
 Bv Learner::minimize (const Bv& ce, const Face& f)
 {
+    auto query = [&](const Bv& bv) -> bool
+    {
+        bool ret;
+        pause(prof.learner_total, prof.toosmall_time);
+
+        ret = teacher.consider(bv);
+
+        resume(prof.learner_total, prof.toosmall_time);
+        return ret;
+    };
+
     Bv tmp = ce;
     for (size_t i=0; i<ce.len(); i++)
     {
         if (tmp[i] != f.basis()[i])
         {
             tmp.flipper(i);
-            if (teacher.consider(tmp))
+            if (query(tmp))
                 i = 0;
             else
                 tmp.flipper(i);

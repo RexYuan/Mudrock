@@ -29,7 +29,7 @@ namespace Donut
 //=================================================================================================
 // Classic Teacher for stepwise over/under-approximation with unrolling
 //
-struct Teacher
+struct Teacher : virtual public Profiled
 {
     // using enum Feedback; needs g++-11
     static const Feedback Refuted  = Feedback::Refuted;
@@ -38,7 +38,7 @@ struct Teacher
     static const Feedback TooSmall = Feedback::TooSmall;
     static const Feedback Unknown  = Feedback::Unknown;
 
-    Teacher  (const string& filename, TeacherProfiler& p);
+    Teacher  (const string& filename);
     ~Teacher () = default;
 
     //=============================================================================================
@@ -63,9 +63,9 @@ struct Teacher
     Bv counterexample () const;
     const Feedback& check_state () const;
 
-//private:
-    TeacherProfiler& prof;
+    inline const TeacherProfiler& get_prof () const { return prof; }
 
+private:
     Mana m;
     Aig aig;
     map<int,int> first_aig_varmap,   second_aig_varmap,   last_aig_varmap;
@@ -87,6 +87,8 @@ struct Teacher
 
     Feedback state = Unknown;
     Bv ce = Bv{};
+
+    TeacherProfiler prof;
 };
 //=================================================================================================
 }

@@ -4,8 +4,7 @@
 namespace Donut
 {
 //=================================================================================================
-Teacher::Teacher (const string& filename, TeacherProfiler& p) :
-prof{p},
+Teacher::Teacher (const string& filename) :
 m{Mana{}},
 aig{Aig{filename}},
 sw{m.newSw()}
