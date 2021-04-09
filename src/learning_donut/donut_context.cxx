@@ -33,15 +33,18 @@ Feedback Context::check ()
             else                                 //         else
                 teacher.advance();               //             last frnt = frnt
         }                                        //     }
+        if (terminate_requested)
+            return (result = Unknown);
     }                                            // }
 }
 
-bool Context::sat () const
+Feedback Context::sat () const
 {
     switch (result)
     {
-    case Refuted: return true;
-    case Perfect: return false;
+    case Refuted: [[fallthrough]];
+    case Perfect: [[fallthrough]];
+    case Unknown: return result;
     default: break;
     }
     assert(false);

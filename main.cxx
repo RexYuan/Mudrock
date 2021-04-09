@@ -5,13 +5,14 @@
 #include <string>
 using namespace std::string_literals;
 using std::string;
-
 #include <sstream>
 using std::stringstream;
 #include <iostream>
 using std::cout;
 #include <ostream>
 using std::endl;
+
+#include "sig.hxx"
 
 #include "direct_context.hxx"
 #include "donut_context.hxx"
@@ -41,11 +42,13 @@ int main(int argc, char** argv)
     }
     else if (mode == "m"s || mode == "M"s)
     {
+        signal(SIGTERM, sigterm_handler);
+
         using namespace Donut;
         Context c{filename};
         c.check();
         cout << c.get_prof();
-        output << (c.sat() ? "sat"s : "unsat"s);
+        output << c.sat();
     }
     else
     {

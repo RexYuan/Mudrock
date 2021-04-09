@@ -1,4 +1,4 @@
-#! /usr/local/bin/python3
+#! /usr/bin/env python3
 
 import timeit
 import subprocess
@@ -6,6 +6,12 @@ import multiprocessing
 import functools
 import itertools
 import pathlib
+import signal
+
+# test configs
+time_limit = 900
+runs = 1
+worker = 1
 
 # path configs
 mudk_prefix = str(pathlib.Path(__file__).parent.absolute())
@@ -34,14 +40,13 @@ with open(test_cases) as f:
 tests = tests[:]
 
 # subprocess options
-time_limit = 900
 run_opts = {
-    "capture_output": True,
-    "text":           True,
-    "encoding":       "utf-8",
-    "timeout":        time_limit,
+    "stdout":   subprocess.PIPE,
+    "stderr":   subprocess.PIPE,
+    "text":     True
 }
-run = functools.partial(subprocess.run, **run_opts)
+run   = functools.partial(subprocess.run, **run_opts)
+popen = functools.partial(subprocess.Popen, **run_opts)
 
 # logging
 def log_out(aag, data):
@@ -50,17 +55,25 @@ def log_out(aag, data):
 
 # run mudk
 def run_in_mode(mode, aag):
-    command = [prog, mode, f"{hwmcc_prefix}/aag/{aag}.aag"]
-    ret = run(command)
-    if mode == "m":
-        log_out(aag, ret.stdout)
-    return ret
+    with popen([prog, mode, f"{hwmcc_prefix}/aag/{aag}.aag"]) as proc:
+        try:
+            output, _ = proc.communicate(timeout=time_limit)
+        except subprocess.TimeoutExpired as e:
+            proc.send_signal(signal.SIGTERM)
+            output, _ = proc.communicate()
+            if mode == "m":
+                log_out(aag, output)
+            proc.kill()
+            raise e
+        else:
+            if mode == "m":
+                log_out(aag, output)
 
 # run abc
 def run_abc_int(aig):
     c = f"read_aiger {hwmcc_prefix}/aig/{aig}.aig; int;"
     command = [abc, "-c", c]
-    ret = run(command)
+    ret = run(command, timeout=time_limit)
     return ret
 
 # run `func` for `number` times and return average time
@@ -133,9 +146,7 @@ def print_header():
 def print_line(state, aag, donut_time, abc_time, direct_time):
     print(fmt_line(state, aag, donut_time, abc_time, direct_time), end="\n", flush=True)
 
-#####
-
-runs = 2
+# run test
 def run_test(aag, state, ret):
     direct_time = (donut_time := "--")
 
@@ -156,7 +167,6 @@ def run_test(aag, state, ret):
 
     print_line(state, aag, donut_time, abc_time, direct_time)
 
-worker = 2
 if __name__ == "__main__":
     print_horizontal()
     print_header()

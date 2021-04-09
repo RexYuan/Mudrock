@@ -3,6 +3,8 @@
 
 #include <cassert>
 
+#include "sig.hxx"
+
 #include "donut_types.hxx"
 #include "donut_profiler.hxx"
 #include "donut_teacher.hxx"
@@ -27,7 +29,7 @@ struct Context : virtual public Profiled
 
     Feedback check ();
 
-    bool sat () const; // if there's a path from init to bad
+    Feedback sat () const; // if there's a path from init to bad
 
     inline const ContextProfiler& get_prof () const override { return prof; }
 
