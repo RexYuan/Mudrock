@@ -47,6 +47,7 @@ int main(int argc, char** argv)
         using namespace Donut;
         Context c{filename};
         c.check();
+        logger.write();
         cout << c.get_prof();
         output << c.sat();
     }

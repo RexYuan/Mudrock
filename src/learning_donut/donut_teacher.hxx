@@ -15,6 +15,7 @@ using std::ostream;
 
 #include "donut_types.hxx"
 #include "donut_profiler.hxx"
+#include "donut_logger.hxx"
 
 #include "aig.hxx"
 #include "bf.hxx"
