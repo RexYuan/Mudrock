@@ -1,0 +1,8 @@
+build/
+depend/
+log/
+*.o
+*.a
+*.gch
+*.d
+*.o.dSYM
