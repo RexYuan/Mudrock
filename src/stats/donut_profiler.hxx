@@ -34,7 +34,7 @@ using std::chrono::steady_clock;
 namespace Donut
 {
 //=================================================================================================
-// Basic stats
+// Basic profiling
 //
 enum class StatsState {Stopped, Running, Paused};
 ostream& operator << (ostream& out, const StatsState& ss);
@@ -103,15 +103,15 @@ struct TeacherProfiler : virtual public Profiler
 {
     Stats teacher_total{"teacher_total"},
           // method time
-          membership_time{"membership_time"},
-          equivalence_time{"equivalence_time"},
-          setup_time{"setup_time"},
-          degen_time{"degen_time"},
-          advanceable_time{"advanceable_time"},
-          unroll_time{"unroll_time"},
-          restart_time{"restart_time"},
-          progressed_time{"progressed_time"},
-          advance_time{"advance_time"},
+          membership{"membership_time"},
+          equivalence{"equivalence_time"},
+          setup{"setup_time"},
+          degen{"degen_time"},
+          advanceable{"advanceable_time"},
+          unroll{"unroll_time"},
+          restart{"restart_time"},
+          progressed{"progressed_time"},
+          advance{"advance_time"},
           // sat time
           sat_total{"sat_total"},
           membership_sat{"membership_sat"},
@@ -124,15 +124,15 @@ struct TeacherProfiler : virtual public Profiler
     const vector<Stats> method_times () const
     {
         return vector<Stats>{
-            membership_time,
-            equivalence_time,
-            setup_time,
-            degen_time,
-            advanceable_time,
-            unroll_time,
-            restart_time,
-            progressed_time,
-            advance_time
+            membership,
+            equivalence,
+            setup,
+            degen,
+            advanceable,
+            unroll,
+            restart,
+            progressed,
+            advance
         };
     }
 

@@ -151,11 +151,7 @@ ttable LearnerProfiler::get_table () const
 
     ret.push_back(fmt_hder(learner_total));
     for (const Stats& learn_time : learn_times())
-    {
-        assert(learn_time.cumu() > 0.0);
         ret.push_back(fmt_line(learn_time, learner_total));
-    }
-
 
     return ret;
 }

@@ -6,7 +6,7 @@
 #include <set>
 using std::set;
 
-#include <type_traits>
+#include <concepts>
 using std::same_as;
 
 #include "minisat.hxx"
@@ -44,7 +44,7 @@ struct Mana
     void releaseSw    (Sw sw);
     void activateSw   (Sw sw);
     void deactivateSw (Sw sw);
-    
+
     //=============================================================================================
     // External solver interface
     //
