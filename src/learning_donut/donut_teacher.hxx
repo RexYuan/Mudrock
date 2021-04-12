@@ -42,6 +42,8 @@ struct Teacher : virtual public Profiled
     Teacher  (const string& filename);
     ~Teacher () = default;
 
+    void renewMana ();
+
     //=============================================================================================
     // Higher order commands for context
     //
@@ -85,6 +87,13 @@ private:
            last_frntp, // H-1(X') last frontier
            frnt,       // H(X)    current frontier
            frntp;      // H(X')   current frontier
+    // cache formula for renewing mana
+    Bf_ptr f_last_frnt_cache,
+           f_last_frntp_cache,
+           f_frnt_cache,
+           f_frntp_cache;
+
+    size_t unroll_depth = 0;
 
     Feedback state = Unknown;
     Bv ce = Bv{};

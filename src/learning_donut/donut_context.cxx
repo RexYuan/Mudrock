@@ -11,7 +11,8 @@ prof{teacher.get_prof(), learner.get_prof()} {}
 
 Feedback Context::check ()
 {
-    teacher.setup();                             // last frnt = false, frnt = init
+    teacher.setup();                             // prepare constraints
+    teacher.restart();                           // prepare frontiers: last frnt = false, frnt = init
     if (teacher.degen())                         // if init meets bad
         return (result = Refuted);               //     return refuted
     learner.learn();                             // frnt = frnt image < frnt < bad

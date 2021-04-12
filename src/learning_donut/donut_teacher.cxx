@@ -35,6 +35,28 @@ sw{m.newSw()}
     assert(aig.num_outputs() == 1);
 }
 
+void Teacher::renewMana ()
+{
+log(3, "Teacher", "Began renewing");
+    // renew mana
+    m.~Mana();
+    new (&m) Mana{};
+    sw = m.newSw();
+
+    // restore constraints
+    setup();
+    size_t tmp = unroll_depth;
+    unroll(unroll_depth);
+    unroll_depth = tmp; // restore depth from over-incrementing
+
+    // restore frontiers
+    last_frnt  = v(addBf(f_last_frnt_cache, m));
+    last_frntp = v(addBf(f_last_frntp_cache, m));
+    frnt       = v(addBf(f_frnt_cache, m));
+    frntp      = v(addBf(f_frntp_cache, m));
+log(3, "Teacher", "Ended renewing");
+}
+
 namespace
 {
     // Init := X_{0} = 0
@@ -117,8 +139,6 @@ PROF_METHOD (setup,
     last_aig_varmap = second_aig_varmap;
     last_index_varmap = second_index_varmap;
 );
-    // prep frontiers
-    restart();
 }
 
 // unroll bad by `n` step
@@ -139,6 +159,8 @@ PROF_METHOD (unroll,
 
         last_aig_varmap = tmp_aig_varmap;
         last_index_varmap = mk_index_varmap(aig, tmp_aig_varmap);
+
+        unroll_depth++;
     }
 );
 }
@@ -186,10 +208,10 @@ PROF_METHOD(restart,
     m.releaseSw(sw);
     sw = m.newSw();
 
-    last_frnt  = init;
-    last_frntp = init;
-    frnt  = v(false);
-    frntp = v(false);
+    f_last_frnt_cache  = last_frnt  = init;
+    f_last_frntp_cache = last_frntp = init;
+    f_frnt_cache       = frnt       = v(false);
+    f_frntp_cache      = frntp      = v(false);
 );
 }
 
@@ -215,8 +237,11 @@ PROF_METHOD(advance,
     // induction by
     // last H(X)_0 = init
     // last H(X)_k = last H(X)_k-1 | H(X)
-    last_frnt  = v(addBf(frnt | last_frnt, m));
+    last_frnt  = v(addBf(frnt  | last_frnt, m));
     last_frntp = v(addBf(frntp | last_frntp, m));
+
+    f_last_frnt_cache  = f_frnt_cache  | f_last_frnt_cache;
+    f_last_frntp_cache = f_frntp_cache | f_last_frntp_cache;
 );
 }
 
@@ -274,8 +299,8 @@ PROF_METHOD(equivalence,
     // H(X), H(X')
     Bf_ptr first_cdnf  = subst(cdnf, first_index_varmap),
            second_cdnf = subst(cdnf, second_index_varmap);
-    frnt  = v(addBf(first_cdnf, m, sw));
-    frntp = v(addBf(second_cdnf, m, sw));
+    frnt  = v(addBf(f_frnt_cache  = first_cdnf, m, sw));
+    frntp = v(addBf(f_frntp_cache = second_cdnf, m, sw));
 
     // progress criterion (forward image over-approximation)
     //=========================================================================
