@@ -155,15 +155,25 @@ struct TeacherProfiler : virtual public Profiler
 struct LearnerProfiler : virtual public Profiler
 {
     Stats learner_total{"learner_total"},
-          // learn time
-          toobig_time{"toobig_time"},
-          toosmall_time{"toosmall_time"};
+          // method time
+          minimize{"minimize_time"},
+          // algo time
+          algo_total{"algo_total"},
+          toobig{"toobig_time"},
+          toosmall{"toosmall_time"};
 
-    const vector<Stats> learn_times () const
+    const vector<Stats> method_times () const
     {
         return vector<Stats>{
-            toobig_time,
-            toosmall_time
+            minimize
+        };
+    }
+
+    const vector<Stats> algo_times () const
+    {
+        return vector<Stats>{
+            toobig,
+            toosmall
         };
     }
 

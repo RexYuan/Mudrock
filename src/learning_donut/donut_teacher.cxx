@@ -2,7 +2,7 @@
 #include "donut_teacher.hxx"
 
 // usage:
-//   PROF_METHOD(code);
+//   PROF_METHOD(method_name, code);
 #define PROF_METHOD(method_name, code...) \
     log(1, "Teacher", "Began " #method_name); \
     start(prof.teacher_total, prof.method_name); \
@@ -12,7 +12,7 @@
         to_string(prof.method_name.laps().back()))
 
 // usage:
-//   if (PROF_SAT(sat_name), sat(...))
+//   if ( PROF_SAT(sat_name, sat(...)) )
 #define PROF_SAT(sat_name, code...) \
     bool tmp; \
     log(2, "Teacher", "Began " #sat_name), \

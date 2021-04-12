@@ -1,6 +1,26 @@
 
 #include "donut_learner.hxx"
 
+// usage:
+//   PROF_METHOD(method_name, code);
+#define PROF_METHOD(method_name, code...) \
+    log(1, "Learner", "Began " #method_name); \
+    start(prof.method_name); \
+    code \
+    stop(prof.method_name); \
+    log(1, "Learner", "Ended " #method_name ", time spent: ", \
+        to_string(prof.method_name.laps().back()))
+
+// usage:
+//   PROF_ALGO(algo_name, code);
+#define PROF_ALGO(algo_name, code...) \
+    log(2, "Learner", "Began " #algo_name); \
+    start(prof.algo_total, prof.algo_name); \
+    code \
+    stop(prof.algo_total, prof.algo_name); \
+    log(2, "Learner", "Ended " #algo_name ", time spent: ", \
+        to_string(prof.algo_name.laps().back()))
+
 namespace Donut
 {
 //=================================================================================================
@@ -20,15 +40,12 @@ void Learner::learn ()
     auto query = [&](const vector<Face>& faces) -> Feedback
     {
         Feedback ret;
-        pause(prof.learner_total);
 
         ret = teacher.consider(hypts);
 
-        resume(prof.learner_total);
         return ret;
     };
-    start(prof.learner_total);
-
+start(prof.learner_total);
     assert(hypts.empty()); // call clear() before re-use
 
     fb = query(hypts); // empty conj degens to true
@@ -53,19 +70,17 @@ void Learner::learn ()
             case Unknown: assert(false); // shouldn't happen
             case TooBig:
             {
-                start(prof.toobig_time);
-
+PROF_ALGO (toobig,
                 ce = teacher.counterexample(); // negative ce
                 assert(ce);
                 hypts.push_back(Face{ce}); // add a new councillor
-
-                stop(prof.toobig_time);
+);
                 break;
             }
             case TooSmall:
             {
-                start(prof.toosmall_time);
-
+PROF_METHOD (minimize,
+PROF_ALGO (toosmall,
                 ce = teacher.counterexample(); // positive ce
                 for (auto& hypt : hypts)
                 {
@@ -75,16 +90,15 @@ void Learner::learn ()
                         hypt.push(ce); // augment councillor
                     }
                 }
-
-                stop(prof.toosmall_time);
+);
+);
                 break;
             }
         }
         fb = query(hypts);
     }
-
 ret:
-    stop(prof.learner_total);
+stop(prof.learner_total);
     return;
 }
 
@@ -93,11 +107,11 @@ Bv Learner::minimize (const Bv& ce, const Face& f)
     auto query = [&](const Bv& bv) -> bool
     {
         bool ret;
-        pause(prof.learner_total, prof.toosmall_time);
+        pause(prof.algo_total, prof.toosmall);
 
         ret = teacher.consider(bv);
 
-        resume(prof.learner_total, prof.toosmall_time);
+        resume(prof.algo_total, prof.toosmall);
         return ret;
     };
 
@@ -123,3 +137,6 @@ const Feedback& Learner::result () const
 }
 //=================================================================================================
 }
+
+#undef PROF_METHOD
+#undef PROF_ALGO

@@ -150,8 +150,14 @@ ttable LearnerProfiler::get_table () const
     ttable ret;
 
     ret.push_back(fmt_hder(learner_total));
-    for (const Stats& learn_time : learn_times())
-        ret.push_back(fmt_line(learn_time, learner_total));
+    for (const Stats& method_time : method_times())
+        ret.push_back(fmt_line(method_time, learner_total));
+
+    ret.push_back(fmt_empty());
+
+    ret.push_back(fmt_hder(algo_total));
+    for (const Stats& algo_time : algo_times())
+        ret.push_back(fmt_line(algo_time, algo_total));
 
     return ret;
 }
