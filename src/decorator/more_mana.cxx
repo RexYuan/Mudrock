@@ -1,11 +1,22 @@
 
 #include "more_mana.hxx"
 
+namespace
+{
+    // add `bf` to `m` on `tmpSw` and return `tmpSw`
+    Sw assume (const Bf_ptr& bf, Mana& m)
+    {
+        Var tmpSw = m.newSw();
+        Var bfVar = addBf(bf, m, tmpSw);
+        m.addClause(tmpSw, mkLit(bfVar));
+        return tmpSw;
+    }
+}
+
 bool sat (const Bf_ptr& bf, Mana& m)
 {
-    Var tmpSw = m.newSw();
-    Var bfVar = addBf(bf, m, tmpSw);
-    bool ret = m.solve(mkLit(bfVar));
+    Sw tmpSw = assume(bf, m);
+    bool ret = m.solve();
     m.releaseSw(tmpSw);
     return ret;
 }
