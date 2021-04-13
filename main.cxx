@@ -47,7 +47,7 @@ int main(int argc, char** argv)
         using namespace Donut;
         Context c{filename};
         c.check();
-        logger.write();
+        SingletonLogger::Get().write();
         cout << c.get_prof();
         output << c.sat();
     }

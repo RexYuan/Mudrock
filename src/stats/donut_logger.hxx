@@ -47,12 +47,26 @@ private:
     ostringstream buffer; // internal stream buffer
 };
 
-// singleton logger
-extern Logger logger;
+struct SingletonLogger
+{
+    static Logger& Get ()
+    {
+        static Logger logger{};
+        return logger;
+    }
+
+    SingletonLogger () {}
+    SingletonLogger           (const SingletonLogger&) = delete;
+    SingletonLogger& operator=(const SingletonLogger&) = delete;
+    SingletonLogger           (SingletonLogger&&) = delete;
+    SingletonLogger& operator=(SingletonLogger&&) = delete;
+};
+
 template <typename T, typename... Ts> requires are_convertible_to_strings<T, Ts...>
 void log (size_t verbosity, const T& title, const Ts&... msgs)
 {
-    logger.log("("s, title, ") "s, string(verbosity, '#'), " "s, msgs...);
+    SingletonLogger::Get().log("("s, title, ") "s, string(verbosity, '#'), " "s, msgs...);
 }
 //=================================================================================================
 }
+
