@@ -16,8 +16,14 @@ using std::pow;
 #include "minisat.hxx"
 using namespace Minisat;
 
-#include "mana.hxx"
 #include "bv.hxx"
+#include "bf.hxx"
+#include "mana.hxx"
+#include "to_minisat.hxx"
+
+// test `bf` in `m`
+bool sat  (const Bf_ptr& bf, Mana& m);
+bool hold (const Bf_ptr& bf, Mana& m);
 
 // set minisat vars according to `valuation` corresponding to `vars` and check sat
 bool evaluate (Mana& m, const Bv& valuation, const vector<Var> vars);

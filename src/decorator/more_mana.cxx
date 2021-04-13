@@ -1,6 +1,20 @@
 
 #include "more_mana.hxx"
 
+bool sat (const Bf_ptr& bf, Mana& m)
+{
+    Var tmpSw = m.newSw();
+    Var bfVar = addBf(bf, m, tmpSw);
+    bool ret = m.solve(mkLit(bfVar));
+    m.releaseSw(tmpSw);
+    return ret;
+}
+
+bool hold (const Bf_ptr& bf, Mana& m)
+{
+    return !sat(~bf, m);
+}
+
 bool evaluate (Mana& m, const Bv& valuation, const vector<Var> vars)
 {
     assert(valuation.len() == vars.size());

@@ -21,6 +21,7 @@ using std::ostream;
 #include "face.hxx"
 
 #include "mana.hxx"
+#include "more_mana.hxx"
 #include "to_minisat.hxx"
 
 namespace Direct

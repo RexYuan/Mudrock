@@ -27,10 +27,6 @@ Var addBf (const Bf_ptr& bf, Mana& m, optional<Sw> swopt=nullopt);
 // handy shortcuts
 void fixBf (const Bf_ptr& bf, Mana& m); // addBf then addClause
 
-// handy queries
-bool sat  (const Bf_ptr& bf, Mana& m);
-bool hold (const Bf_ptr& bf, Mana& m);
-
 //=================================================================================================
 // Aig => Minisat
 //

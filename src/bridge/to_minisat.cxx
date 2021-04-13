@@ -61,20 +61,6 @@ void fixBf (const Bf_ptr& bf, Mana& m)
     assert(ret);
 }
 
-bool sat (const Bf_ptr& bf, Mana& m)
-{
-    Var tmpSw = m.newSw();
-    Var bfVar = addBf(bf, m, tmpSw);
-    bool ret = m.solve(mkLit(bfVar));
-    m.releaseSw(tmpSw);
-    return ret;
-}
-
-bool hold (const Bf_ptr& bf, Mana& m)
-{
-    return !sat(~bf, m);
-}
-
 //=================================================================================================
 // Aig => Minisat
 //
