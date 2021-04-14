@@ -26,20 +26,26 @@ bool hold (const Bf_ptr& bf, Mana& m)
     return !sat(~bf, m);
 }
 
-bool evaluate (Mana& m, const Bv& valuation, const vector<Var> vars)
+bool evaluate (Mana& m, const Bv& valuation, const map<int,int>& index_varmap)
 {
-    assert(valuation.len() == vars.size());
-
-    auto bit = valuation.begin();
-    auto vit = vars.begin();
+    assert(valuation.len() == index_varmap.size());
 
     vec<Lit> ps;
-    for (; bit!=valuation.end(); bit++, vit++)
+    for (auto bit = valuation.begin(); auto [i,v] : index_varmap)
     {
-        if (*bit) ps.push(mkLit(*vit));
-        else ps.push(~mkLit(*vit));
+        if (*bit) ps.push(mkLit(v));
+        else ps.push(~mkLit(v));
+        bit++;
     }
     return m.solve(ps);
+}
+
+bool evaluate (const Bf_ptr& bf, Mana& m, const Bv& valuation, const map<int,int>& index_varmap)
+{
+    Sw tmpSw = assume(bf, m);
+    bool ret = evaluate(m, valuation, index_varmap);
+    m.releaseSw(tmpSw);
+    return ret;
 }
 
 namespace
@@ -49,10 +55,20 @@ namespace
         for (const auto& v: range)
             assert(v < m.nVars());
     }
+
+    inline map<int,int> mk_index_varmap (const vector<Var>& range)
+    {
+        map<int,int> tmp;
+        for (size_t i=0; const auto v : range)
+            tmp[i++] = v;
+        return tmp;
+    }
 }
 string tabulate (Mana& m, vector<Var> range)
 {
     validate_range(m, range);
+    auto index_varmap = mk_index_varmap(range);
+
     string table = "listing truth table:\n"s;
     size_t line_size = range.size() + " 0\n"s.size(),
            line_num  = pow(2, range.size());
@@ -65,7 +81,7 @@ string tabulate (Mana& m, vector<Var> range)
         table += tmp.to_string();
         table += ' ';
 
-        auto ret = evaluate(m, tmp, range);
+        auto ret = evaluate(m, tmp, index_varmap);
 
         table += to_string(static_cast<unsigned>(ret));
         table += '\n';

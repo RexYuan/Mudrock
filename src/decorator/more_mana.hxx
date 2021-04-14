@@ -25,8 +25,10 @@ using namespace Minisat;
 bool sat  (const Bf_ptr& bf, Mana& m);
 bool hold (const Bf_ptr& bf, Mana& m);
 
-// set minisat vars according to `valuation` corresponding to `vars` and check sat
-bool evaluate (Mana& m, const Bv& valuation, const vector<Var> vars);
+// set `m` vars to `valuation` according to `index_varmap` and check sat
+bool evaluate (Mana& m, const Bv& valuation, const map<int,int>& index_varmap);
+// set `m` vars to `valuation` according to `index_varmap` and test `bf`
+bool evaluate (const Bf_ptr& bf, Mana& m, const Bv& valuation, const map<int,int>& index_varmap);
 
 // enumerate minisat vars of `range` and check sat
 string tabulate (Mana& m, vector<Var> range);
