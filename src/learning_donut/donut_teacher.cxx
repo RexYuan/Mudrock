@@ -275,11 +275,8 @@ bool Teacher::consider (Bv bv)
 {
     bool ret;
 PROF_METHOD(membership,
-        Bf_ptr bf = toBf(bv);
-        bf = subst(bf, second_index_varmap);
     // accept all X' that is not in T(X',X'',...), B(X',X'',...)
     if (PROF_SAT(membership_sat,
-        //sat(bf & trans_tl & bad, m)))
         evaluate(trans_tl & bad, m, bv, second_index_varmap)))
         ret = false;
     else

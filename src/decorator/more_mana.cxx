@@ -31,11 +31,12 @@ bool evaluate (Mana& m, const Bv& valuation, const map<int,int>& index_varmap)
     assert(valuation.len() == index_varmap.size());
 
     vec<Lit> ps;
-    for (auto bit = valuation.begin(); auto [i,v] : index_varmap)
+    auto bit = --valuation.end();
+    auto mit = --index_varmap.end();
+    for (; bit != --valuation.begin(); bit--, mit--)
     {
-        if (*bit) ps.push(mkLit(v));
-        else ps.push(~mkLit(v));
-        bit++;
+        if (*bit) ps.push(mkLit(mit->second));
+        else ps.push(~mkLit(mit->second));
     }
     return m.solve(ps);
 }
