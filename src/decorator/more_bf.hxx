@@ -19,6 +19,9 @@ using std::pow;
 // if `bf` refers to the variable `v`
 bool contains (const Bf_ptr& bf, int v);
 
+// substitute `Base` vars in `bf` according to `varmap`
+Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& varmap);
+
 // evaluate `bf` according to `val`; variables are indexed {0, ..., val.len()}
 bool evaluate (const Bf_ptr& bf, const Bv& val);
 

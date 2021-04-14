@@ -21,6 +21,34 @@ bool contains (const Bf_ptr& bf, int v)
     assert(false);
 }
 
+Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& varmap)
+{
+    switch (bf->t)
+    {
+    case Conn::Top:  return v(true);
+    case Conn::Bot:  return v(false);
+    case Conn::Base:
+        assert(varmap.contains(bf->get_int()));
+        return v(varmap.at(bf->get_int()));
+    case Conn::Not:  return ~subst(bf->get_sub(), varmap);
+    case Conn::And:
+    {
+        Bf_ptr tmp = v(true);
+        for (Bf_ptr s : bf->get_subs())
+            tmp = tmp & subst(s, varmap);
+        return tmp;
+    }
+    case Conn::Or:
+    {
+        Bf_ptr tmp = v(false);
+        for (Bf_ptr s : bf->get_subs())
+            tmp = tmp | subst(s, varmap);
+        return tmp;
+    }
+    }
+    assert(false);
+}
+
 bool evaluate (const Bf_ptr& bf, const Bv& val)
 {
     switch (bf->t)

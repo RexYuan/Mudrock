@@ -90,9 +90,6 @@ Bf_ptr neg  (Bf_ptr bf);
 Bf_ptr conj (Bf_ptr bf1, Bf_ptr bf2);
 Bf_ptr disj (Bf_ptr bf1, Bf_ptr bf2);
 
-// substitute var space
-Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& to);
-
 inline Bf_ptr operator ~  (const Bf_ptr& bf)                     { return neg(bf); }
 inline Bf_ptr operator &  (const Bf_ptr& bf1, const Bf_ptr& bf2) { return conj(bf1, bf2); }
 inline Bf_ptr operator |  (const Bf_ptr& bf1, const Bf_ptr& bf2) { return disj(bf1, bf2); }
