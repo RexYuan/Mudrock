@@ -44,129 +44,82 @@ namespace
                 tmp = num;
         return tmp;
     }
-
-    inline trow fmt_hder (const Stats& hd)
-    {
-        trow row{hd.title()+":", mk_time(hd.cumu()), ""s, ""s, ""s, ""s};
-        return row;
-    }
-
-    inline trow fmt_line (const Stats& nomi, const Stats& deno)
-    {
-        trow row{nomi.title() + ":",
-                 mk_time(nomi.cumu()),
-                 mk_percentage(nomi.cumu()/deno.cumu()),
-                 "#" + mk_count(nomi.runs()),
-                 mk_time(nomi.cumu()/nomi.runs()) + "(avg)"s,
-                 mk_time(fd_max(nomi.laps())) + " (max)"s};
-        return row;
-    }
-
-    inline trow fmt_empty ()
-    {
-        trow row{""s, ""s, ""s, ""s, ""s, ""s};
-        return row;
-    }
 }
-// Teacher profiler
-ttable TeacherProfiler::get_table () const
+PRow Profiler::fmt_header (const Stats& s) const
 {
-    ttable ret;
+    return PRow{s.title()+":", mk_time(s.cumu()), ""s, ""s, ""s, ""s};
+}
+PRow Profiler::fmt_line (const Stats& nomi, const Stats& deno) const
+{
+    return PRow{nomi.title() + ":",
+                mk_time(nomi.cumu()),
+                mk_percentage(nomi.cumu()/deno.cumu()),
+                "#" + mk_count(nomi.runs()),
+                mk_time(nomi.cumu()/nomi.runs()) + "(avg)"s,
+                mk_time(fd_max(nomi.laps())) + "(max)"s};
+}
 
-    ret.push_back(fmt_hder(teacher_total));
+// Teacher profiler
+PTable TeacherProfiler::get_table () const
+{
+    PTable ret;
+
+    ret.set_header(fmt_header(teacher_total));
     for (const Stats& method_time : method_times())
-        ret.push_back(fmt_line(method_time, teacher_total));
+        ret.push_entry(fmt_line(method_time, teacher_total));
 
-    ret.push_back(fmt_empty());
+    ret.push_entry();
 
-    ret.push_back(fmt_hder(sat_total));
+    ret.push_entry(fmt_header(sat_total));
     for (const Stats& sat_time : sat_times())
-        ret.push_back(fmt_line(sat_time, sat_total));
+        ret.push_entry(fmt_line(sat_time, sat_total));
 
     return ret;
 }
 
 // Learner profiler
-ttable LearnerProfiler::get_table () const
+PTable LearnerProfiler::get_table () const
 {
-    ttable ret;
+    PTable ret;
 
-    ret.push_back(fmt_hder(learner_total));
+    ret.set_header(PRow{
+        "name "s, "totime"s, "totime%"s, "#runs"s, "runtime(avg)"s, "runtime(max)"s
+    });
+
+    ret.push_entry(fmt_header(learner_total));
     for (const Stats& method_time : method_times())
-        ret.push_back(fmt_line(method_time, learner_total));
+        ret.push_entry(fmt_line(method_time, learner_total));
 
-    ret.push_back(fmt_empty());
+    ret.push_entry();
 
-    ret.push_back(fmt_hder(algo_total));
+    ret.push_entry(fmt_header(algo_total));
     for (const Stats& algo_time : algo_times())
-        ret.push_back(fmt_line(algo_time, algo_total));
+        ret.push_entry(fmt_line(algo_time, algo_total));
 
     return ret;
 }
 
 // Context profiler
-ttable ContextProfiler::get_table () const
+PTable ContextProfiler::get_table () const
 {
-    ttable tmp;
+    PTable tmp;
 
-    for (auto row : lprof.get_table())
-        tmp.push_back(row);
+    tmp.push_entry(lprof.get_table().header());
+    for (auto row : lprof.get_table().entries())
+        tmp.push_entry(row);
 
-    tmp.push_back(fmt_empty());
+    tmp.push_entry();
 
-    for (auto row : tprof.get_table())
-        tmp.push_back(row);
+    tmp.push_entry(tprof.get_table().header());
+    for (auto row : tprof.get_table().entries())
+        tmp.push_entry(row);
 
     return tmp;
 }
 
-namespace
-{
-    array<size_t, table_fields> maxlens (const vector<array<string, table_fields>>& table)
-    {
-        size_t title_wd{}, cumu_wd{}, perc_wd{}, runs_wd{}, avg_wd{}, max_wd{};
-        for (auto [row_title, row_cumu, row_perc, row_runs, row_avg, row_max] : table)
-        {
-            if (row_title.length() > title_wd) title_wd = row_title.length();
-            if (row_cumu.length()  > cumu_wd)  cumu_wd  = row_cumu.length();
-            if (row_perc.length()  > perc_wd)  perc_wd  = row_perc.length();
-            if (row_runs.length()  > runs_wd)  runs_wd  = row_runs.length();
-            if (row_avg.length()   > avg_wd)   avg_wd   = row_avg.length();
-            if (row_max.length()   > max_wd)   max_wd   = row_max.length();
-        }
-        return array<size_t, table_fields>{title_wd, cumu_wd, perc_wd, runs_wd, avg_wd, max_wd};
-    }
-}
-// Base profiler
-string Profiler::print_stats (ttable table)
-{
-    auto [title_wd, cumu_wd, perc_wd, runs_wd, avg_wd, max_wd] = maxlens(table);
-    auto print_line = [=](trow row) -> string
-    {
-        auto [title, cumu, perc, runs, avg, max] = row;
-        stringstream tmp;
-        tmp << right
-            << setw(title_wd) << title << " "
-            << setw(cumu_wd)  << cumu  << " "
-            << setw(perc_wd)  << perc  << " "
-            << left
-            << setw(runs_wd)  << runs  << " "
-            << right
-            << setw(avg_wd)   << avg   << " "
-            << setw(max_wd)   << max   << "\n";
-        return tmp.str();
-    };
-
-    string ret = ""s;
-    for (trow row : table)
-        ret += print_line(row);
-
-    return ret;
-}
-
 ostream& operator << (ostream& out, const Profiler& prof)
 {
-    out << Profiler::print_stats(prof.get_table());
+    out << prof.to_string();
     return out;
 }
 //=================================================================================================

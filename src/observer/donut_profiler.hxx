@@ -26,6 +26,7 @@ using std::left;
 using std::right;
 
 #include "stats.hxx"
+#include "table.hxx"
 
 namespace Donut
 {
@@ -33,13 +34,16 @@ namespace Donut
 // Object profiler
 //
 // Base profiler
-constinit const size_t table_fields = 6;
-using trow = array<string, table_fields>;
-using ttable = vector<trow>;
+constinit static const size_t prof_table_fields = 6;
+using PTable = Table<prof_table_fields>;
+using PRow   = PTable::Row;
 struct Profiler
 {
-    virtual ttable get_table () const = 0;
-    static string print_stats (ttable table);
+    virtual PTable get_table () const = 0;
+    string to_string () const { return get_table().to_string(); }
+
+    PRow fmt_header (const Stats& s) const;
+    PRow fmt_line   (const Stats& nomi, const Stats& deno) const;
 };
 ostream& operator << (ostream& out, const Profiler& prof);
 
@@ -93,7 +97,7 @@ struct TeacherProfiler : virtual public Profiler
         };
     }
 
-    ttable get_table () const override;
+    PTable get_table () const override;
 };
 
 // Learner profiler
@@ -122,7 +126,7 @@ struct LearnerProfiler : virtual public Profiler
         };
     }
 
-    ttable get_table () const override;
+    PTable get_table () const override;
 };
 
 // Context profiler aggregate
@@ -133,7 +137,7 @@ struct ContextProfiler : virtual public Profiler
     const TeacherProfiler& tprof;
     const LearnerProfiler& lprof;
 
-    ttable get_table () const override;
+    PTable get_table () const override;
 };
 
 //=================================================================================================
