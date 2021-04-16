@@ -14,6 +14,10 @@ using namespace std::string_literals;
 #include <concepts>
 using std::same_as;
 using std::convertible_to;
+#include <type_traits>
+using std::true_type;
+using std::false_type;
+using std::integral_constant;
 
 #include <iostream>
 using std::ostream;
@@ -32,14 +36,14 @@ template <size_t N>
 using Row_t = array<string, N>;
 
 template <typename T>
-struct is_Row {};
+struct is_Row : false_type {};
 template <size_t N>
-struct is_Row<Row_t<N>> { static const bool value = true; };
+struct is_Row<Row_t<N>> : true_type {};
 
 template <typename T>
 struct Row_size {};
 template <size_t N>
-struct Row_size<Row_t<N>> { static const size_t value = N; };
+struct Row_size<Row_t<N>> : integral_constant<size_t, N> {};
 
 template <typename T, typename... Ts>
 concept can_mk_Row =
