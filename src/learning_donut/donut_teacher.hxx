@@ -5,6 +5,7 @@
 
 #include <string>
 using std::string;
+using namespace std::string_literals;
 #include <map>
 using std::map;
 #include <vector>
@@ -14,8 +15,8 @@ using std::vector;
 using std::ostream;
 
 #include "donut_types.hxx"
-#include "donut_profiler.hxx"
-#include "donut_logger.hxx"
+#include "profiler.hxx"
+#include "logger.hxx"
 
 #include "aig.hxx"
 #include "bf.hxx"

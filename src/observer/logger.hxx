@@ -20,8 +20,6 @@ using std::convertible_to;
 #include <functional>
 using std::function;
 
-namespace Donut
-{
 template <typename T>     concept is_convertible_to_string   = convertible_to<T,string>;
 template <typename... Ts> concept are_convertible_to_strings = (is_convertible_to_string<Ts> && ...);
 //=================================================================================================
@@ -67,6 +65,3 @@ void log (size_t verbosity, const T& title, const Ts&... msgs)
 {
     SingletonLogger::Get().log("("s, title, ") "s, string(verbosity, '#'), " "s, msgs...);
 }
-//=================================================================================================
-}
-

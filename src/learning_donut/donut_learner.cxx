@@ -1,21 +1,14 @@
 
 #include "donut_learner.hxx"
 
-#define PROF_METHOD(code...) \
-    log(1, "Learner", "Began ", __func__); \
-    SingletonProfiler::Start("learner", __func__); \
-    code \
-    SingletonProfiler::Stop("learner", __func__); \
-    log(1, "Learner", "Ended ", __func__, ", time spent: ", \
-        to_string(SingletonProfiler::Get().get_stats("learner", __func__).laps().back()))
-
+#define SETN string(__FILE__) + " algo"s
 #define PROF_ALGO(name, code...) \
-    log(1, "Learner", "Began ", #name); \
-    SingletonProfiler::Start("algo", #name); \
+    log(2, SETN, "Began ", #name); \
+    SingletonProfiler::Start(SETN, #name); \
     code \
-    SingletonProfiler::Stop("algo", #name); \
-    log(1, "Learner", "Ended ", #name, ", time spent: ", \
-        to_string(SingletonProfiler::Get().get_stats("algo", #name).laps().back()))
+    SingletonProfiler::Stop(SETN, #name); \
+    log(2, SETN "Ended ", #name, ", time spent: ", \
+        to_string(SingletonProfiler::Get().get_stats(SETN, #name).laps().back()))
 
 namespace Donut
 {
@@ -26,6 +19,7 @@ hypts{vector<Face>{}} {}
 
 void Learner::clear ()
 {
+PROF_SCOPE();
     fb = Unknown;
     ce = Bv{};
     hypts.clear();
@@ -33,6 +27,7 @@ void Learner::clear ()
 
 void Learner::learn ()
 {
+PROF_SCOPE();
     auto query = [&](const vector<Face>& faces) -> Feedback
     {
         Feedback ret;
@@ -97,17 +92,17 @@ ret:
 
 Bv Learner::minimize (const Bv& ce, const Face& f)
 {
+PROF_SCOPE();
     auto query = [&](const Bv& bv) -> bool
     {
         bool ret;
-        SingletonProfiler::Pause("algo", "toosmall");
+        SingletonProfiler::Pause(SETN, "toosmall");
 
         ret = teacher.consider(bv);
 
-        SingletonProfiler::Resume("algo", "toosmall");
+        SingletonProfiler::Resume(SETN, "toosmall");
         return ret;
     };
-PROF_METHOD (
     Bv tmp = ce;
     for (size_t i=0; i<ce.len(); i++)
     {
@@ -120,7 +115,6 @@ PROF_METHOD (
                 tmp.flipper(i);
         }
     }
-);
     return tmp;
 }
 
@@ -131,5 +125,5 @@ const Feedback& Learner::result () const
 //=================================================================================================
 }
 
-#undef PROF_METHOD
 #undef PROF_ALGO
+#undef SETN

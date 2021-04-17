@@ -1,22 +1,15 @@
 
 #include "donut_teacher.hxx"
 
-#define PROF_METHOD(code...) \
-    log(1, "Teacher", "Began ", __func__); \
-    SingletonProfiler::Start("teacher", __func__); \
-    code \
-    SingletonProfiler::Stop("teacher", __func__); \
-    log(1, "Teacher", "Ended ", __func__, ", time spent: ", \
-        to_string(SingletonProfiler::Get().get_stats("teacher", __func__).laps().back()))
-
+#define SETN string(__FILE__) + " sat"s
 #define PROF_SAT(name, code...) \
     bool tmp; \
-    log(2, "Teacher", "Began ", #name), \
-    SingletonProfiler::Start("sat", #name), \
+    log(2, SETN, "Began ", #name), \
+    SingletonProfiler::Start(SETN, #name), \
     tmp = code, \
-    SingletonProfiler::Stop("sat", #name), \
-    log(2, "Teacher", "Ended ", #name, ", time spent: ", \
-        to_string(SingletonProfiler::Get().get_stats("sat", #name).laps().back())), \
+    SingletonProfiler::Stop(SETN, #name), \
+    log(2, SETN, "Ended ", #name, ", time spent: ", \
+        to_string(SingletonProfiler::Get().get_stats(SETN, #name).laps().back())), \
     tmp
 
 namespace Donut
@@ -33,6 +26,7 @@ sw{m.newSw()}
 
 void Teacher::renewMana ()
 {
+PROF_SCOPE();
 log(3, "Teacher", "Began renewing");
     // renew mana
     m.~Mana();
@@ -113,7 +107,7 @@ namespace
 //
 void Teacher::setup ()
 {
-PROF_METHOD(
+PROF_SCOPE();
     // set up variables over X,X'
     first_aig_varmap  = toBfmap(addAig(aig, m));
     second_aig_varmap = toBfmap(addAig(aig, m));
@@ -134,13 +128,12 @@ PROF_METHOD(
 
     last_aig_varmap = second_aig_varmap;
     last_index_varmap = second_index_varmap;
-);
 }
 
 // unroll bad by `n` step
 void Teacher::unroll (size_t n)
 {
-PROF_METHOD(
+PROF_SCOPE();
     for (size_t i=0; i<n; i++)
     {
         // set up variables over X''
@@ -158,14 +151,13 @@ PROF_METHOD(
 
         unroll_depth++;
     }
-);
 }
 
 // if init meets bad
 bool Teacher::degen ()
 {
+PROF_SCOPE();
     bool ret;
-PROF_METHOD(
     // I(X), T(X,X'), T(X',X'',...), B(X',X'',...)
     if (PROF_SAT(degen_sat,
         sat(init & trans_hd & trans_tl & bad, m)))
@@ -178,29 +170,27 @@ PROF_METHOD(
         state = Unknown;
         ret = false;
     }
-);
     return ret;
 }
 
 // if frontier image doesn't meet bad
 bool Teacher::advanceable ()
 {
+PROF_SCOPE();
     bool ret;
-PROF_METHOD(
     // last H(X), T(X,X'), T(X',X'',...), B(X',X'',...)
     if (PROF_SAT(advanceable_sat,
         sat(last_frnt & trans_hd & trans_tl & bad, m)))
         ret = false;
     else
         ret = true;
-);
     return ret;
 }
 
 // reset frontier back to init
 void Teacher::restart ()
 {
-PROF_METHOD(
+PROF_SCOPE();
     m.releaseSw(sw);
     sw = m.newSw();
 
@@ -208,28 +198,26 @@ PROF_METHOD(
     f_last_frntp_cache = last_frntp = init;
     f_frnt_cache       = frnt       = v(false);
     f_frntp_cache      = frntp      = v(false);
-);
 }
 
 // if current frontier > last frontier
 bool Teacher::progressed ()
 {
+PROF_SCOPE();
     bool ret;
-PROF_METHOD(
     // H(X) <= last H(X) and H is non-empty means no progress
     if (PROF_SAT(progressed_sat,
         hold(frnt |= last_frnt, m) && sat(frnt, m)))
         ret = false;
     else
         ret = true;
-);
     return ret;
 }
 
 // advance frontier
 void Teacher::advance ()
 {
-PROF_METHOD(
+PROF_SCOPE();
     // induction by
     // last H(X)_0 = init
     // last H(X)_k = last H(X)_k-1 | H(X)
@@ -238,7 +226,6 @@ PROF_METHOD(
 
     f_last_frnt_cache  = f_frnt_cache  | f_last_frnt_cache;
     f_last_frntp_cache = f_frntp_cache | f_last_frntp_cache;
-);
 }
 
 namespace
@@ -269,23 +256,22 @@ namespace
 //
 bool Teacher::consider (Bv bv)
 {
+PROF_SCOPE();
     bool ret;
-PROF_METHOD(
     // accept all X' that is not in T(X',X'',...), B(X',X'',...)
     if (PROF_SAT(membership_sat,
         evaluate(trans_tl & bad, m, bv, second_index_varmap)))
         ret = false;
     else
         ret = true;
-);
     return ret;
 }
 
 // if frontier image < `faces` < bad
 Feedback Teacher::consider (const vector<Face>& faces)
 {
+PROF_SCOPE();
     Feedback ret;
-PROF_METHOD(
     assert(first_index_varmap.size() > 0 && last_index_varmap.size() > 0);
 
     Bf_ptr cdnf = mk_cdnf(faces);
@@ -320,12 +306,12 @@ PROF_METHOD(
     {
         ret = (state = Perfect);
     }
-);
     return ret;
 }
 
 Bv Teacher::counterexample () const
 {
+PROF_SCOPE();
     assert(state != Refuted && state != Perfect && state != Unknown);
     assert(ce);
     return ce;
@@ -333,10 +319,11 @@ Bv Teacher::counterexample () const
 
 const Feedback& Teacher::check_state () const
 {
+PROF_SCOPE();
     return state;
 }
 //=================================================================================================
 }
 
-#undef PROF_METHOD
 #undef PROF_SAT
+#undef SETN

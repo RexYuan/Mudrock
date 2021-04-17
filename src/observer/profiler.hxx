@@ -74,3 +74,25 @@ struct SingletonProfiler
     SingletonProfiler           (SingletonProfiler&&) = delete;
     SingletonProfiler& operator=(SingletonProfiler&&) = delete;
 };
+
+#define PROF_SCOPE_NAME_HELPER(line, count)                                   \
+    __plz_no_collision_ ## line ## _ ## count
+
+#define PROF_SCOPE_NAME(line, count)                                          \
+    PROF_SCOPE_NAME_HELPER(line, count)
+
+#define PROF_SCOPE_AS(set_name, name)                                         \
+    struct ScopeProfiler                                                      \
+    {                                                                         \
+        ScopeProfiler (string sn_, string n_) : sn{sn_}, n{n_}                \
+            { log(1, sn, "Began ", n);                                        \
+              SingletonProfiler::Start(sn, n); }                              \
+       ~ScopeProfiler ()                                                      \
+            { log(1, sn, "Ended ", n);                                        \
+              SingletonProfiler::Stop (sn, n); }                              \
+    private:                                                                  \
+        string sn, n;                                                         \
+    } PROF_SCOPE_NAME(__LINE__, __COUNTER__) {set_name, name}
+
+#define PROF_SCOPE()                                                          \
+    PROF_SCOPE_AS(__FILE__, __func__)

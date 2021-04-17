@@ -1,8 +1,6 @@
 
-#include "donut_logger.hxx"
+#include "logger.hxx"
 
-namespace Donut
-{
 //=================================================================================================
 // Basic logging
 //
@@ -35,7 +33,4 @@ void Logger::write ()
     outs << buffer.str() << flush;
     buffer.str(""s);
     buffer.clear();
-}
-
-//=================================================================================================
 }

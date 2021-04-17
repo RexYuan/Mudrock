@@ -1,5 +1,5 @@
 
-#include "donut_profiler.hxx"
+#include "profiler.hxx"
 
 //=================================================================================================
 // Stats profiler

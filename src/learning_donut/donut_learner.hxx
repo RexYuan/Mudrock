@@ -14,7 +14,7 @@ using std::vector;
 
 #include "donut_types.hxx"
 #include "donut_teacher.hxx"
-#include "donut_profiler.hxx"
+#include "profiler.hxx"
 
 namespace Donut
 {
