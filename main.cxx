@@ -48,7 +48,7 @@ int main(int argc, char** argv)
         Context c{filename};
         c.check();
         SingletonLogger::Get().write();
-        cout << c.get_prof();
+        output << SingletonProfiler::Get();
         output << c.sat();
     }
     else

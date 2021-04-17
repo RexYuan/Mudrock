@@ -11,6 +11,8 @@ using std::to_string;
 using namespace std::string_literals;
 #include <iostream>
 using std::ostream;
+#include <map>
+using std::map;
 
 #include <array>
 using std::array;
@@ -28,125 +30,47 @@ using std::right;
 #include "stats.hxx"
 #include "table.hxx"
 
-namespace Donut
-{
 //=================================================================================================
-// Object profiler
+// Stats profiler
 //
-// Base profiler
 constinit static const size_t prof_table_fields = 6;
 using PTable = Table<prof_table_fields>;
 using PRow   = PTable::Row;
+static const PRow fields_header{"name"s, "totime"s, "totime%"s, "#runs"s,
+                                "runtime(avg)"s, "runtime(max)"s};
 struct Profiler
 {
-    virtual PTable get_table () const = 0;
-    string to_string () const { return get_table().to_string(); }
+    map<string, Stats>& get_stats_set (string set_name);
+    Stats&              get_stats     (string set_name, string name);
 
-    PRow fmt_header (const Stats& s) const;
-    PRow fmt_line   (const Stats& nomi, const Stats& deno) const;
+    string to_string () const;
+
+private:
+    map<string, map<string, Stats>> stats_sets;
+
+    PRow fmt_header (const string& title, double cum) const;
+    PRow fmt_line   (const Stats& nomi,   double cum) const;
+
+    PTable get_table () const;
 };
 ostream& operator << (ostream& out, const Profiler& prof);
 
-// Teacher profiler
-struct TeacherProfiler : virtual public Profiler
+struct SingletonProfiler
 {
-    Stats teacher_total{"teacher_total"},
-          // method time
-          membership{"membership_time"},
-          equivalence{"equivalence_time"},
-          setup{"setup_time"},
-          degen{"degen_time"},
-          advanceable{"advanceable_time"},
-          unroll{"unroll_time"},
-          restart{"restart_time"},
-          progressed{"progressed_time"},
-          advance{"advance_time"},
-          // sat time
-          sat_total{"sat_total"},
-          membership_sat{"membership_sat"},
-          equivalence_progress_sat{"equivalence_progress_sat"},
-          equivalence_soundness_sat{"equivalence_soundness_sat"},
-          degen_sat{"degen_sat"},
-          advanceable_sat{"advanceable_sat"},
-          progressed_sat{"progressed_sat"};
-
-    const vector<Stats> method_times () const
+    static Profiler& Get ()
     {
-        return vector<Stats>{
-            membership,
-            equivalence,
-            setup,
-            degen,
-            advanceable,
-            unroll,
-            restart,
-            progressed,
-            advance
-        };
+        static Profiler prof{};
+        return prof;
     }
 
-    const vector<Stats> sat_times () const
-    {
-        return vector<Stats>{
-            membership_sat,
-            equivalence_progress_sat,
-            equivalence_soundness_sat,
-            degen_sat,
-            advanceable_sat,
-            progressed_sat
-        };
-    }
+    static void Start  (string set_name, string name) { start (SingletonProfiler::Get().get_stats(set_name, name)); }
+    static void Stop   (string set_name, string name) { stop  (SingletonProfiler::Get().get_stats(set_name, name)); }
+    static void Resume (string set_name, string name) { resume(SingletonProfiler::Get().get_stats(set_name, name)); }
+    static void Pause  (string set_name, string name) { pause (SingletonProfiler::Get().get_stats(set_name, name)); }
 
-    PTable get_table () const override;
+    SingletonProfiler () {}
+    SingletonProfiler           (const SingletonProfiler&) = delete;
+    SingletonProfiler& operator=(const SingletonProfiler&) = delete;
+    SingletonProfiler           (SingletonProfiler&&) = delete;
+    SingletonProfiler& operator=(SingletonProfiler&&) = delete;
 };
-
-// Learner profiler
-struct LearnerProfiler : virtual public Profiler
-{
-    Stats learner_total{"learner_total"},
-          // method time
-          minimize{"minimize_time"},
-          // algo time
-          algo_total{"algo_total"},
-          toobig{"toobig_time"},
-          toosmall{"toosmall_time"};
-
-    const vector<Stats> method_times () const
-    {
-        return vector<Stats>{
-            minimize
-        };
-    }
-
-    const vector<Stats> algo_times () const
-    {
-        return vector<Stats>{
-            toobig,
-            toosmall
-        };
-    }
-
-    PTable get_table () const override;
-};
-
-// Context profiler aggregate
-struct ContextProfiler : virtual public Profiler
-{
-    ContextProfiler (const TeacherProfiler& tp, const LearnerProfiler& lp) : tprof{tp}, lprof{lp} {}
-    // teacher time
-    const TeacherProfiler& tprof;
-    const LearnerProfiler& lprof;
-
-    PTable get_table () const override;
-};
-
-//=================================================================================================
-// Stuff being profiled
-//
-struct Profiled
-{
-    virtual const Profiler& get_prof () const = 0;
-};
-
-//=================================================================================================
-}

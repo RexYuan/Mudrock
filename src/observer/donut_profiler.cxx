@@ -1,11 +1,23 @@
 
 #include "donut_profiler.hxx"
 
-namespace Donut
-{
 //=================================================================================================
-// Object profiler
+// Stats profiler
 //
+map<string, Stats>& Profiler::get_stats_set (string set_name)
+{
+    if (!stats_sets.contains(set_name))
+        stats_sets.emplace(set_name, map<string, Stats>{});
+    return stats_sets.at(set_name);
+}
+
+Stats& Profiler::get_stats (string set_name, string name)
+{
+    if (!get_stats_set(set_name).contains(name))
+        get_stats_set(set_name).emplace(name, name);
+    return get_stats_set(set_name).at(name);
+}
+
 namespace
 {
     inline string trunc_trail (double num, size_t len)
@@ -45,82 +57,57 @@ namespace
         return tmp;
     }
 }
-PRow Profiler::fmt_header (const Stats& s) const
+PRow Profiler::fmt_header (const string& title, double cum) const
 {
-    return PRow{s.title()+":", mk_time(s.cumu()), ""s, ""s, ""s, ""s};
+    return PRow{title, mk_time(cum), ""s, ""s, ""s, ""s};
 }
-PRow Profiler::fmt_line (const Stats& nomi, const Stats& deno) const
+PRow Profiler::fmt_line (const Stats& nomi, double cum) const
 {
-    return PRow{nomi.title() + ":",
+    return PRow{nomi.title(),
                 mk_time(nomi.cumu()),
-                mk_percentage(nomi.cumu()/deno.cumu()),
+                mk_percentage(nomi.cumu()/cum),
                 "#" + mk_count(nomi.runs()),
                 mk_time(nomi.cumu()/nomi.runs()) + "(avg)"s,
                 mk_time(fd_max(nomi.laps())) + "(max)"s};
 }
 
-// Teacher profiler
-PTable TeacherProfiler::get_table () const
+namespace
+{
+    inline double sum_stats_set (map<string, Stats> stats_set)
+    {
+        double cum = 0.0;
+        for (auto [stats_name, stats] : stats_set)
+            cum = cum + stats.cumu();
+        return cum;
+    }
+}
+PTable Profiler::get_table () const
 {
     PTable ret;
 
-    ret.set_header(fmt_header(teacher_total));
-    for (const Stats& method_time : method_times())
-        ret.push_entry(fmt_line(method_time, teacher_total));
+    ret.set_header(fields_header);
 
-    ret.push_entry();
-
-    ret.push_entry(fmt_header(sat_total));
-    for (const Stats& sat_time : sat_times())
-        ret.push_entry(fmt_line(sat_time, sat_total));
+    for (auto [set_name, stats_set] : stats_sets)
+    {
+        double set_cum = sum_stats_set(stats_set);
+        ret.push_entry(fmt_header(set_name, set_cum));
+        for (auto [stats_name, stats] : stats_set)
+        {
+            ret.push_entry(fmt_line(stats, set_cum));
+        }
+        ret.push_entry();
+    }
 
     return ret;
 }
 
-// Learner profiler
-PTable LearnerProfiler::get_table () const
+string Profiler::to_string () const
 {
-    PTable ret;
-
-    ret.set_header(PRow{
-        "name "s, "totime"s, "totime%"s, "#runs"s, "runtime(avg)"s, "runtime(max)"s
-    });
-
-    ret.push_entry(fmt_header(learner_total));
-    for (const Stats& method_time : method_times())
-        ret.push_entry(fmt_line(method_time, learner_total));
-
-    ret.push_entry();
-
-    ret.push_entry(fmt_header(algo_total));
-    for (const Stats& algo_time : algo_times())
-        ret.push_entry(fmt_line(algo_time, algo_total));
-
-    return ret;
-}
-
-// Context profiler
-PTable ContextProfiler::get_table () const
-{
-    PTable tmp;
-
-    tmp.push_entry(lprof.get_table().header());
-    for (auto row : lprof.get_table().entries())
-        tmp.push_entry(row);
-
-    tmp.push_entry();
-
-    tmp.push_entry(tprof.get_table().header());
-    for (auto row : tprof.get_table().entries())
-        tmp.push_entry(row);
-
-    return tmp;
+    return get_table().to_string();
 }
 
 ostream& operator << (ostream& out, const Profiler& prof)
 {
     out << prof.to_string();
     return out;
-}
-//=================================================================================================
 }

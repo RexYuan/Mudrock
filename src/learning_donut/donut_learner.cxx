@@ -1,25 +1,21 @@
 
 #include "donut_learner.hxx"
 
-// usage:
-//   PROF_METHOD(method_name, code);
-#define PROF_METHOD(method_name, code...) \
-    log(1, "Learner", "Began " #method_name); \
-    start(prof.method_name); \
+#define PROF_METHOD(code...) \
+    log(1, "Learner", "Began ", __func__); \
+    SingletonProfiler::Start("learner", __func__); \
     code \
-    stop(prof.method_name); \
-    log(1, "Learner", "Ended " #method_name ", time spent: ", \
-        to_string(prof.method_name.laps().back()))
+    SingletonProfiler::Stop("learner", __func__); \
+    log(1, "Learner", "Ended ", __func__, ", time spent: ", \
+        to_string(SingletonProfiler::Get().get_stats("learner", __func__).laps().back()))
 
-// usage:
-//   PROF_ALGO(algo_name, code);
-#define PROF_ALGO(algo_name, code...) \
-    log(2, "Learner", "Began " #algo_name); \
-    start(prof.algo_total, prof.algo_name); \
+#define PROF_ALGO(name, code...) \
+    log(1, "Learner", "Began ", #name); \
+    SingletonProfiler::Start("algo", #name); \
     code \
-    stop(prof.algo_total, prof.algo_name); \
-    log(2, "Learner", "Ended " #algo_name ", time spent: ", \
-        to_string(prof.algo_name.laps().back()))
+    SingletonProfiler::Stop("algo", #name); \
+    log(1, "Learner", "Ended ", #name, ", time spent: ", \
+        to_string(SingletonProfiler::Get().get_stats("algo", #name).laps().back()))
 
 namespace Donut
 {
@@ -45,7 +41,7 @@ void Learner::learn ()
 
         return ret;
     };
-start(prof.learner_total);
+
     assert(hypts.empty()); // call clear() before re-use
 
     fb = query(hypts); // empty conj degens to true
@@ -79,7 +75,6 @@ PROF_ALGO (toobig,
             }
             case TooSmall:
             {
-PROF_METHOD (minimize,
 PROF_ALGO (toosmall,
                 ce = teacher.counterexample(); // positive ce
                 for (auto& hypt : hypts)
@@ -91,14 +86,12 @@ PROF_ALGO (toosmall,
                     }
                 }
 );
-);
                 break;
             }
         }
         fb = query(hypts);
     }
 ret:
-stop(prof.learner_total);
     return;
 }
 
@@ -107,14 +100,14 @@ Bv Learner::minimize (const Bv& ce, const Face& f)
     auto query = [&](const Bv& bv) -> bool
     {
         bool ret;
-        pause(prof.algo_total, prof.toosmall);
+        SingletonProfiler::Pause("algo", "toosmall");
 
         ret = teacher.consider(bv);
 
-        resume(prof.algo_total, prof.toosmall);
+        SingletonProfiler::Resume("algo", "toosmall");
         return ret;
     };
-
+PROF_METHOD (
     Bv tmp = ce;
     for (size_t i=0; i<ce.len(); i++)
     {
@@ -127,7 +120,7 @@ Bv Learner::minimize (const Bv& ce, const Face& f)
                 tmp.flipper(i);
         }
     }
-
+);
     return tmp;
 }
 

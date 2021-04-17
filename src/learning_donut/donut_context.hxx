@@ -15,7 +15,7 @@ namespace Donut
 //=================================================================================================
 // Unrolling reset dispatch
 //
-struct Context : virtual public Profiled
+struct Context
 {
     // using enum Feedback; needs g++-11
     static const Feedback Refuted  = Feedback::Refuted;
@@ -31,15 +31,11 @@ struct Context : virtual public Profiled
 
     Feedback sat () const; // if there's a path from init to bad
 
-    inline const ContextProfiler& get_prof () const override { return prof; }
-
 private:
     Teacher teacher;
     Learner learner;
 
     Feedback result = Unknown;
-
-    ContextProfiler prof;
 };
 //=================================================================================================
 }

@@ -21,7 +21,7 @@ namespace Donut
 //=================================================================================================
 // Classic exact learner for stepwise over/under-approximation
 //
-struct Learner : virtual public Profiled
+struct Learner
 {
     // using enum Feedback; needs g++-11
     static const Feedback Refuted  = Feedback::Refuted;
@@ -39,8 +39,6 @@ struct Learner : virtual public Profiled
 
     const Feedback& result () const;
 
-    inline const LearnerProfiler& get_prof () const { return prof; }
-
 private:
     Teacher& teacher;
     Feedback fb = Unknown;
@@ -49,8 +47,6 @@ private:
     Bv minimize (const Bv& ce, const Face& f);
 
     vector<Face> hypts; // cdnf
-
-    LearnerProfiler prof;
 };
 //=================================================================================================
 }

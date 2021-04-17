@@ -1,26 +1,22 @@
 
 #include "donut_teacher.hxx"
 
-// usage:
-//   PROF_METHOD(method_name, code);
-#define PROF_METHOD(method_name, code...) \
-    log(1, "Teacher", "Began " #method_name); \
-    start(prof.teacher_total, prof.method_name); \
+#define PROF_METHOD(code...) \
+    log(1, "Teacher", "Began ", __func__); \
+    SingletonProfiler::Start("teacher", __func__); \
     code \
-    stop(prof.teacher_total, prof.method_name); \
-    log(1, "Teacher", "Ended " #method_name ", time spent: ", \
-        to_string(prof.method_name.laps().back()))
+    SingletonProfiler::Stop("teacher", __func__); \
+    log(1, "Teacher", "Ended ", __func__, ", time spent: ", \
+        to_string(SingletonProfiler::Get().get_stats("teacher", __func__).laps().back()))
 
-// usage:
-//   if ( PROF_SAT(sat_name, sat(...)) )
-#define PROF_SAT(sat_name, code...) \
+#define PROF_SAT(name, code...) \
     bool tmp; \
-    log(2, "Teacher", "Began " #sat_name), \
-    start(prof.sat_total, prof.sat_name), \
+    log(2, "Teacher", "Began ", #name), \
+    SingletonProfiler::Start("sat", #name), \
     tmp = code, \
-    stop(prof.sat_total, prof.sat_name), \
-    log(2, "Teacher", "Ended " #sat_name ", time spent: ", \
-        to_string(prof.sat_name.laps().back())), \
+    SingletonProfiler::Stop("sat", #name), \
+    log(2, "Teacher", "Ended ", #name, ", time spent: ", \
+        to_string(SingletonProfiler::Get().get_stats("sat", #name).laps().back())), \
     tmp
 
 namespace Donut
@@ -117,7 +113,7 @@ namespace
 //
 void Teacher::setup ()
 {
-PROF_METHOD (setup,
+PROF_METHOD(
     // set up variables over X,X'
     first_aig_varmap  = toBfmap(addAig(aig, m));
     second_aig_varmap = toBfmap(addAig(aig, m));
@@ -144,7 +140,7 @@ PROF_METHOD (setup,
 // unroll bad by `n` step
 void Teacher::unroll (size_t n)
 {
-PROF_METHOD (unroll,
+PROF_METHOD(
     for (size_t i=0; i<n; i++)
     {
         // set up variables over X''
@@ -169,7 +165,7 @@ PROF_METHOD (unroll,
 bool Teacher::degen ()
 {
     bool ret;
-PROF_METHOD(degen,
+PROF_METHOD(
     // I(X), T(X,X'), T(X',X'',...), B(X',X'',...)
     if (PROF_SAT(degen_sat,
         sat(init & trans_hd & trans_tl & bad, m)))
@@ -190,7 +186,7 @@ PROF_METHOD(degen,
 bool Teacher::advanceable ()
 {
     bool ret;
-PROF_METHOD(advanceable,
+PROF_METHOD(
     // last H(X), T(X,X'), T(X',X'',...), B(X',X'',...)
     if (PROF_SAT(advanceable_sat,
         sat(last_frnt & trans_hd & trans_tl & bad, m)))
@@ -204,7 +200,7 @@ PROF_METHOD(advanceable,
 // reset frontier back to init
 void Teacher::restart ()
 {
-PROF_METHOD(restart,
+PROF_METHOD(
     m.releaseSw(sw);
     sw = m.newSw();
 
@@ -219,7 +215,7 @@ PROF_METHOD(restart,
 bool Teacher::progressed ()
 {
     bool ret;
-PROF_METHOD(progressed,
+PROF_METHOD(
     // H(X) <= last H(X) and H is non-empty means no progress
     if (PROF_SAT(progressed_sat,
         hold(frnt |= last_frnt, m) && sat(frnt, m)))
@@ -233,7 +229,7 @@ PROF_METHOD(progressed,
 // advance frontier
 void Teacher::advance ()
 {
-PROF_METHOD(advance,
+PROF_METHOD(
     // induction by
     // last H(X)_0 = init
     // last H(X)_k = last H(X)_k-1 | H(X)
@@ -274,7 +270,7 @@ namespace
 bool Teacher::consider (Bv bv)
 {
     bool ret;
-PROF_METHOD(membership,
+PROF_METHOD(
     // accept all X' that is not in T(X',X'',...), B(X',X'',...)
     if (PROF_SAT(membership_sat,
         evaluate(trans_tl & bad, m, bv, second_index_varmap)))
@@ -289,7 +285,7 @@ PROF_METHOD(membership,
 Feedback Teacher::consider (const vector<Face>& faces)
 {
     Feedback ret;
-PROF_METHOD(equivalence,
+PROF_METHOD(
     assert(first_index_varmap.size() > 0 && last_index_varmap.size() > 0);
 
     Bf_ptr cdnf = mk_cdnf(faces);
