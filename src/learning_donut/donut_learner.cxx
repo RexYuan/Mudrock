@@ -1,14 +1,14 @@
 
 #include "donut_learner.hxx"
 
-#define SETN string(__FILE__) + " algo"s
-#define PROF_ALGO(name, code...) \
-    log(2, SETN, "Began ", #name); \
-    SingletonProfiler::Start(SETN, #name); \
-    code \
-    SingletonProfiler::Stop(SETN, #name); \
-    log(2, SETN "Ended ", #name, ", time spent: ", \
-        to_string(SingletonProfiler::Get().get_stats(SETN, #name).laps().back()))
+#define PROF_ALGO_SCOPE_AS(name)                                              \
+        PROF_SCOPE_WITH_ID("algo", name)
+
+#define PROF_ALGO_PAUSE(name)                                                 \
+    SingletonProfiler::Pause(ID_NAME(__FILE__, "algo"), ID_NAME(__func__, name));
+
+#define PROF_ALGO_RESUME(name)                                                \
+    SingletonProfiler::Resume(ID_NAME(__FILE__, "algo"), ID_NAME(__func__, name));
 
 namespace Donut
 {
@@ -61,26 +61,26 @@ PROF_SCOPE();
             case Unknown: assert(false); // shouldn't happen
             case TooBig:
             {
-PROF_ALGO (toobig,
+            PROF_ALGO_SCOPE_AS("toobig"s);
                 ce = teacher.counterexample(); // negative ce
                 assert(ce);
                 hypts.push_back(Face{ce}); // add a new councillor
-);
                 break;
             }
             case TooSmall:
             {
-PROF_ALGO (toosmall,
+            PROF_ALGO_SCOPE_AS("toosmall"s);
                 ce = teacher.counterexample(); // positive ce
                 for (auto& hypt : hypts)
                 {
                     if (!hypt(ce))
                     {
+            PROF_ALGO_PAUSE("toosmall"s);
                         ce = minimize(ce, hypt);
+            PROF_ALGO_RESUME("toosmall"s);
                         hypt.push(ce); // augment councillor
                     }
                 }
-);
                 break;
             }
         }
@@ -96,11 +96,9 @@ PROF_SCOPE();
     auto query = [&](const Bv& bv) -> bool
     {
         bool ret;
-        SingletonProfiler::Pause(SETN, "toosmall");
 
         ret = teacher.consider(bv);
 
-        SingletonProfiler::Resume(SETN, "toosmall");
         return ret;
     };
     Bv tmp = ce;
@@ -125,5 +123,6 @@ const Feedback& Learner::result () const
 //=================================================================================================
 }
 
-#undef PROF_ALGO
-#undef SETN
+#undef PROF_ALGO_SCOPE_AS
+#undef PROF_ALGO_PAUSE
+#undef PROF_ALGO_RESUME

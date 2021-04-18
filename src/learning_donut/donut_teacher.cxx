@@ -1,16 +1,17 @@
 
 #include "donut_teacher.hxx"
 
-#define SETN string(__FILE__) + " sat"s
-#define PROF_SAT(name, code...) \
-    bool tmp; \
-    log(2, SETN, "Began ", #name), \
-    SingletonProfiler::Start(SETN, #name), \
-    tmp = code, \
-    SingletonProfiler::Stop(SETN, #name), \
-    log(2, SETN, "Ended ", #name, ", time spent: ", \
-        to_string(SingletonProfiler::Get().get_stats(SETN, #name).laps().back())), \
-    tmp
+#define SAT_NAME_ID_TRAIL(name, id)                                           \
+    (string(name) == ""s ? string(id) : string(name) + " "s + string(id))
+
+#define PROF_SAT_AS(name, code...)                                            \
+    ({                                                                        \
+        PROF_SCOPE_WITH_ID("sat", SAT_NAME_ID_TRAIL(name, "sat"s));           \
+        code;                                                                 \
+    })
+
+#define PROF_SAT(code...)                                                     \
+    PROF_SAT_AS(""s, code)
 
 namespace Donut
 {
@@ -159,8 +160,7 @@ bool Teacher::degen ()
 PROF_SCOPE();
     bool ret;
     // I(X), T(X,X'), T(X',X'',...), B(X',X'',...)
-    if (PROF_SAT(degen_sat,
-        sat(init & trans_hd & trans_tl & bad, m)))
+    if (PROF_SAT(sat(init & trans_hd & trans_tl & bad, m)))
     {
         state = Refuted;
         ret = true;
@@ -179,8 +179,7 @@ bool Teacher::advanceable ()
 PROF_SCOPE();
     bool ret;
     // last H(X), T(X,X'), T(X',X'',...), B(X',X'',...)
-    if (PROF_SAT(advanceable_sat,
-        sat(last_frnt & trans_hd & trans_tl & bad, m)))
+    if (PROF_SAT(sat(last_frnt & trans_hd & trans_tl & bad, m)))
         ret = false;
     else
         ret = true;
@@ -206,8 +205,7 @@ bool Teacher::progressed ()
 PROF_SCOPE();
     bool ret;
     // H(X) <= last H(X) and H is non-empty means no progress
-    if (PROF_SAT(progressed_sat,
-        hold(frnt |= last_frnt, m) && sat(frnt, m)))
+    if (PROF_SAT(hold(frnt |= last_frnt, m) && sat(frnt, m)))
         ret = false;
     else
         ret = true;
@@ -259,7 +257,7 @@ bool Teacher::consider (Bv bv)
 PROF_SCOPE();
     bool ret;
     // accept all X' that is not in T(X',X'',...), B(X',X'',...)
-    if (PROF_SAT(membership_sat,
+    if (PROF_SAT_AS("membership"s,
         evaluate(trans_tl & bad, m, bv, second_index_varmap)))
         ret = false;
     else
@@ -284,7 +282,7 @@ PROF_SCOPE();
     // progress criterion (forward image over-approximation)
     //=========================================================================
     // last H(X), T(X,X') => H(X')
-    if (PROF_SAT(equivalence_progress_sat,
+    if (PROF_SAT_AS("equivalence progress"s,
         !hold(last_frnt & trans_hd |= frntp, m)))
     {
         // X' is positive counterexample
@@ -294,7 +292,7 @@ PROF_SCOPE();
     // soundness criterion with foresight (unrolled ~bad under-approximation)
     //=========================================================================
     // H(X'), T(X',X'',...) => ~B(X',X'',...)
-    else if (PROF_SAT(equivalence_soundness_sat,
+    else if (PROF_SAT_AS("equivalence soundness"s,
              !hold(frntp & trans_tl |= ~bad, m)))
     {
         // X' is negative counterexample
@@ -325,5 +323,6 @@ PROF_SCOPE();
 //=================================================================================================
 }
 
+#undef SAT_NAME_ID_TRAIL
+#undef PROF_SAT_AS
 #undef PROF_SAT
-#undef SETN

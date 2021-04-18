@@ -63,10 +63,15 @@ struct SingletonProfiler
         return prof;
     }
 
-    static void Start  (string set_name, string name) { start (SingletonProfiler::Get().get_stats(set_name, name)); }
-    static void Stop   (string set_name, string name) { stop  (SingletonProfiler::Get().get_stats(set_name, name)); }
-    static void Resume (string set_name, string name) { resume(SingletonProfiler::Get().get_stats(set_name, name)); }
-    static void Pause  (string set_name, string name) { pause (SingletonProfiler::Get().get_stats(set_name, name)); }
+    static Stats& GetStats (string set_name, string name)
+    {
+        return SingletonProfiler::Get().get_stats(set_name, name);
+    }
+
+    static void Start  (string set_name, string name) { start (SingletonProfiler::GetStats(set_name, name)); }
+    static void Stop   (string set_name, string name) { stop  (SingletonProfiler::GetStats(set_name, name)); }
+    static void Resume (string set_name, string name) { resume(SingletonProfiler::GetStats(set_name, name)); }
+    static void Pause  (string set_name, string name) { pause (SingletonProfiler::GetStats(set_name, name)); }
 
     SingletonProfiler () {}
     SingletonProfiler           (const SingletonProfiler&) = delete;
@@ -81,18 +86,26 @@ struct SingletonProfiler
 #define PROF_SCOPE_NAME(line, count)                                          \
     PROF_SCOPE_NAME_HELPER(line, count)
 
-#define PROF_SCOPE_AS(set_name, name)                                         \
+#define PROF_SCOPE_AS(verbosity, set_name, name)                              \
     struct ScopeProfiler                                                      \
     {                                                                         \
         ScopeProfiler (string sn_, string n_) : sn{sn_}, n{n_}                \
-            { log(1, sn, "Began ", n);                                        \
-              SingletonProfiler::Start(sn, n); }                              \
+            { SingletonProfiler::Start(sn, n);                                \
+              log(verbosity, sn, "Began ", n); }                              \
        ~ScopeProfiler ()                                                      \
-            { log(1, sn, "Ended ", n);                                        \
-              SingletonProfiler::Stop (sn, n); }                              \
+            { SingletonProfiler::Stop (sn, n);                                \
+              log(verbosity, sn, "Ended ", n,                                 \
+                  ", time spent: ", to_string(                                \
+                  SingletonProfiler::GetStats(sn, n).laps().back())); }       \
     private:                                                                  \
         string sn, n;                                                         \
     } PROF_SCOPE_NAME(__LINE__, __COUNTER__) {set_name, name}
 
 #define PROF_SCOPE()                                                          \
-    PROF_SCOPE_AS(__FILE__, __func__)
+    PROF_SCOPE_AS(1, __FILE__, __func__)
+
+#define ID_NAME(name, id)                                                     \
+    (string(id) == ""s ? string(name) : string(name) + " "s + string(id))
+
+#define PROF_SCOPE_WITH_ID(sid, nid)                                          \
+    PROF_SCOPE_AS(2, ID_NAME(__FILE__, sid), ID_NAME(__func__, nid))
