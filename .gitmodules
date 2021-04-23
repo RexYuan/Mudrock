@@ -1,0 +1,3 @@
+[submodule "lib/minisat22-fixed"]
+	path = lib/minisat22-fixed
+	url = https://github.com/RexYuan/minisat22-fixed.git

@@ -48,12 +48,19 @@ vpath %.cxx $(COLON_SEP_SRC_DIRS)
 vpath %.hxx $(COLON_SEP_SRC_DIRS)
 
 ###############################################################################
-# Minisat                                                                     #
+# Submodule paths                                                             #
 ###############################################################################
-MINISAT_DIR := lib
-MINISAT_HDR := $(MINISAT_DIR)/minisat.hxx
-MINISAT_PCH := $(OBJ_ROOT)/minisat.hxx.gch
-MINISAT_AR  := minisat
+LIB_ROOT := lib
+MINISAT_ROOT := $(LIB_ROOT)/minisat22-fixed
+
+MINISAT_LIB_DIR  := $(MINISAT_ROOT)/build/release/lib
+MINISAT_LIB_NAME := minisat
+MINISAT_LIB_AR   := $(MINISAT_LIB_DIR)/lib$(MINISAT_LIB_NAME).a
+
+MINISAT_HDR     := $(LIB_ROOT)/minisat.hxx
+MINISAT_PCH     := $(OBJ_ROOT)/minisat.hxx.gch
+
+MINISAT := $(MINISAT_LIB_AR) $(MINISAT_PCH)
 
 ###############################################################################
 # Compile options                                                             #
@@ -61,11 +68,11 @@ MINISAT_AR  := minisat
 CXX_STD := -std=c++20
 CXX_W   := -Wall
 
-CPP_FLAGS := $(addprefix -I, $(dir $(SRCS)) $(MINISAT_DIR))
+CPP_FLAGS := $(addprefix -I, $(dir $(SRCS)) $(LIB_ROOT) $(MINISAT_ROOT))
 CXX_INCS  := $(CPP_FLAGS)
 
-LD_FLAGS  := -L$(MINISAT_DIR)
-LD_LIBS   := -l$(MINISAT_AR)
+LD_FLAGS  := -L$(MINISAT_LIB_DIR)
+LD_LIBS   := -l$(MINISAT_LIB_NAME)
 CXX_LINKS := $(LD_FLAGS) $(LD_LIBS)
 
 CXX_FLAGS := $(CXX_STD) $(CXX_W) $(CXX_INCS)
@@ -74,6 +81,15 @@ MAIN_SRC := main.cxx
 MAIN_OBJ := $(MAIN_SRC:.cxx=.o)
 
 OUT := $(MAIN_OBJ)
+
+###############################################################################
+# Submodules recipes                                                          #
+###############################################################################
+$(MINISAT_LIB_AR):
+	$(MAKE) -C $(MINISAT_ROOT)
+
+$(MINISAT_PCH): $(MINISAT_HDR) | $(OBJ_ROOT)
+	$(CXX) $(CXX_STD) -w -I$(MINISAT_ROOT) -c $< -o $@
 
 ###############################################################################
 # Canned                                                                      #
@@ -91,6 +107,7 @@ define ObjFactory
 $(OBJ_ROOT)/$(1)/%.o: %.cxx %.hxx | $(OBJ_ROOT)/$(1)
 	$$(CXX) $$(CXX_FLAGS) -c $$< $$(CXX_LINKS) -o $$@
 endef
+
 
 ###############################################################################
 # Recipes                                                                     #
@@ -115,10 +132,7 @@ $(DEP_DIRS): | $(DEP_ROOT)
 $(OBJ_ROOT) $(OBJ_DIRS) $(DEP_ROOT) $(DEP_DIRS):
 	mkdir $@
 
-$(MINISAT_PCH): $(MINISAT_HDR) | $(OBJ_ROOT)
-	$(CXX) $(CXX_STD) -w -I$(MINISAT_DIR) -c $< -o $@
-
-$(MAIN_OBJ): $(MAIN_SRC) $(OBJS) $(MINISAT_PCH) | $(OBJ_ROOT)
+$(MAIN_OBJ): $(MAIN_SRC) $(OBJS) $(MINISAT) | $(OBJ_ROOT)
 	$(CXX) $(CXX_FLAGS) $(OBJS) $< $(CXX_LINKS) -o $@
 
 $(foreach d, $(SUB_DIRS), $(eval $(call DepFactory,$(d))))
