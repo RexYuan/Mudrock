@@ -60,10 +60,10 @@ struct Teacher
     //=============================================================================================
     // Query commands for learner
     //
-    bool consider (Bv bv);
+    bool membership (Bv bv);
     // counterexample populators
     //
-    Feedback consider (const vector<Face>& faces); // if frontier image < `faces` < bad
+    Feedback equivalence (const vector<Face>& faces); // if frontier image < `faces` < bad
 
     Bv counterexample () const;
     const Feedback& check_state () const;

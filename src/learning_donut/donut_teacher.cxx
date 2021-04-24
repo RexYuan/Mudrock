@@ -252,13 +252,12 @@ namespace
 //=================================================================================================
 // Query commands for learner
 //
-bool Teacher::consider (Bv bv)
+bool Teacher::membership (Bv bv)
 {
 PROF_SCOPE();
     bool ret;
     // accept all X' that is not in T(X',X'',...), B(X',X'',...)
-    if (PROF_SAT_AS("membership"s,
-        evaluate(trans_tl & bad, m, bv, second_index_varmap)))
+    if (PROF_SAT(evaluate(trans_tl & bad, m, bv, second_index_varmap)))
         ret = false;
     else
         ret = true;
@@ -266,7 +265,7 @@ PROF_SCOPE();
 }
 
 // if frontier image < `faces` < bad
-Feedback Teacher::consider (const vector<Face>& faces)
+Feedback Teacher::equivalence (const vector<Face>& faces)
 {
 PROF_SCOPE();
     Feedback ret;
@@ -282,7 +281,7 @@ PROF_SCOPE();
     // progress criterion (forward image over-approximation)
     //=========================================================================
     // last H(X), T(X,X') => H(X')
-    if (PROF_SAT_AS("equivalence progress"s,
+    if (PROF_SAT_AS("progress"s,
         !hold(last_frnt & trans_hd |= frntp, m)))
     {
         // X' is positive counterexample
@@ -292,7 +291,7 @@ PROF_SCOPE();
     // soundness criterion with foresight (unrolled ~bad under-approximation)
     //=========================================================================
     // H(X'), T(X',X'',...) => ~B(X',X'',...)
-    else if (PROF_SAT_AS("equivalence soundness"s,
+    else if (PROF_SAT_AS("soundness"s,
              !hold(frntp & trans_tl |= ~bad, m)))
     {
         // X' is negative counterexample

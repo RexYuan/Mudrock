@@ -32,7 +32,7 @@ PROF_SCOPE();
     {
         Feedback ret;
 
-        ret = teacher.consider(hypts);
+        ret = teacher.equivalence(hypts);
 
         return ret;
     };
@@ -97,7 +97,7 @@ PROF_SCOPE();
     {
         bool ret;
 
-        ret = teacher.consider(bv);
+        ret = teacher.membership(bv);
 
         return ret;
     };
