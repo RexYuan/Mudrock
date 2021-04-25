@@ -3,6 +3,8 @@
 
 #include <cassert>
 
+#include "sig.hxx"
+
 #include <vector>
 using std::vector;
 
@@ -15,6 +17,7 @@ using std::vector;
 #include "donut_types.hxx"
 #include "donut_teacher.hxx"
 #include "profiler.hxx"
+#include "logger.hxx"
 
 namespace Donut
 {

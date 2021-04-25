@@ -34,7 +34,10 @@ Feedback Context::check ()
                 teacher.advance();               //             last frnt = frnt
         }                                        //     }
         if (terminate_requested)
+        {
+            log(3, "Top", "SIGTERM received. Check returning Unknown");
             return (result = Unknown);
+        }
     }                                            // }
 }
 

@@ -53,6 +53,11 @@ PROF_SCOPE();
 
     while (true)
     {
+        if (terminate_requested)
+        {
+            log(3, "Top", "SIGTERM received. Breaking out of learn loop");
+            break;
+        }
         switch (fb)
         {
             // needs g++-11
@@ -104,6 +109,11 @@ PROF_SCOPE();
     Bv tmp = ce;
     for (size_t i=0; i<ce.len(); i++)
     {
+        if (terminate_requested)
+        {
+            log(3, "Top", "SIGTERM received. Breaking out of minimize loop");
+            break;
+        }
         if (tmp[i] != f.basis()[i])
         {
             tmp.flipper(i);

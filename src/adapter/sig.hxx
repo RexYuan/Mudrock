@@ -5,5 +5,5 @@
 #include <cstdlib>
 #include <csignal>
 
-extern bool terminate_requested;
+extern volatile sig_atomic_t terminate_requested;
 void sigterm_handler (int signum);

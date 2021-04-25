@@ -1,7 +1,7 @@
 
 #include "sig.hxx"
 
-bool terminate_requested = false;
+volatile sig_atomic_t terminate_requested = false;
 
 void sigterm_handler (int signum)
 {
