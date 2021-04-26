@@ -10,15 +10,17 @@ OS := $(shell uname -s)
 # Utilities                                                                   #
 ###############################################################################
 ifeq ($(OS),Darwin)
-	RM  := trash
-	CXX := g++-10
-	CPP := cpp-10 -E
+ RM  := trash
+ CXX := g++-10
+ CPP := cpp-10 -E
 else
-	ifeq ($(OS),Linux)
-		RM  := rm -rf
-		CXX := g++
-		CPP := cpp -E
-	endif
+ ifeq ($(OS),Linux)
+  RM  := rm -rf
+  CXX := g++
+  CPP := cpp -E
+ else
+  $(error Darwin/Linux only!)
+ endif
 endif
 
 ###############################################################################
