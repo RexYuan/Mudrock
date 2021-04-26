@@ -124,10 +124,17 @@ debug: $(OUT)
 debug:
 	lldb $(OUT)
 
-.PHONY: clean
+.PHONY: clean cleanall
 clean:
 	@echo "deleting builds"
 	@$(call Silence, $(RM) $(OBJ_ROOT) $(MAIN_OBJ))
+cleanall:
+	@echo "deleting builds"
+	@$(call Silence, $(RM) $(OBJ_ROOT) $(MAIN_OBJ))
+	@echo "deleting depends"
+	@$(call Silence, $(RM) $(DEP_ROOT))
+	@echo "deleting minisat builds"
+	@$(call Silence, $(MAKE) -C $(MINISAT_ROOT) -s clean VERB=)
 
 $(OBJ_DIRS): | $(OBJ_ROOT)
 $(DEP_DIRS): | $(DEP_ROOT)
