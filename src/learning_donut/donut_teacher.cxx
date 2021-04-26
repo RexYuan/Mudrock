@@ -19,7 +19,7 @@ namespace Donut
 Teacher::Teacher (const string& filename) :
 m{Mana{}},
 aig{Aig{filename}},
-sw{m.newSw()}
+cumu_sw{m.newSw()}, tent_sw{m.newSw()}
 {
     assert(aig);
     assert(aig.num_outputs() == 1);
@@ -32,7 +32,9 @@ log(3, "Teacher", "Began renewing");
     // renew mana
     m.~Mana();
     new (&m) Mana{};
-    sw = m.newSw();
+
+    cumu_sw = m.newSw();
+    tent_sw = m.newSw();
 
     // restore constraints
     setup();
@@ -190,8 +192,10 @@ PROF_SCOPE();
 void Teacher::restart ()
 {
 PROF_SCOPE();
-    m.releaseSw(sw);
-    sw = m.newSw();
+    m.releaseSw(cumu_sw);
+    m.releaseSw(tent_sw);
+    cumu_sw = m.newSw();
+    tent_sw = m.newSw();
 
     f_last_frnt_cache  = last_frnt  = init;
     f_last_frntp_cache = last_frntp = init;
@@ -216,11 +220,15 @@ PROF_SCOPE();
 void Teacher::advance ()
 {
 PROF_SCOPE();
+    // cumulate progress
+    frnt  = v(addBf(f_frnt_cache,  m, cumu_sw));
+    frntp = v(addBf(f_frntp_cache, m, cumu_sw));
+
     // induction by
     // last H(X)_0 = init
     // last H(X)_k = last H(X)_k-1 | H(X)
-    last_frnt  = v(addBf(frnt  | last_frnt, m));
-    last_frntp = v(addBf(frntp | last_frntp, m));
+    last_frnt  = v(addBf(frnt  | last_frnt,  m, cumu_sw));
+    last_frntp = v(addBf(frntp | last_frntp, m, cumu_sw));
 
     f_last_frnt_cache  = f_frnt_cache  | f_last_frnt_cache;
     f_last_frntp_cache = f_frntp_cache | f_last_frntp_cache;
@@ -271,12 +279,15 @@ PROF_SCOPE();
     Feedback ret;
     assert(first_index_varmap.size() > 0 && last_index_varmap.size() > 0);
 
+    m.releaseSw(tent_sw);
+    tent_sw = m.newSw();
+
     Bf_ptr cdnf = mk_cdnf(faces);
     // H(X), H(X')
     Bf_ptr first_cdnf  = subst(cdnf, first_index_varmap),
            second_cdnf = subst(cdnf, second_index_varmap);
-    frnt  = v(addBf(f_frnt_cache  = first_cdnf, m, sw));
-    frntp = v(addBf(f_frntp_cache = second_cdnf, m, sw));
+    frnt  = v(addBf(f_frnt_cache  = first_cdnf,  m, tent_sw));
+    frntp = v(addBf(f_frntp_cache = second_cdnf, m, tent_sw));
 
     // progress criterion (forward image over-approximation)
     //=========================================================================

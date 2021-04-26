@@ -74,7 +74,8 @@ private:
     map<int,int> first_aig_varmap,   second_aig_varmap,   last_aig_varmap;
     map<int,int> first_index_varmap, second_index_varmap, last_index_varmap;
 
-    Sw sw;
+    Sw cumu_sw, // tracking the cumulative disjuncted hypotheses set
+       tent_sw; // tracking the tentative frontier hypothesis
     // Working with bf formulae
     //
     // formulae for given conditions
