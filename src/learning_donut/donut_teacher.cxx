@@ -265,10 +265,10 @@ bool Teacher::membership (Bv bv)
 PROF_SCOPE();
     bool ret;
     // accept all X' that is not in T(X',X'',...), B(X',X'',...)
-    if (PROF_SAT(evaluate(trans_tl & bad, m, bv, second_index_varmap)))
-        ret = false;
-    else
+    if (PROF_SAT(evaluate(last_frnt & trans_hd, m, bv, second_index_varmap)))
         ret = true;
+    else
+        ret = false;
     return ret;
 }
 
