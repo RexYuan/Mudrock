@@ -1,6 +1,7 @@
 build/
 depend/
 log/
+__pycache__/
 *.o
 *.a
 *.gch
