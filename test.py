@@ -57,20 +57,28 @@ def get_time(func):
 
 # run test
 def run_test(aag, state, ret):
+    result = [None, None, None]
     direct_time = (donut_time := "--")
 
     try:
         donut_time = get_time(lambda: run_in_donut(aag))
     except subprocess.TimeoutExpired:
         donut_time = "to"
+        result[0] = False
     except TermError:
         donut_time = "killed"
+        result[0] = False
+    else:
+        result[0] = True
 
     if abc_exists:
         try:
             abc_time = get_time(lambda: run_abc_int(aag))
         except subprocess.TimeoutExpired:
             abc_time = "to"
+            result[1] = False
+        else:
+            result[1] = True
     else:
         abc_time = "n/a"
 
@@ -78,13 +86,23 @@ def run_test(aag, state, ret):
         direct_time = get_time(lambda: run_in_direct(aag))
     except subprocess.TimeoutExpired:
         direct_time = "to"
+        result[2] = False
+    else:
+        result[2] = True
 
     print_line(state, aag, donut_time, abc_time, direct_time)
+    return result
 
 if __name__ == "__main__":
     print_horizontal()
     print_header()
     print_horizontal()
     with multiprocessing.Pool(processes=worker) as pool:
-        pool.starmap(run_test, tests)
+        rets = pool.starmap(run_test, tests)
     print_horizontal()
+
+    print("total", len(tests))
+    for n, i in zip(("donut", "abc", "direct"), range(3)):
+        extracted = map(lambda trip: trip[i], rets)
+        summed = functools.reduce(lambda acc,i: acc+1 if i else acc, extracted, 0)
+        print(n, summed)
