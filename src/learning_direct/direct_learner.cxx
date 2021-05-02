@@ -47,20 +47,21 @@ void Learner::learn ()
             }
             case TooSmall:
             {
-                // TODO: optimizable by sat solving strict order constraint
+                // TODO: possibility of eliminating a face by affirming its basis?
                 ce = teacher.counterexample(); // positive ce
                 for (auto& hypt : hypts)
                 {
                     if (!hypt(ce))
                     {
+                        ce = teacher.minimize(ce, hypt);
                         hypt.push(ce); // augment councillor
-                    }
-
-                    // re-align with the council while we're at it
-                    while (!teacher.aligned(hypt))
-                    {
-                        ce = teacher.counterexample();
-                        hypt.push(ce); // positive ce
+                        // re-align with the council while we're at it
+                        while (!teacher.aligned(hypt))
+                        {
+                            ce = teacher.counterexample();
+                            ce = teacher.minimize(ce, hypt);
+                            hypt.push(ce); // positive ce
+                        }
                     }
                 }
                 break;

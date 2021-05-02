@@ -176,8 +176,8 @@ namespace
  */
 Feedback Teacher::judge (const vector<Face>& faces)
 {
-    Bf_ptr deadirect_endsp = subst(mk_char_dnf(faces), next_index_varmap);
-    if (sat(hypt & trans & ~hyptp & deadirect_endsp, m))
+    Bf_ptr dead_endsp = subst(mk_char_dnf(faces), next_index_varmap);
+    if (sat(hypt & trans & ~hyptp & dead_endsp, m))
     {
         // X is negative counterexample
         ce = mk_ce(curr_index_varmap, m);
@@ -235,6 +235,42 @@ bool Teacher::aligned (const Face& face)
 
     m.releaseSw(asw);
     return ret;
+}
+
+namespace
+{
+    // constraint of being strictly less than `b` in `face` over `index_varmap`
+    inline Bf_ptr mk_lt_basis (const Bv& b, const Face& f, const map<int,int>& index_varmap)
+    {
+        assert(b.len() == f.basis().len() && b.len() == index_varmap.size());
+        Bf_ptr ret = v(true);
+
+        // neq
+        ret = ret & subst(~toBf(b), index_varmap);
+
+        // leq
+        Bv xored = b ^ f.basis();
+        auto bit = b.begin();
+        auto xit = xored.begin();
+        auto mit = index_varmap.begin();
+        for (; bit != b.end(); bit++, xit++, mit++)
+            if (!*xit)
+                ret = ret & (*bit ? v(mit->second) :
+                                   ~v(mit->second));
+
+        return ret;
+    }
+}
+// minimize positive counterexample
+Bv Teacher::minimize (const Bv& bv, const Face& face)
+{
+    Bv tmp = bv;
+    // Hypt(X), Trans(I,X,X'), ~Hypt(X'), X' <_{face} bv, ~DEAD_ENDS(X')
+    // ~DEAD_ENDS(X') is implicit by `judge` always giving negative first if there's any
+    while (sat(mk_lt_basis(tmp, face, next_index_varmap) &
+               hypt & trans & ~hyptp, m))
+        tmp = mk_ce(next_index_varmap, m);
+    return tmp;
 }
 
 const Feedback& Teacher::check_state () const

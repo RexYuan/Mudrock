@@ -43,6 +43,7 @@ struct Teacher
 
     bool degen (); // if init intersects bad
 
+    Bv minimize (const Bv& bv, const Face& face); // minimize `bv` in `face`
     // counterexample populator
     Feedback consider (const vector<Face>& faces); // add `hypts` and check if invariant is found
     bool aligned (const Face& face); // if `face` prevents `hypt` from being transitive
