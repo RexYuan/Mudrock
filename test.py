@@ -91,10 +91,11 @@ def run_test(aag, state, ret):
     else:
         result[2] = True
 
-    print_line(state, aag, donut_time, abc_time, direct_time)
+    print_line(ret, state, aag, donut_time, abc_time, direct_time)
     return result
 
 parser = argparse.ArgumentParser()
+parser.add_argument("-r", "--result", help='filter sat/uns')
 group = parser.add_mutually_exclusive_group()
 group.add_argument("-f", "--file", help='specify one or more input file title(s)', nargs="+")
 group.add_argument("-n", "--number", help='specify number of tests')
@@ -106,7 +107,11 @@ if __name__ == "__main__":
         tests = [(aag, state, ret) for aag, state, ret in tests if aag in files]
         if not tests:
             raise FileNotFoundError(args.file)
-    elif args.number:
+    if args.result:
+        if args.result not in {"sat", "uns"}:
+            raise ValueError(args.result)
+        tests = [(aag, state, ret) for aag, state, ret in tests if ret == args.result]
+    if args.number:
         tests = tests[:int(args.number)]
         if not tests:
             raise IndexError(args.number)
