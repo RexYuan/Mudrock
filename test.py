@@ -5,6 +5,7 @@ import subprocess
 import multiprocessing
 import functools
 import signal
+import argparse
 
 from config import *
 from logging import *
@@ -93,7 +94,23 @@ def run_test(aag, state, ret):
     print_line(state, aag, donut_time, abc_time, direct_time)
     return result
 
+parser = argparse.ArgumentParser()
+group = parser.add_mutually_exclusive_group()
+group.add_argument("-f", "--file", help='specify one or more input file title(s)', nargs="+")
+group.add_argument("-n", "--number", help='specify number of tests')
+
 if __name__ == "__main__":
+    args = parser.parse_args()
+    if args.file:
+        files = [f if "." not in f else f.split(".")[0] for f in args.file]
+        tests = [(aag, state, ret) for aag, state, ret in tests if aag in files]
+        if not tests:
+            raise FileNotFoundError(args.file)
+    elif args.number:
+        tests = tests[:int(args.number)]
+        if not tests:
+            raise IndexError(args.number)
+
     print_horizontal()
     print_header()
     print_horizontal()
