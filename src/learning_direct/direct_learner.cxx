@@ -67,15 +67,7 @@ void Learner::learn ()
                 break;
             }
         }
-#ifdef PRINT
-        std::cout << "asking:" << "\n";
-        for (auto& hypt : hypts)
-            std::cout << hypt << "\n";
-#endif
         fb = teacher.consider(hypts);
-#ifdef PRINT
-        std::cout << "feedback: " << fb << "\n";
-#endif
     }
 }
 

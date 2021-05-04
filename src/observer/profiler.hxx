@@ -68,10 +68,17 @@ struct SingletonProfiler
         return SingletonProfiler::Get().get_stats(set_name, name);
     }
 
+#ifdef PROFILING
     static void Start  (string set_name, string name) { start (SingletonProfiler::GetStats(set_name, name)); }
     static void Stop   (string set_name, string name) { stop  (SingletonProfiler::GetStats(set_name, name)); }
     static void Resume (string set_name, string name) { resume(SingletonProfiler::GetStats(set_name, name)); }
     static void Pause  (string set_name, string name) { pause (SingletonProfiler::GetStats(set_name, name)); }
+#else
+    static void Start  (string set_name, string name) {}
+    static void Stop   (string set_name, string name) {}
+    static void Resume (string set_name, string name) {}
+    static void Pause  (string set_name, string name) {}
+#endif
 
     SingletonProfiler () {}
     SingletonProfiler           (const SingletonProfiler&) = delete;
@@ -86,6 +93,7 @@ struct SingletonProfiler
 #define PROF_SCOPE_NAME(line, count)                                          \
     PROF_SCOPE_NAME_HELPER(line, count)
 
+#ifdef PROFILING
 #define PROF_SCOPE_AS(verbosity, set_name, name)                              \
     struct ScopeProfiler                                                      \
     {                                                                         \
@@ -100,6 +108,9 @@ struct SingletonProfiler
     private:                                                                  \
         string sn, n;                                                         \
     } PROF_SCOPE_NAME(__LINE__, __COUNTER__) {set_name, name}
+#else
+#define PROF_SCOPE_AS(verbosity, set_name, name)
+#endif
 
 #define PROF_SCOPE()                                                          \
     PROF_SCOPE_AS(1, __FILE__, __func__)

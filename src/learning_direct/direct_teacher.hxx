@@ -51,7 +51,7 @@ struct Teacher
     Bv counterexample () const;
     const Feedback& check_state () const;
 
-//private:
+private:
     Mana m;
     Aig aig;
     map<int,int> curr_index_varmap, next_index_varmap;

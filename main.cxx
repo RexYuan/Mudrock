@@ -47,7 +47,12 @@ int main(int argc, char** argv)
         using namespace Donut;
         Context c{filename};
         c.check();
+
+#ifdef PROFILING
+        SingletonLogger::Get().write();
         output << SingletonProfiler::Get();
+#endif
+
         output << c.sat();
     }
     else
@@ -56,7 +61,6 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    SingletonLogger::Get().write();
     cout << output.str() << endl;
 
     return EXIT_SUCCESS;

@@ -63,5 +63,7 @@ struct SingletonLogger
 template <typename T, typename... Ts> requires are_convertible_to_strings<T, Ts...>
 void log (size_t verbosity, const T& title, const Ts&... msgs)
 {
+#ifdef LOGGING
     SingletonLogger::Get().log("("s, title, ") "s, string(verbosity, '#'), " "s, msgs...);
+#endif
 }

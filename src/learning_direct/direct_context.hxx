@@ -28,7 +28,7 @@ struct Context
 
     bool sat () const; // if there's a path from init to bad
 
-//private:
+private:
     Teacher teacher;
     Learner learner;
 
