@@ -67,17 +67,21 @@ MINISAT := $(MINISAT_LIB_AR) $(MINISAT_PCH)
 ###############################################################################
 # Compile options                                                             #
 ###############################################################################
-CXX_STD := -std=c++20
-CXX_W   := -Wall
+CXX_STD   := -std=c++20
+CXX_W     := -Wall
+CXX_O     := -O0
+CXX_DEBUG :=
 
-CPP_FLAGS := $(addprefix -I, $(dir $(SRCS)) $(LIB_ROOT) $(MINISAT_ROOT))
-CXX_INCS  := $(CPP_FLAGS)
+CPP_DEF   :=
+CPP_PATH  := -iprefix$(SRC_ROOT)/ $(addprefix -iwithprefixbefore, $(SUB_DIRS))
+CPP_PATH  += $(addprefix -I, $(LIB_ROOT) $(MINISAT_ROOT))
+
+override CPP_FLAGS = $(CPP_DEF) $(CPP_PATH)
+override CXX_FLAGS = $(CXX_STD) $(CXX_W) $(CXX_O) $(CXX_DEBUG) $(CPP_FLAGS)
 
 LD_FLAGS  := -L$(MINISAT_LIB_DIR)
 LD_LIBS   := -l$(MINISAT_LIB_NAME)
 CXX_LINKS := $(LD_FLAGS) $(LD_LIBS)
-
-CXX_FLAGS := $(CXX_STD) $(CXX_W) $(CXX_INCS)
 
 MAIN_SRC := main.cxx
 MAIN_OBJ := $(MAIN_SRC:.cxx=.o)
@@ -110,19 +114,23 @@ $(OBJ_ROOT)/$(1)/%.o: %.cxx %.hxx | $(OBJ_ROOT)/$(1)
 	$$(CXX) $$(CXX_FLAGS) -c $$< $$(CXX_LINKS) -o $$@
 endef
 
-
 ###############################################################################
 # Recipes                                                                     #
 ###############################################################################
 .PHONY: all
-all: CXX_FLAGS += -g -O0
-all: $(OUT)
+all: debug
+
+.PHONY: release
+release: CXX_O     := -Ofast
+release: CXX_DEBUG := -g0
+release: CPP_DEF   := -D NDEBUG
+release: $(OUT)
 
 .PHONY: debug
-debug: CXX_FLAGS += -g -O0 -D PRINT
+debug: CXX_O     := -Og
+debug: CXX_DEBUG := -g3
+debug: CPP_DEF   := -D LOGGING -D PROFILING
 debug: $(OUT)
-debug:
-	lldb $(OUT)
 
 .PHONY: clean cleanall
 clean:
