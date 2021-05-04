@@ -2,7 +2,6 @@
 import pathlib
 
 # test configs
-worker = 1
 time_limit = 900
 term_time_limit = 30
 
@@ -29,7 +28,6 @@ with open(test_cases) as f:
     for line in list(f):
         aag, state, ret = line.split()
         tests.append((aag, state, ret))
-tests = tests[:]
 
 # logging
 def log_out(aag, data):

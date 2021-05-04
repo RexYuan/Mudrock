@@ -96,9 +96,10 @@ def run_test(aag, state, ret):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-r", "--result", help='filter sat/uns')
+parser.add_argument("-w", "--worker", help='specify number of workers', default="1", type=int)
 group = parser.add_mutually_exclusive_group()
 group.add_argument("-f", "--file", help='specify one or more input file title(s)', nargs="+")
-group.add_argument("-n", "--number", help='specify number of tests')
+group.add_argument("-n", "--number", help='specify number of tests', type=int)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -112,14 +113,14 @@ if __name__ == "__main__":
             raise ValueError(args.result)
         tests = [(aag, state, ret) for aag, state, ret in tests if ret == args.result]
     if args.number:
-        tests = tests[:int(args.number)]
+        tests = tests[:args.number]
         if not tests:
             raise IndexError(args.number)
 
     print_horizontal()
     print_header()
     print_horizontal()
-    with multiprocessing.Pool(processes=worker) as pool:
+    with multiprocessing.Pool(processes=args.worker) as pool:
         rets = pool.starmap(run_test, tests)
     print_horizontal()
 
