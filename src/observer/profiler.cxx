@@ -105,9 +105,3 @@ string Profiler::to_string () const
 {
     return get_table().to_string();
 }
-
-ostream& operator << (ostream& out, const Profiler& prof)
-{
-    out << prof.to_string();
-    return out;
-}

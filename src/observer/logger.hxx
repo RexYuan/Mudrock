@@ -31,11 +31,7 @@ struct Logger
     ~Logger ();
 
     template <typename... Ts> requires are_convertible_to_strings<Ts...>
-    void log (const Ts&... msgs)
-    {
-        (buffer << ... << msgs) << endl;
-        try_write();
-    }
+    void log (const Ts&... msgs);
 
     void try_write ();
     void write (); // write `buffer` content to `outs`
@@ -59,6 +55,15 @@ struct SingletonLogger
     SingletonLogger           (SingletonLogger&&) = delete;
     SingletonLogger& operator=(SingletonLogger&&) = delete;
 };
+
+template <typename... Ts> requires are_convertible_to_strings<Ts...>
+void Logger::log (const Ts&... msgs)
+{
+#ifdef LOGGING
+    (buffer << ... << msgs) << endl;
+    try_write();
+#endif
+}
 
 template <typename T, typename... Ts> requires are_convertible_to_strings<T, Ts...>
 void log (size_t verbosity, const T& title, const Ts&... msgs)

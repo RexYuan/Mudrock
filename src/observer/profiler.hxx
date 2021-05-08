@@ -53,7 +53,13 @@ private:
 
     PTable get_table () const;
 };
-ostream& operator << (ostream& out, const Profiler& prof);
+inline ostream& operator << (ostream& out, const Profiler& prof)
+{
+#ifdef PROFILING
+    out << prof.to_string();
+#endif
+    return out;
+}
 
 struct SingletonProfiler
 {
