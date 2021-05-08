@@ -53,7 +53,7 @@ namespace
 {
     inline void validate_range (const Mana& m, const vector<Var>& range)
     {
-        for (const auto& v: range)
+        for ([[maybe_unused]] const auto& v: range)
             assert(v < m.nVars());
     }
 

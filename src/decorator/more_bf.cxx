@@ -18,7 +18,7 @@ bool contains (const Bf_ptr& bf, int v)
         return false;
     }
     }
-    assert(false);
+    throw InvalidBfConn("Unmatched cases."s);
 }
 
 Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& varmap)
@@ -46,7 +46,7 @@ Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& varmap)
         return tmp;
     }
     }
-    assert(false);
+    throw InvalidBfConn("Unmatched cases."s);
 }
 
 bool evaluate (const Bf_ptr& bf, const Bv& val)
@@ -74,7 +74,7 @@ bool evaluate (const Bf_ptr& bf, const Bv& val)
         return false;
     }
     }
-    assert(false);
+    throw InvalidBfConn("Unmatched cases."s);
 }
 
 string tabulate (const Bf_ptr& bf, size_t len)

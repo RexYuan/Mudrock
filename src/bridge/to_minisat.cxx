@@ -51,13 +51,13 @@ Var addBf (const Bf_ptr& bf, Mana& m, optional<Sw> swopt)
         return v;
     }
     }
-    assert(false);
+    throw InvalidBfConn("Unmatched cases."s);
 }
 
 void fixBf (const Bf_ptr& bf, Mana& m)
 {
     Var tmp = addBf(bf, m);
-    bool ret = m.addClause(m.fixedSw(), mkLit(tmp));
+    [[maybe_unused]] bool ret = m.addClause(m.fixedSw(), mkLit(tmp));
     assert(ret);
 }
 

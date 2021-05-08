@@ -22,7 +22,7 @@ bool Context::sat () const
     case Perfect: return false;
     default: break;
     }
-    assert(false);
+    throw InvalidFeedback("Must be final and determined."s);
 }
 //=================================================================================================
 }

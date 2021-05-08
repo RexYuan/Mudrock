@@ -50,7 +50,7 @@ Feedback Context::sat () const
     case Unknown: return result;
     default: break;
     }
-    assert(false);
+    throw InvalidFeedback("Must be final."s);
 }
 //=================================================================================================
 }

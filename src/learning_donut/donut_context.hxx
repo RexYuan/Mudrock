@@ -3,6 +3,10 @@
 
 #include <cassert>
 
+#include <string>
+using std::string;
+using namespace std::string_literals;
+
 #include "sig.hxx"
 
 #include "donut_types.hxx"

@@ -3,6 +3,10 @@
 
 #include <cassert>
 
+#include <string>
+using std::string;
+using namespace std::string_literals;
+
 #include "direct_types.hxx"
 #include "direct_teacher.hxx"
 #include "direct_learner.hxx"

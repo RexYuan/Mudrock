@@ -181,7 +181,7 @@ namespace
     inline void validate_bitstring (size_t bv_len, const string& bs)
     {
         assert (bv_len == bs.length());
-        for (const auto& b : bs)
+        for ([[maybe_unused]] const auto& b : bs)
             assert(b == '0' || b == '1');
     }
 }

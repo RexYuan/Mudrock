@@ -6,7 +6,9 @@
 #include <vector>
 using std::vector;
 #include <string>
-using std::string; using std::to_string;
+using std::string;
+using std::to_string;
+using namespace std::string_literals;
 #include <map>
 using std::map;
 
@@ -15,9 +17,15 @@ using std::same_as;
 #include <iostream>
 using std::ostream;
 #include <variant>
-using std::variant; using std::monostate; using std::get; using std::holds_alternative;
+using std::variant;
+using std::monostate;
+using std::get;
+using std::holds_alternative;
 #include <memory>
-using std::shared_ptr; using std::make_shared;
+using std::shared_ptr;
+using std::make_shared;
+#include <stdexcept>
+using std::logic_error;
 
 // boolean connectives
 enum class Conn {Top, Bot, Base, Not, And, Or};
@@ -98,3 +106,8 @@ inline Bf_ptr operator == (const Bf_ptr& bf1, const Bf_ptr& bf2) { return (~bf1 
 inline Bf_ptr operator != (const Bf_ptr& bf1, const Bf_ptr& bf2) { return ( bf1 | bf2) & (~bf1 | ~bf2); }
 
 inline ostream& operator << (ostream& out, const Bf_ptr& bf) { out << bf->to_string(); return out; }
+
+struct InvalidBfConn : public logic_error
+{
+    InvalidBfConn (const string& what_arg) : logic_error(what_arg) {}
+};

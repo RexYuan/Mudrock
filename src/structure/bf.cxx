@@ -76,7 +76,7 @@ const bool Bf::get_bool () const
         case Conn::Bot: return false;
         default:        break;
     }
-    assert(false);
+    throw InvalidBfConn("Must be bool constants."s);
 }
 
 const int Bf::get_int () const
@@ -107,28 +107,28 @@ string Bf::to_string ()
 {
     switch (t)
     {
-    case Conn::Top:  return "T";
-    case Conn::Bot:  return "F";
+    case Conn::Top:  return "T"s;
+    case Conn::Bot:  return "F"s;
     case Conn::Base: return std::to_string(get_int());
-    case Conn::Not:  return "~" + get_sub()->to_string();
+    case Conn::Not:  return "~"s + get_sub()->to_string();
     case Conn::And:
     {
-        string tmp = "(";
+        string tmp = "("s;
         for (Bf_ptr s : get_subs())
-            tmp.append(s->to_string() + "&");
+            tmp.append(s->to_string() + "&"s);
         tmp.pop_back();
-        tmp.append(")");
+        tmp.append(")"s);
         return tmp;
     }
     case Conn::Or:
     {
-        string tmp = "(";
+        string tmp = "("s;
         for (Bf_ptr s : get_subs())
-            tmp.append(s->to_string() + "|");
+            tmp.append(s->to_string() + "|"s);
         tmp.pop_back();
-        tmp.append(")");
+        tmp.append(")"s);
         return tmp;
     }
     }
-    assert(false);
+    throw InvalidBfConn("Unmatched cases."s);
 }

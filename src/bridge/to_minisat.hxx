@@ -3,6 +3,8 @@
 
 #include <cassert>
 
+#include <string>
+using namespace std::string_literals;
 #include <map>
 using std::map;
 
