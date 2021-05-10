@@ -13,6 +13,24 @@
 #define PROF_SAT(code...)                                                     \
     PROF_SAT_AS(""s, code)
 
+#define COUNT_CLAUSE(thing)                                                   \
+    log(4, "Count", string(#thing) + " clause size = "s +                     \
+                    to_string(dryCountClause(thing)))
+
+#ifdef COUNTING
+#define addBf(bf, args...)                                                    \
+    ({                                                                        \
+        COUNT_CLAUSE(bf);                                                     \
+        addBf(bf, args);                                                      \
+    })
+
+#define addAig(aig, args...)                                                  \
+    ({                                                                        \
+        COUNT_CLAUSE(aig);                                                    \
+        addAig(aig, args);                                                    \
+    })
+#endif
+
 namespace Donut
 {
 //=================================================================================================
@@ -141,7 +159,6 @@ PROF_SCOPE();
     {
         // set up variables over X''
         auto tmp_aig_varmap = toBfmap(addAig(aig, m));
-
         // set up Bad(X''), Trans(X',X'')
         auto f_bad      = mk_bad(aig, tmp_aig_varmap);
         auto f_trans_tl = mk_trans(aig, last_aig_varmap, tmp_aig_varmap);
@@ -336,3 +353,8 @@ PROF_SCOPE();
 #undef SAT_NAME_ID_TRAIL
 #undef PROF_SAT_AS
 #undef PROF_SAT
+#undef COUNT_CLAUSE
+#ifdef COUNTING
+#undef addBf
+#undef addAig
+#endif
