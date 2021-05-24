@@ -36,3 +36,6 @@ def log_out(aag, data):
 
 class TermError(Exception):
     pass
+
+class RetError(Exception):
+    pass

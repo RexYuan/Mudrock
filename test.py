@@ -22,9 +22,19 @@ run_opts = {
 run   = functools.partial(subprocess.run, **run_opts)
 popen = functools.partial(subprocess.Popen, **run_opts)
 
+def validate_result(ret, ans):
+    if ret == "Unknown":
+        return True
+    if ret == "Perfect" and ans == "uns":
+        return True
+    if ret == "Refuted" and ans == "sat":
+        return True
+    return False
+
 # run mudk
-def run_in_donut(aag):
-    with popen([prog, "m", f"{hwmcc_prefix}/aag/{aag}.aag"]) as proc:
+def run_in_donut(aag, ret):
+    command = [prog, "m", f"{hwmcc_prefix}/aag/{aag}.aag"]
+    with popen(command) as proc:
         try:
             output, _ = proc.communicate(timeout=time_limit)
         except subprocess.TimeoutExpired as e: # time out
@@ -40,15 +50,20 @@ def run_in_donut(aag):
         finally:
             log_out(aag, output)
 
-def run_in_direct(aag):
-    return run([prog, "d", f"{hwmcc_prefix}/aag/{aag}.aag"], timeout=time_limit)
+            if not validate_result(output.split('\n')[-2], ret):
+                raise RetError
+
+def run_in_direct(aag, ret):
+    command = [prog, "d", f"{hwmcc_prefix}/aag/{aag}.aag"]
+    output = run(command, timeout=time_limit).stdout
+
+    if not validate_result(output.split('\n')[-2], ret):
+        raise RetError
 
 # run abc
-def run_abc_int(aig):
-    c = f"read_aiger {hwmcc_prefix}/aig/{aig}.aig; int;"
-    command = [abc, "-c", c]
-    ret = run(command, timeout=time_limit)
-    return ret
+def run_abc_int(aig, ret):
+    command = [abc, "-c", f"read_aiger {hwmcc_prefix}/aig/{aig}.aig; int;"]
+    output = run(command, timeout=time_limit).stdout
 
 def get_time(func):
     start_time = time.time()
@@ -62,19 +77,22 @@ def run_test(aag, state, ret):
     direct_time = (donut_time := "--")
 
     try:
-        donut_time = get_time(lambda: run_in_donut(aag))
+        donut_time = get_time(lambda: run_in_donut(aag, ret))
     except subprocess.TimeoutExpired:
         donut_time = "to"
         result[0] = False
     except TermError:
         donut_time = "killed"
         result[0] = False
+    except RetError:
+        donut_time = "wrong"
+        result[0] = False
     else:
         result[0] = True
 
     if abc_exists:
         try:
-            abc_time = get_time(lambda: run_abc_int(aag))
+            abc_time = get_time(lambda: run_abc_int(aag, ret))
         except subprocess.TimeoutExpired:
             abc_time = "to"
             result[1] = False
@@ -84,9 +102,12 @@ def run_test(aag, state, ret):
         abc_time = "n/a"
 
     try:
-        direct_time = get_time(lambda: run_in_direct(aag))
+        direct_time = get_time(lambda: run_in_direct(aag, ret))
     except subprocess.TimeoutExpired:
         direct_time = "to"
+        result[2] = False
+    except RetError:
+        donut_time = "wrong"
         result[2] = False
     else:
         result[2] = True

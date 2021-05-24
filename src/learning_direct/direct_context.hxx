@@ -30,7 +30,7 @@ struct Context
 
     void check ();
 
-    bool sat () const; // if there's a path from init to bad
+    Feedback sat () const; // if there's a path from init to bad
 
 private:
     Teacher teacher;

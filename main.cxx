@@ -38,7 +38,7 @@ int main(int argc, char** argv)
         using namespace Direct;
         Context c{filename};
         c.check();
-        output << (c.sat() ? "sat"s : "unsat"s);
+        output << c.sat();
     }
     else if (mode == "m"s || mode == "M"s)
     {

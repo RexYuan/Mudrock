@@ -14,12 +14,12 @@ void Context::check ()
     result = learner.result();
 }
 
-bool Context::sat () const
+Feedback Context::sat () const
 {
     switch (result)
     {
-    case Refuted: return true;
-    case Perfect: return false;
+    case Refuted: [[fallthrough]];
+    case Perfect: return result;
     default: break;
     }
     throw InvalidFeedback("Must be final and determined."s);
