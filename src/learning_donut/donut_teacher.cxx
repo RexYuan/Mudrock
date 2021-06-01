@@ -157,14 +157,13 @@ void Teacher::unroll (size_t n)
 PROF_SCOPE();
     for (size_t i=0; i<n; i++)
     {
-        // set up variables over X''
-        auto tmp_aig_varmap = toBfmap(addAig(aig, m));
-        // set up Bad(X''), Trans(X',X'')
-        auto f_bad      = mk_bad(aig, tmp_aig_varmap);
-        auto f_trans_tl = mk_trans(aig, last_aig_varmap, tmp_aig_varmap);
+        // set up X''
+        auto tmp_aig_varmap = toBfmap(addAig(toAigmap(last_aig_varmap), aig, m));
 
-        bad      = v(addBf(bad | f_bad, m));
-        trans_tl = v(addBf(trans_tl & f_trans_tl, m));
+        // set up Bad(X'')
+        auto f_bad = mk_bad(aig, tmp_aig_varmap);
+
+        bad = v(addBf(bad | f_bad, m));
 
         last_aig_varmap = tmp_aig_varmap;
         last_index_varmap = mk_index_varmap(aig, tmp_aig_varmap);

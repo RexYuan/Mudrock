@@ -34,6 +34,8 @@ void fixBf (const Bf_ptr& bf, Mana& m); // addBf then addClause
 //
 // add `aig` as a new state and return map from aig to minisat
 map<AigVar,Var> addAig (const Aig& aig, Mana& m);
+// add aig with state vars determined by `last_varmap` and return map from aig to minisat
+map<AigVar,Var> addAig (const map<AigVar,Var>& last_varmap, const Aig& aig, Mana& m);
 
 //=================================================================================================
 // Stats

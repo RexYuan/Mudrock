@@ -34,3 +34,8 @@ Bf_ptr toBf (const AigLit& aiglit);
 // (Aig => Minisat) map => Bf map
 //
 map<int,int> toBfmap (const map<AigVar,Var>& varmap);
+
+//=================================================================================================
+// Bf map => (Aig => Minisat) map
+//
+map<AigVar,Var> toAigmap (const map<int,int>& varmap);

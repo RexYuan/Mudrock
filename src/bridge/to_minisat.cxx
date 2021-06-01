@@ -114,6 +114,45 @@ map<AigVar,Var> addAig (const Aig& aig, Mana& m)
     return varmap;
 }
 
+map<AigVar,Var> addAig (const map<AigVar,Var>& last_varmap, const Aig& aig, Mana& m)
+{
+    map<AigVar,Var> varmap;
+
+    // when AigVar has var 0 it is a constant (0=false, 1=true)
+    varmap[0] = m.constFalse();
+
+    // add input
+    for (const auto& aigvar : aig.inputs())
+    {
+        assert(aigvar > 0); // must not be constant
+        varmap[aigvar] = m.newVar();
+    }
+
+    // add state in terms of last step
+    for (auto bmap = toBfmap(last_varmap); const auto& [aigvar,aiglit] : aig.latches())
+    {
+        assert(aigvar > 0);               // must not be constant
+        assert(!varmap.contains(aigvar)); // must be fresh number
+
+        varmap[aigvar] = addBf(subst(toBf(aiglit), bmap), m);
+    }
+
+    // add and
+    for (auto bmap = toBfmap(varmap); const auto& [aigvar,aiglit1,aiglit2] : aig.ands())
+    {
+        assert(aigvar > 0);               // must not be constant
+        assert(!varmap.contains(aigvar)); // must be fresh number
+        assert(varmap.contains(aiglit1.var) && // assuming ordered
+               varmap.contains(aiglit2.var));
+
+        Bf_ptr tmpbf = subst(toBf(aiglit1) & toBf(aiglit2), bmap);
+        bmap[aigvar] = varmap[aigvar] = addBf(tmpbf, m);
+    }
+
+    validate_varmap(varmap, aig);
+    return varmap;
+}
+
 //=================================================================================================
 // Stats
 //

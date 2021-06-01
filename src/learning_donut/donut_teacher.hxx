@@ -26,6 +26,7 @@ using std::ostream;
 #include "mana.hxx"
 #include "more_mana.hxx"
 #include "to_minisat.hxx"
+#include "to_bf.hxx"
 
 namespace Donut
 {
