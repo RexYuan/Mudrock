@@ -107,7 +107,7 @@ def run_test(aag, state, ret):
         direct_time = "to"
         result[2] = False
     except RetError:
-        donut_time = "wrong"
+        direct_time = "wrong"
         result[2] = False
     else:
         result[2] = True
