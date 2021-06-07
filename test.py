@@ -72,7 +72,7 @@ def get_time(func):
     return end_time-start_time
 
 # run test
-def run_test(aag, state, ret):
+def run_test(aag, state, ret, no_direct=False):
     result = [None, None, None]
     direct_time = (donut_time := "--")
 
@@ -101,16 +101,20 @@ def run_test(aag, state, ret):
     else:
         abc_time = "n/a"
 
-    try:
-        direct_time = get_time(lambda: run_in_direct(aag, ret))
-    except subprocess.TimeoutExpired:
-        direct_time = "to"
-        result[2] = False
-    except RetError:
-        direct_time = "wrong"
+    if no_direct:
+        direct_time = "skipped"
         result[2] = False
     else:
-        result[2] = True
+        try:
+            direct_time = get_time(lambda: run_in_direct(aag, ret))
+        except subprocess.TimeoutExpired:
+            direct_time = "to"
+            result[2] = False
+        except RetError:
+            direct_time = "wrong"
+            result[2] = False
+        else:
+            result[2] = True
 
     print_line(ret, state, aag, donut_time, abc_time, direct_time)
     return result
@@ -118,6 +122,7 @@ def run_test(aag, state, ret):
 parser = argparse.ArgumentParser()
 parser.add_argument("-r", "--result", help='filter sat/uns')
 parser.add_argument("-w", "--worker", help='specify number of workers', default="1", type=int)
+parser.add_argument("--no-direct", help='do not test direct method', action="store_true")
 group = parser.add_mutually_exclusive_group()
 group.add_argument("-f", "--file", help='specify one or more input file title(s)', nargs="+")
 group.add_argument("-n", "--number", help='specify number of tests', type=int)
@@ -137,6 +142,8 @@ if __name__ == "__main__":
         tests = tests[:args.number]
         if not tests:
             raise IndexError(args.number)
+    if args.no_direct:
+        tests = [(aag, state, ret, True) for aag, state, ret in tests]
 
     print_horizontal()
     print_header()
