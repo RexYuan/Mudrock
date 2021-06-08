@@ -61,5 +61,17 @@ Feedback Context::sat () const
     }
     throw InvalidFeedback("Must be final."s);
 }
+
+string Context::witness () const
+{
+    stringstream wit;
+    wit << "1\n"s
+        << "b0\n"s
+        << string(teacher.aig.num_latches(), '0') << "\n"s;
+    for (const auto& line : teacher.witness())
+        wit << line << "\n"s;
+    wit << ".\n"s;
+    return wit.str();
+}
 //=================================================================================================
 }

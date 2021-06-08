@@ -49,6 +49,8 @@ int main(int argc, char** argv)
         c.check();
         SingletonLogger::Get().write();
         output << SingletonProfiler::Get();
+        if (c.sat() == Donut::Feedback::Refuted)
+            output << c.witness();
         output << c.sat();
     }
     else

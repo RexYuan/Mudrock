@@ -42,6 +42,8 @@ struct Teacher
     static const Feedback TooSmall = Feedback::TooSmall;
     static const Feedback Unknown  = Feedback::Unknown;
 
+    friend struct Context;
+
     Teacher  (const string& filename);
     ~Teacher () = default;
 
@@ -69,11 +71,14 @@ struct Teacher
     Bv counterexample () const;
     const Feedback& check_state () const;
 
+    vector<Bv> witness () const; // return refutation stimulus
+
 private:
     Mana m;
     Aig aig;
     map<int,int> first_aig_varmap,   second_aig_varmap,   last_aig_varmap;
     map<int,int> first_index_varmap, second_index_varmap, last_index_varmap;
+    vector<map<int,int>> aig_varmaps_cache;
 
     Sw cumu_sw, // tracking the cumulative disjuncted hypotheses set
        tent_sw; // tracking the tentative frontier hypothesis

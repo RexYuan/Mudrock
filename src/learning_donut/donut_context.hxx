@@ -7,6 +7,8 @@
 using std::string;
 using std::to_string;
 using namespace std::string_literals;
+#include <sstream>
+using std::stringstream;
 
 #include "sig.hxx"
 
@@ -35,6 +37,7 @@ struct Context
     Feedback check ();
 
     Feedback sat () const; // if there's a path from init to bad
+    string witness () const; // witness in aiger19 format
 
 private:
     Teacher teacher;

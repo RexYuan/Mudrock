@@ -149,6 +149,9 @@ PROF_SCOPE();
 
     last_aig_varmap = second_aig_varmap;
     last_index_varmap = second_index_varmap;
+
+    aig_varmaps_cache.push_back(first_aig_varmap);
+    aig_varmaps_cache.push_back(second_aig_varmap);
 }
 
 // unroll bad by `n` step
@@ -167,6 +170,8 @@ PROF_SCOPE();
 
         last_aig_varmap = tmp_aig_varmap;
         last_index_varmap = mk_index_varmap(aig, tmp_aig_varmap);
+
+        aig_varmaps_cache.push_back(last_aig_varmap);
 
         unroll_depth++;
     }
@@ -197,6 +202,7 @@ bool Teacher::advanceable ()
 PROF_SCOPE();
     bool ret;
     // last H(X), T(X,X'), T(X',X'',...), B(X',X'',...)
+    // DEBUG: this takes too much time
     if (PROF_SAT(sat(last_frnt & trans_hd & trans_tl & bad, m)))
         ret = false;
     else
@@ -318,6 +324,7 @@ PROF_SCOPE();
     // soundness criterion with foresight (unrolled ~bad under-approximation)
     //=========================================================================
     // H(X'), T(X',X'',...) => ~B(X',X'',...)
+    // DEBUG: this takes too much time
     else if (PROF_SAT_AS("soundness"s,
              !hold(frntp & trans_tl |= ~bad, m)))
     {
@@ -345,6 +352,23 @@ const Feedback& Teacher::check_state () const
 {
 PROF_SCOPE();
     return state;
+}
+
+vector<Bv> Teacher::witness () const
+{
+    vector<Bv> stimulus;
+    for (const auto& aig_varmap : aig_varmaps_cache)
+    {
+        Bv tmp{aig.num_inputs()};
+        auto bit = tmp.begin();
+        for (const auto& aigvar : aig.inputs())
+        {
+            bit.setbit(m.val(aig_varmap.at(aigvar)));
+            bit++;
+        }
+        stimulus.push_back(tmp);
+    }
+    return stimulus;
 }
 //=================================================================================================
 }
