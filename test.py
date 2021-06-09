@@ -47,18 +47,21 @@ def run_in_donut(aag, ret):
                 raise TermError from e
             else:
                 raise e
+        else:
+            if not validate_result(output.split('\n')[-2], ret):
+                raise RetError
         finally:
             log_out(aag, output)
 
-            if not validate_result(output.split('\n')[-2], ret):
-                raise RetError
-
 def run_in_direct(aag, ret):
     command = [prog, "d", f"{hwmcc_prefix}/aag/{aag}.aag"]
-    output = run(command, timeout=time_limit).stdout
-
-    if not validate_result(output.split('\n')[-2], ret):
-        raise RetError
+    try:
+        output = run(command, timeout=time_limit).stdout
+    except:
+        raise
+    else:
+        if not validate_result(output.split('\n')[-2], ret):
+            raise RetError
 
 # run abc
 def run_abc_int(aig, ret):
