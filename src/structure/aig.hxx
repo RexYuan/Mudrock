@@ -25,8 +25,9 @@ struct AigLit // TODO: use lifted literals
 
     explicit operator bool () const { return sign; }
 };
-inline constinit AigLit AigTrue  { true, 0};
-inline constinit AigLit AigFalse {false, 0};
+// aigvar 0 is constant false
+inline constinit AigLit AigTrue  {false, 0};
+inline constinit AigLit AigFalse { true, 0};
 
 struct AigLatch
 {
