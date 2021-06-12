@@ -19,7 +19,7 @@ using namespace Minisat;
 #include "bv.hxx"
 #include "bf.hxx"
 #include "mana.hxx"
-#include "to_minisat.hxx"
+#include "bf_to_minisat.hxx"
 
 // test `bf` in `m`
 bool sat  (const Bf_ptr& bf, Mana& m);

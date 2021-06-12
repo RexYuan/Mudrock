@@ -22,7 +22,8 @@ using std::ostream;
 
 #include "mana.hxx"
 #include "more_mana.hxx"
-#include "to_minisat.hxx"
+#include "bf_to_minisat.hxx"
+#include "aig_to_minisat.hxx"
 
 namespace Direct
 {
