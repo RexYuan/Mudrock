@@ -4,9 +4,10 @@
 //=================================================================================================
 // Bf => Minisat
 //
-Var addBf (const Bf_ptr& bf, Mana& m, optional<Sw> swopt)
+Var addBf (const Bf_ptr& bf, Mana& m, optional<Sw> swopt, optional<bool> dvaropt)
 {
     Sw sw = swopt ? swopt.value() : m.fixedSw();
+    bool dvar = dvaropt ? dvaropt.value() : false; // defaults to non-decision var
     switch (bf->t)
     {
     case Conn::Top:  return m.constTrue();
@@ -18,7 +19,7 @@ Var addBf (const Bf_ptr& bf, Mana& m, optional<Sw> swopt)
     }
     case Conn::Not:
     {
-        Var v = m.newVar(false); // tseitin nodes
+        Var v = m.newVar(dvar); // tseitin nodes
         Var sub_v = addBf(bf->get_sub(), m, sw);
         m.addClause(sw,  mkLit(v),  mkLit(sub_v));
         m.addClause(sw, ~mkLit(v), ~mkLit(sub_v));
@@ -26,7 +27,7 @@ Var addBf (const Bf_ptr& bf, Mana& m, optional<Sw> swopt)
     }
     case Conn::And:
     {
-        Var v = m.newVar(false); // tseitin nodes
+        Var v = m.newVar(dvar); // tseitin nodes
         vec<Lit> ps; ps.push(mkLit(v));
         for (Var sub_v; Bf_ptr sub : bf->get_subs())
         {
@@ -39,7 +40,7 @@ Var addBf (const Bf_ptr& bf, Mana& m, optional<Sw> swopt)
     }
     case Conn::Or:
     {
-        Var v = m.newVar(false); // tseitin nodes
+        Var v = m.newVar(dvar); // tseitin nodes
         vec<Lit> ps; ps.push(~mkLit(v));
         for (Var sub_v; Bf_ptr sub : bf->get_subs())
         {
@@ -145,8 +146,13 @@ map<AigVar,Var> addAig (const map<AigVar,Var>& last_varmap, const Aig& aig, Mana
         assert(varmap.contains(aiglit1.var) && // assuming ordered
                varmap.contains(aiglit2.var));
 
+        // set decision if it's next state
+        bool is_next = false;
+        for (const auto& [curr_aigvar,next_aiglit] : aig.latches())
+            if (aigvar == next_aiglit.var) is_next = true;
+
         Bf_ptr tmpbf = subst(toBf(aiglit1) & toBf(aiglit2), bmap);
-        bmap[aigvar] = varmap[aigvar] = addBf(tmpbf, m);
+        bmap[aigvar] = varmap[aigvar] = addBf(tmpbf, m, nullopt, is_next);
     }
 
     validate_varmap(varmap, aig);
