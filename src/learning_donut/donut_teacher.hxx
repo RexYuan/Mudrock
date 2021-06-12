@@ -17,7 +17,7 @@ using std::ostream;
 #include "donut_types.hxx"
 #include "profiler.hxx"
 #include "logger.hxx"
-#include "to_minisat.hxx"
+#include "counting.hxx"
 
 #include "aig.hxx"
 #include "bf.hxx"
@@ -26,9 +26,11 @@ using std::ostream;
 
 #include "mana.hxx"
 #include "more_mana.hxx"
+#include "aig_to_bf.hxx"
+#include "face_to_bf.hxx"
 #include "bf_to_minisat.hxx"
 #include "aig_to_minisat.hxx"
-#include "to_bf.hxx"
+#include "between_maps.hxx"
 
 namespace Donut
 {

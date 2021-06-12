@@ -15,7 +15,9 @@ using namespace Minisat;
 #include "mana.hxx"
 #include "bf.hxx"
 #include "aig.hxx"
-#include "to_bf.hxx"
+
+#include "between_maps.hxx"
+#include "aig_to_bf.hxx"
 #include "bf_to_minisat.hxx"
 
 //=================================================================================================

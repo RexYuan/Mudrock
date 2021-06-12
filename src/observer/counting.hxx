@@ -8,7 +8,7 @@ using namespace std::string_literals;
 
 #include "bf.hxx"
 #include "aig.hxx"
-#include "to_bf.hxx"
+#include "aig_to_bf.hxx"
 
 //=================================================================================================
 // Count clauses

@@ -22,6 +22,9 @@ using std::ostream;
 
 #include "mana.hxx"
 #include "more_mana.hxx"
+#include "aig_to_bf.hxx"
+#include "bv_to_bf.hxx"
+#include "face_to_bf.hxx"
 #include "bf_to_minisat.hxx"
 #include "aig_to_minisat.hxx"
 
