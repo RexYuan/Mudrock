@@ -3,6 +3,11 @@
 
 #include <cassert>
 
+#include <vector>
+using std::vector;
+#include <utility>
+using std::move;
+
 #include "bf.hxx"
 #include "face.hxx"
 

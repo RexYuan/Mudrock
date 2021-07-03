@@ -9,6 +9,8 @@ using std::string;
 using std::to_string;
 #include <vector>
 using std::vector;
+#include <map>
+using std::map;
 
 #include <cmath>
 using std::pow;

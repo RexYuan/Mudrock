@@ -286,7 +286,7 @@ bool Teacher::membership (Bv bv)
 {
 PROF_SCOPE();
     bool ret;
-    // accept all X' that is not in T(X',X'',...), B(X',X'',...)
+    // accept X' when last H(X), T(X,X') is sat
     if (PROF_SAT(evaluate(last_frnt & trans_hd, m, bv, second_index_varmap)))
         ret = true;
     else
