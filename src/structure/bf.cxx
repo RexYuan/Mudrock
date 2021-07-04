@@ -4,8 +4,20 @@
 //=================================================================================================
 // Pointer manipulation helpers
 //
-Bf_ptr v (bool b) { return make_shared<Bf>(b); }
-Bf_ptr v (int i)  { return make_shared<Bf>(i); }
+Bf_ptr v (bool b)
+{
+    static Bf_ptr t = make_shared<Bf>(true),
+                  f = make_shared<Bf>(false);
+    return b ? t : f;
+}
+
+Bf_ptr v (int i)
+{
+    static vector<Bf_ptr> vs; // cache vars
+    while (i >= static_cast<int>(vs.size()))
+        vs.push_back(make_shared<Bf>(static_cast<int>(vs.size())));
+    return vs[i];
+}
 
 Bf_ptr neg (Bf_ptr bf)
 {
