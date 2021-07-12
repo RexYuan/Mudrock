@@ -49,6 +49,34 @@ Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& varmap)
     throw InvalidBfConn("Unmatched cases."s);
 }
 
+Bf_ptr subst (const Bf_ptr& bf, const vector<int>& varmap)
+{
+    switch (bf->t)
+    {
+    case Conn::Top:  return v(true);
+    case Conn::Bot:  return v(false);
+    case Conn::Base:
+        assert(bf->get_int() < static_cast<int>(varmap.size()));
+        return v(varmap[bf->get_int()]);
+    case Conn::Not:  return ~subst(bf->get_sub(), varmap);
+    case Conn::And:
+    {
+        Bf_ptr tmp = v(true);
+        for (Bf_ptr s : bf->get_subs())
+            tmp = tmp & subst(s, varmap);
+        return tmp;
+    }
+    case Conn::Or:
+    {
+        Bf_ptr tmp = v(false);
+        for (Bf_ptr s : bf->get_subs())
+            tmp = tmp | subst(s, varmap);
+        return tmp;
+    }
+    }
+    throw InvalidBfConn("Unmatched cases."s);
+}
+
 bool evaluate (const Bf_ptr& bf, const Bv& val)
 {
     switch (bf->t)

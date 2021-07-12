@@ -3,8 +3,8 @@
 
 #include <cassert>
 
-#include <map>
-using std::map;
+#include <vector>
+using std::vector;
 
 #include <optional>
 using std::nullopt;
@@ -16,7 +16,6 @@ using namespace Minisat;
 #include "bf.hxx"
 #include "aig.hxx"
 
-#include "between_maps.hxx"
 #include "aig_to_bf.hxx"
 #include "bf_to_minisat.hxx"
 
@@ -24,6 +23,6 @@ using namespace Minisat;
 // Aig => Minisat
 //
 // add `aig` as a new state and return map from aig to minisat
-map<AigVar,Var> addAig (const Aig& aig, Mana& m);
+vector<Var> addAig (const Aig& aig, Mana& m);
 // add aig with state vars determined by `last_varmap` and return map from aig to minisat
-map<AigVar,Var> addAig (const map<AigVar,Var>& last_varmap, const Aig& aig, Mana& m);
+vector<Var> addAig (const vector<Var>& last_varmap, const Aig& aig, Mana& m);

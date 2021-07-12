@@ -5,8 +5,6 @@
 
 #include <string>
 using std::string;
-#include <map>
-using std::map;
 #include <vector>
 using std::vector;
 
@@ -58,7 +56,7 @@ struct Teacher
 private:
     Mana m;
     Aig aig;
-    map<int,int> curr_index_varmap, next_index_varmap;
+    vector<Var> curr_state_varmap, next_state_varmap;
 
     Sw sw;
     // Working with bf formulae

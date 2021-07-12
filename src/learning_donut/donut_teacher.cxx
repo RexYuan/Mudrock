@@ -71,7 +71,7 @@ log(3, "Teacher", "Ended renewing");
 namespace
 {
     // Init := X_{0} = 0
-    inline Bf_ptr mk_init (const Aig& aig, const map<int,int>& first_varmap)
+    inline Bf_ptr mk_init (const Aig& aig, const vector<Var>& first_varmap)
     {
         Bf_ptr tmp = v(true);
 
@@ -84,7 +84,7 @@ namespace
     }
 
     // Bad_{k} := output(X_{k})
-    inline Bf_ptr mk_bad (const Aig& aig, const map<int,int>& k_varmap)
+    inline Bf_ptr mk_bad (const Aig& aig, const vector<Var>& k_varmap)
     {
         Bf_ptr tmp = toBf(aig.outputs()[0]);
         tmp = subst(tmp, k_varmap);
@@ -92,8 +92,8 @@ namespace
     }
 
     // Trans_{k} := X_{k} = X_{k-1}; succ(`k`)=`kp`
-    inline Bf_ptr mk_trans (const Aig& aig, const map<int,int>& k_varmap,
-                                            const map<int,int>& kp_varmap)
+    inline Bf_ptr mk_trans (const Aig& aig, const vector<Var>& k_varmap,
+                                            const vector<Var>& kp_varmap)
     {
         Bf_ptr tmp = v(true);
 
@@ -112,13 +112,14 @@ namespace
     }
 
     // from range of AigVar=>Var to {0...latches.size()}=>Var
-    inline map<int,int> mk_index_varmap (const Aig& aig, const map<int,int>& varmap)
+    inline vector<Var> mk_state_varmap (const Aig& aig, const vector<Var>& varmap)
     {
-        map<int,int> tmp;
+        // NOTE: this is a trap because brace init calls the init list ctor
+        vector<Var> tmp(aig.num_latches(), var_Undef);
 
         // zip range{0, ..., num_latches} to Vars corresponding to latches AigVars in varmap
         for (size_t i=0; const auto& [aigvar,aiglit] : aig.latches())
-            tmp[i++] = varmap.at(static_cast<int>(aigvar));
+            tmp[i++] = varmap[aigvar];
 
         return tmp;
     }
@@ -126,12 +127,13 @@ namespace
 //=================================================================================================
 // Higher order commands for context
 //
+#include <iostream>
 void Teacher::setup ()
 {
 PROF_SCOPE();
     // set up variables over X,X'
-    first_aig_varmap  = toBfmap(addAig(aig, m));
-    second_aig_varmap = toBfmap(addAig(aig, m));
+    first_aig_varmap  = addAig(aig, m);
+    second_aig_varmap = addAig(aig, m);
 
     // set up Init(X), Bad(X'), Trans(X,X'), Trans()
     auto f_init     = mk_init(aig, first_aig_varmap);
@@ -144,11 +146,11 @@ PROF_SCOPE();
     trans_hd = v(addBf(f_trans_hd, m));
     trans_tl = v(addBf(f_trans_tl, m));
 
-    first_index_varmap  = mk_index_varmap(aig, first_aig_varmap);
-    second_index_varmap = mk_index_varmap(aig, second_aig_varmap);
+    first_state_varmap  = mk_state_varmap(aig, first_aig_varmap);
+    second_state_varmap = mk_state_varmap(aig, second_aig_varmap);
 
     last_aig_varmap = second_aig_varmap;
-    last_index_varmap = second_index_varmap;
+    last_state_varmap = second_state_varmap;
 
     aig_varmaps_cache.push_back(first_aig_varmap);
     aig_varmaps_cache.push_back(second_aig_varmap);
@@ -161,7 +163,7 @@ PROF_SCOPE();
     for (size_t i=0; i<n; i++)
     {
         // set up X''
-        auto tmp_aig_varmap = toBfmap(addAig(toAigmap(last_aig_varmap), aig, m));
+        auto tmp_aig_varmap = addAig(last_aig_varmap, aig, m);
 
         // set up Bad(X'')
         auto f_bad = mk_bad(aig, tmp_aig_varmap);
@@ -169,7 +171,7 @@ PROF_SCOPE();
         bad = v(addBf(bad | f_bad, m));
 
         last_aig_varmap = tmp_aig_varmap;
-        last_index_varmap = mk_index_varmap(aig, tmp_aig_varmap);
+        last_state_varmap = mk_state_varmap(aig, tmp_aig_varmap);
 
         aig_varmaps_cache.push_back(last_aig_varmap);
 
@@ -266,12 +268,12 @@ namespace
         return tmp;
     }
 
-    // extract the valuation Bv in the range of `index_varmap`
-    inline Bv mk_ce (const map<int,int>& index_varmap, const Mana& m)
+    // extract the valuation Bv in the range of `state_varmap`
+    inline Bv mk_ce (const vector<Var>& state_varmap, const Mana& m)
     {
-        Bv tmp{index_varmap.size()};
+        Bv tmp{state_varmap.size()};
         auto bit = tmp.begin();
-        for (const auto& [i,v] : index_varmap)
+        for (const Var v : state_varmap)
         {
             bit.setbit(m.val(v));
             bit++;
@@ -287,7 +289,7 @@ bool Teacher::membership (Bv bv)
 PROF_SCOPE();
     bool ret;
     // accept X' when last H(X), T(X,X') is sat
-    if (PROF_SAT(evaluate(last_frnt & trans_hd, m, bv, second_index_varmap)))
+    if (PROF_SAT(evaluate(last_frnt & trans_hd, m, bv, second_state_varmap)))
         ret = true;
     else
         ret = false;
@@ -299,15 +301,15 @@ Feedback Teacher::equivalence (const vector<Face>& faces)
 {
 PROF_SCOPE();
     Feedback ret;
-    assert(first_index_varmap.size() > 0 && last_index_varmap.size() > 0);
+    assert(first_state_varmap.size() > 0 && last_state_varmap.size() > 0);
 
     m.releaseSw(tent_sw);
     tent_sw = m.newSw();
 
     Bf_ptr cdnf = mk_cdnf(faces);
     // H(X), H(X')
-    Bf_ptr first_cdnf  = subst(cdnf, first_index_varmap),
-           second_cdnf = subst(cdnf, second_index_varmap);
+    Bf_ptr first_cdnf  = subst(cdnf, first_state_varmap),
+           second_cdnf = subst(cdnf, second_state_varmap);
     frnt  = v(addBf(f_frnt_cache  = first_cdnf,  m, tent_sw));
     frntp = v(addBf(f_frntp_cache = second_cdnf, m, tent_sw));
 
@@ -318,7 +320,7 @@ PROF_SCOPE();
         !hold(last_frnt & trans_hd |= frntp, m)))
     {
         // X' is positive counterexample
-        ce = mk_ce(second_index_varmap, m);
+        ce = mk_ce(second_state_varmap, m);
         ret = (state = TooSmall);
     }
     // soundness criterion with foresight (unrolled ~bad under-approximation)
@@ -329,7 +331,7 @@ PROF_SCOPE();
              !hold(frntp & trans_tl |= ~bad, m)))
     {
         // X' is negative counterexample
-        ce = mk_ce(second_index_varmap, m);
+        ce = mk_ce(second_state_varmap, m);
         ret = (state = TooBig);
     }
     // done

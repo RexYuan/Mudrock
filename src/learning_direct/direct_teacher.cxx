@@ -18,7 +18,7 @@ sw{m.newSw()}
 namespace
 {
     // Init := X = 0
-    inline Bf_ptr mk_init (const Aig& aig, const map<int,int>& curr_varmap)
+    inline Bf_ptr mk_init (const Aig& aig, const vector<Var>& curr_varmap)
     {
         Bf_ptr tmp = v(true);
 
@@ -31,7 +31,7 @@ namespace
     }
 
     // Bad := aig output
-    inline Bf_ptr mk_bad (const Aig& aig, const map<int,int>& curr_varmap)
+    inline Bf_ptr mk_bad (const Aig& aig, const vector<Var>& curr_varmap)
     {
         Bf_ptr tmp = toBf(aig.outputs()[0]);
         tmp = subst(tmp, curr_varmap);
@@ -39,8 +39,8 @@ namespace
     }
 
     // Trans := X' = X
-    inline Bf_ptr mk_trans (const Aig& aig, const map<int,int>& curr_varmap,
-                                            const map<int,int>& next_varmap)
+    inline Bf_ptr mk_trans (const Aig& aig, const vector<Var>& curr_varmap,
+                                            const vector<Var>& next_varmap)
     {
         Bf_ptr tmp = v(true);
 
@@ -59,13 +59,14 @@ namespace
     }
 
     // from range of AigVar=>Var to {0...latches.size()}=>Var
-    inline map<int,int> mk_index_varmap (const Aig& aig, const map<int,int>& varmap)
+    inline vector<Var> mk_state_varmap (const Aig& aig, const vector<Var>& varmap)
     {
-        map<int,int> tmp;
+        // NOTE: this is a trap because brace init calls the init list ctor
+        vector<Var> tmp(aig.num_latches(), var_Undef);
 
         // zip range{0, ..., num_latches} to Vars corresponding to latches AigVars in varmap
         for (size_t i=0; const auto& [aigvar,aiglit] : aig.latches())
-            tmp[i++] = varmap.at(static_cast<int>(aigvar));
+            tmp[i++] = varmap[aigvar];
 
         return tmp;
     }
@@ -73,11 +74,11 @@ namespace
 void Teacher::setup ()
 {
     // set up variables over I,X and I',X'
-    auto curr_aig_varmap = toBfmap(addAig(aig, m));
-    auto next_aig_varmap = toBfmap(addAig(aig, m));
+    auto curr_aig_varmap = addAig(aig, m);
+    auto next_aig_varmap = addAig(aig, m);
 
-    curr_index_varmap = mk_index_varmap(aig, curr_aig_varmap);
-    next_index_varmap = mk_index_varmap(aig, next_aig_varmap);
+    curr_state_varmap = mk_state_varmap(aig, curr_aig_varmap);
+    next_state_varmap = mk_state_varmap(aig, next_aig_varmap);
 
     // set up Init(I,X), Bad(I,X), Trans(I,X,X')
     auto f_init  = mk_init (aig, curr_aig_varmap);
@@ -99,12 +100,12 @@ namespace
         return tmp;
     }
 
-    // extract the valuation Bv in the range of `index_varmap`
-    inline Bv mk_ce (const map<int,int>& index_varmap, const Mana& m)
+    // extract the valuation Bv in the range of `state_varmap`
+    inline Bv mk_ce (const vector<Var>& state_varmap, const Mana& m)
     {
-        Bv tmp{index_varmap.size()};
+        Bv tmp{state_varmap.size()};
         auto bit = tmp.begin();
-        for (const auto& [i,v] : index_varmap)
+        for (const Var v : state_varmap)
         {
             bit.setbit(m.val(v));
             bit++;
@@ -114,11 +115,11 @@ namespace
 }
 Feedback Teacher::consider (const vector<Face>& faces)
 {
-    assert(curr_index_varmap.size() > 0 && next_index_varmap.size() > 0);
+    assert(curr_state_varmap.size() > 0 && next_state_varmap.size() > 0);
 
     Bf_ptr cdnf = mk_cdnf(faces);
-    Bf_ptr curr_cdnf = subst(cdnf, curr_index_varmap),
-           next_cdnf = subst(cdnf, next_index_varmap);
+    Bf_ptr curr_cdnf = subst(cdnf, curr_state_varmap),
+           next_cdnf = subst(cdnf, next_state_varmap);
     m.releaseSw(sw);
     sw = m.newSw();
     hypt  = v(addBf(curr_cdnf, m, sw));
@@ -128,14 +129,14 @@ Feedback Teacher::consider (const vector<Face>& faces)
     if (!hold(init |= hypt, m))
     {
         // X is positive counterexample
-        ce = mk_ce(curr_index_varmap, m);
+        ce = mk_ce(curr_state_varmap, m);
         return (state = TooSmall);
     }
     // Hypt(X) => ~Bad(I,X)
     else if (!hold(hypt |= ~bad, m))
     {
         // X is negative counterexample
-        ce = mk_ce(curr_index_varmap, m);
+        ce = mk_ce(curr_state_varmap, m);
         return (state = TooBig);
     }
     // Hypt(X), Trans(I,X,X') => Hypt(X')
@@ -176,14 +177,14 @@ namespace
  */
 Feedback Teacher::judge (const vector<Face>& faces)
 {
-    Bf_ptr dead_endsp = subst(mk_char_dnf(faces), next_index_varmap);
+    Bf_ptr dead_endsp = subst(mk_char_dnf(faces), next_state_varmap);
     if (sat(hypt & trans & ~hyptp & dead_endsp, m))
     {
         // X is negative counterexample
-        ce = mk_ce(curr_index_varmap, m);
+        ce = mk_ce(curr_state_varmap, m);
 
         // check refutation
-        Bf_ptr is_ce = subst(toBf(ce), curr_index_varmap);
+        Bf_ptr is_ce = subst(toBf(ce), curr_state_varmap);
         if (sat(is_ce & init, m))
             return Refuted;
 
@@ -192,7 +193,7 @@ Feedback Teacher::judge (const vector<Face>& faces)
     else
     {
         // X' is positive counterexample
-        ce = mk_ce(next_index_varmap, m);
+        ce = mk_ce(next_state_varmap, m);
         return TooSmall;
     }
 }
@@ -221,7 +222,7 @@ bool Teacher::degen ()
 bool Teacher::aligned (const Face& face)
 {
     Sw asw = m.newSw();
-    Bf_ptr dnfp = subst(toBf(face), next_index_varmap);
+    Bf_ptr dnfp = subst(toBf(face), next_state_varmap);
     dnfp = v(addBf(dnfp, m, asw));
 
     bool ret = true;
@@ -229,7 +230,7 @@ bool Teacher::aligned (const Face& face)
     if (sat(hypt & trans & ~dnfp, m))
     {
         // X' is positive counterexample
-        ce = mk_ce(next_index_varmap, m);
+        ce = mk_ce(next_state_varmap, m);
         ret = false;
     }
 
@@ -239,24 +240,24 @@ bool Teacher::aligned (const Face& face)
 
 namespace
 {
-    // constraint of being strictly less than `b` in `face` over `index_varmap`
-    inline Bf_ptr mk_lt_basis (const Bv& b, const Face& f, const map<int,int>& index_varmap)
+    // constraint of being strictly less than `b` in `face` over `state_varmap`
+    inline Bf_ptr mk_lt_basis (const Bv& b, const Face& f, const vector<Var>& state_varmap)
     {
-        assert(b.len() == f.basis().len() && b.len() == index_varmap.size());
+        assert(b.len() == f.basis().len() && b.len() == state_varmap.size());
         Bf_ptr ret = v(true);
 
         // neq
-        ret = ret & subst(~toBf(b), index_varmap);
+        ret = ret & subst(~toBf(b), state_varmap);
 
         // leq
         Bv xored = b ^ f.basis();
         auto bit = b.begin();
         auto xit = xored.begin();
-        auto mit = index_varmap.begin();
+        auto mit = state_varmap.begin();
         for (; bit != b.end(); bit++, xit++, mit++)
             if (!*xit)
-                ret = ret & (*bit ? v(mit->second) :
-                                   ~v(mit->second));
+                ret = ret & (*bit ? v(*mit) :
+                                   ~v(*mit));
 
         return ret;
     }
@@ -267,9 +268,9 @@ Bv Teacher::minimize (const Bv& bv, const Face& face)
     Bv tmp = bv;
     // Hypt(X), Trans(I,X,X'), ~Hypt(X'), X' <_{face} bv, ~DEAD_ENDS(X')
     // ~DEAD_ENDS(X') is implicit by `judge` always giving negative first if there's any
-    while (sat(mk_lt_basis(tmp, face, next_index_varmap) &
+    while (sat(mk_lt_basis(tmp, face, next_state_varmap) &
                hypt & trans & ~hyptp, m))
-        tmp = mk_ce(next_index_varmap, m);
+        tmp = mk_ce(next_state_varmap, m);
     return tmp;
 }
 

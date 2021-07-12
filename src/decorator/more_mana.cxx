@@ -26,29 +26,31 @@ bool hold (const Bf_ptr& bf, Mana& m)
     return !sat(~bf, m);
 }
 
-bool evaluate (Mana& m, const Bv& valuation, const map<int,int>& index_varmap)
+bool evaluate (Mana& m, const Bv& valuation, const vector<Var>& state_varmap)
 {
-    assert(valuation.len() == index_varmap.size());
+    assert(valuation.len() == state_varmap.size());
 
     vec<Lit> ps;
     auto bit = --valuation.end();
-    auto mit = --index_varmap.end();
+    auto mit = --state_varmap.end();
     for (; bit != --valuation.begin(); bit--, mit--)
     {
-        if (*bit) ps.push(mkLit(mit->second));
-        else ps.push(~mkLit(mit->second));
+        if (*bit) ps.push(mkLit(*mit));
+        else ps.push(~mkLit(*mit));
     }
     return m.solve(ps);
 }
 
-bool evaluate (const Bf_ptr& bf, Mana& m, const Bv& valuation, const map<int,int>& index_varmap)
+bool evaluate (const Bf_ptr& bf, Mana& m, const Bv& valuation, const vector<Var>& state_varmap)
 {
     Sw tmpSw = assume(bf, m);
-    bool ret = evaluate(m, valuation, index_varmap);
+    bool ret = evaluate(m, valuation, state_varmap);
     m.releaseSw(tmpSw);
     return ret;
 }
 
+// TODO: rework tabulate with vector varmap
+/*
 namespace
 {
     inline void validate_range (const Mana& m, const vector<Var>& range)
@@ -90,3 +92,4 @@ string tabulate (Mana& m, vector<Var> range)
 
     return table;
 }
+*/

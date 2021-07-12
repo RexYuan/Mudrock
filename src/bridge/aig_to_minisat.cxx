@@ -6,57 +6,82 @@
 //
 namespace
 {
-    inline void validate_varmap (const map<AigVar,Var>& varmap, const Aig& aig)
+    inline void validate_varmap (const vector<Var>& varmap, const Aig& aig, const Mana& m)
     {
-        // every nodes are mapped
-        for (size_t i=0; i<1+aig.num_inputs()+aig.num_latches()+aig.num_ands(); i++)
-            assert(varmap.contains(i));
+        assert(varmap.size() == 1+aig.maxvar());
+        // every AigVar has a mapped Var
+        for (size_t i=0; i<1+aig.maxvar(); i++)
+        {
+            assert(varmap[i] != var_Undef);
+            assert(varmap[i] < m.nVars());
+        }
+    }
+
+    // must be valid within range of map
+    inline bool isValid (AigVar aigvar, const vector<Var>& varmap)
+    {
+        return aigvar < varmap.size();
+    }
+
+    // must be un-newVar-ed fresh number
+    inline bool isFresh (AigVar aigvar, const vector<Var>& varmap)
+    {
+        return varmap[aigvar] == var_Undef;
+    }
+
+    // ready to be newVar-ed
+    inline bool isNew (AigVar aigvar, const vector<Var>& varmap)
+    {
+        return !isConst(aigvar) &&
+               isValid(aigvar, varmap) &&
+               isFresh(aigvar, varmap);
+    }
+
+    // children precede parent
+    inline bool isOrdered (AigVar aigvar, AigLit aiglit1, AigLit aiglit2,
+                           const vector<Var>& varmap)
+    {
+        return !isFresh(aiglit1.var, varmap) &&
+               !isFresh(aiglit2.var, varmap);
     }
 }
-map<AigVar,Var> addAig (const Aig& aig, Mana& m)
+vector<Var> addAig (const Aig& aig, Mana& m)
 {
-    map<AigVar,Var> varmap; // mapping from AigVar(unsigned) to Var(int)
+    vector<Var> varmap(1+aig.maxvar(), var_Undef); // index AigVar(unsigned) => Var(int)
 
-    // when AigVar has var 0 it is a constant (0=false, 1=true)
+    // AigVar 0 is constant bools (0=false, 1=true)
     varmap[0] = m.constFalse();
 
     // add input
     for (const auto& aigvar : aig.inputs())
     {
-        assert(aigvar > 0);               // must not be constant
-        assert(!varmap.contains(aigvar)); // must be fresh number
-
+        assert(isNew(aigvar, varmap));
         varmap[aigvar] = m.newVar();
     }
 
     // add state
     for (const auto& [aigvar,aiglit] : aig.latches())
     {
-        assert(aigvar > 0);               // must not be constant
-        assert(!varmap.contains(aigvar)); // must be fresh number
-
+        assert(isNew(aigvar, varmap));
         varmap[aigvar] = m.newVar();
     }
 
     // add and
-    for (auto bmap = toBfmap(varmap); const auto& [aigvar,aiglit1,aiglit2] : aig.ands())
+    for (const auto& [aigvar,aiglit1,aiglit2] : aig.ands())
     {
-        assert(aigvar > 0);               // must not be constant
-        assert(!varmap.contains(aigvar)); // must be fresh number
-        assert(varmap.contains(aiglit1.var) && // assuming ordered
-               varmap.contains(aiglit2.var));
-
-        Bf_ptr tmpbf = subst(toBf(aiglit1) & toBf(aiglit2), bmap);
-        bmap[aigvar] = varmap[aigvar] = addBf(tmpbf, m);
+        assert(isNew(aigvar, varmap));
+        assert(isOrdered(aigvar, aiglit1, aiglit2, varmap));
+        Bf_ptr tmpbf = subst(toBf(aiglit1) & toBf(aiglit2), varmap);
+        varmap[aigvar] = addBf(tmpbf, m);
     }
 
-    validate_varmap(varmap, aig);
+    validate_varmap(varmap, aig, m);
     return varmap;
 }
 
-map<AigVar,Var> addAig (const map<AigVar,Var>& last_varmap, const Aig& aig, Mana& m)
+vector<Var> addAig (const vector<Var>& last_varmap, const Aig& aig, Mana& m)
 {
-    map<AigVar,Var> varmap;
+    vector<Var> varmap(1+aig.maxvar(), var_Undef);
 
     // when AigVar has var 0 it is a constant (0=false, 1=true)
     varmap[0] = m.constFalse();
@@ -64,36 +89,31 @@ map<AigVar,Var> addAig (const map<AigVar,Var>& last_varmap, const Aig& aig, Mana
     // add input
     for (const auto& aigvar : aig.inputs())
     {
-        assert(aigvar > 0); // must not be constant
+        assert(isNew(aigvar, varmap));
         varmap[aigvar] = m.newVar();
     }
 
     // add state in terms of last step
-    for (auto bmap = toBfmap(last_varmap); const auto& [aigvar,aiglit] : aig.latches())
+    for (const auto& [aigvar,aiglit] : aig.latches())
     {
-        assert(aigvar > 0);               // must not be constant
-        assert(!varmap.contains(aigvar)); // must be fresh number
-
-        varmap[aigvar] = addBf(subst(toBf(aiglit), bmap), m);
+        assert(isNew(aigvar, varmap));
+        varmap[aigvar] = addBf(subst(toBf(aiglit), last_varmap), m);
     }
 
     // add and
-    for (auto bmap = toBfmap(varmap); const auto& [aigvar,aiglit1,aiglit2] : aig.ands())
+    for (const auto& [aigvar,aiglit1,aiglit2] : aig.ands())
     {
-        assert(aigvar > 0);               // must not be constant
-        assert(!varmap.contains(aigvar)); // must be fresh number
-        assert(varmap.contains(aiglit1.var) && // assuming ordered
-               varmap.contains(aiglit2.var));
-
+        assert(isNew(aigvar, varmap));
+        assert(isOrdered(aigvar, aiglit1, aiglit2, varmap));
         // set decision if it's next state
         bool is_next = false;
         for (const auto& [curr_aigvar,next_aiglit] : aig.latches())
             if (aigvar == next_aiglit.var) is_next = true;
 
-        Bf_ptr tmpbf = subst(toBf(aiglit1) & toBf(aiglit2), bmap);
-        bmap[aigvar] = varmap[aigvar] = addBf(tmpbf, m, nullopt, is_next);
+        Bf_ptr tmpbf = subst(toBf(aiglit1) & toBf(aiglit2), varmap);
+        varmap[aigvar] = addBf(tmpbf, m, nullopt, is_next);
     }
 
-    validate_varmap(varmap, aig);
+    validate_varmap(varmap, aig, m);
     return varmap;
 }

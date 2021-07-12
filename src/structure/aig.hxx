@@ -28,6 +28,9 @@ struct AigLit // TODO: use lifted literals
 // aigvar 0 is constant false
 inline constinit AigLit AigTrue  {false, 0};
 inline constinit AigLit AigFalse { true, 0};
+// constant checks
+inline bool isConst (AigVar v) { return v == 0; }
+inline bool isConst (AigLit l) { return isConst(l.var); }
 
 struct AigLatch
 {

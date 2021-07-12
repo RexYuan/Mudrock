@@ -6,8 +6,6 @@
 #include <string>
 using std::string;
 using namespace std::string_literals;
-#include <map>
-using std::map;
 #include <vector>
 using std::vector;
 
@@ -30,7 +28,6 @@ using std::ostream;
 #include "face_to_bf.hxx"
 #include "bf_to_minisat.hxx"
 #include "aig_to_minisat.hxx"
-#include "between_maps.hxx"
 
 namespace Donut
 {
@@ -80,9 +77,9 @@ struct Teacher
 private:
     Mana m;
     Aig aig;
-    map<int,int> first_aig_varmap,   second_aig_varmap,   last_aig_varmap;
-    map<int,int> first_index_varmap, second_index_varmap, last_index_varmap;
-    vector<map<int,int>> aig_varmaps_cache;
+    vector<Var> first_aig_varmap,   second_aig_varmap,   last_aig_varmap;
+    vector<Var> first_state_varmap, second_state_varmap, last_state_varmap;
+    vector< vector<Var> > aig_varmaps_cache;
 
     Sw cumu_sw, // tracking the cumulative disjuncted hypotheses set
        tent_sw; // tracking the tentative frontier hypothesis

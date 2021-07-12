@@ -50,6 +50,7 @@ struct Bf
 
     // substitute var space
     friend Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& to);
+    friend Bf_ptr subst (const Bf_ptr& bf, const vector<int>& to);
 
     const bool            get_bool () const;
     const int             get_int  () const;
