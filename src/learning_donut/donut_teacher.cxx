@@ -20,14 +20,23 @@
 #ifdef COUNTING
 #define addBf(bf, args...)                                                    \
     ({                                                                        \
+        log(4, "Count", "Counting addBf");                                    \
         COUNT_CLAUSE(bf);                                                     \
         addBf(bf, args);                                                      \
     })
 
 #define addAig(aig, args...)                                                  \
     ({                                                                        \
+        log(4, "Count", "Counting addAig");                                   \
         COUNT_CLAUSE(aig);                                                    \
         addAig(aig, args);                                                    \
+    })
+
+#define extendAig(varmap, aig, args...)                                       \
+    ({                                                                        \
+        log(4, "Count", "Counting extendAig");                                \
+        COUNT_CLAUSE(aig);                                                    \
+        extendAig(varmap, aig, args);                                         \
     })
 #endif
 
@@ -127,7 +136,6 @@ namespace
 //=================================================================================================
 // Higher order commands for context
 //
-#include <iostream>
 void Teacher::setup ()
 {
 PROF_SCOPE();
@@ -163,7 +171,7 @@ PROF_SCOPE();
     for (size_t i=0; i<n; i++)
     {
         // set up X''
-        auto tmp_aig_varmap = addAig(last_aig_varmap, aig, m);
+        auto tmp_aig_varmap = extendAig(last_aig_varmap, aig, m);
 
         // set up Bad(X'')
         auto f_bad = mk_bad(aig, tmp_aig_varmap);
@@ -305,14 +313,22 @@ PROF_SCOPE();
 
     m.releaseSw(tent_sw);
     tent_sw = m.newSw();
-
+SingletonProfiler::Start("eqpart", "mk_cdnf");
     Bf_ptr cdnf = mk_cdnf(faces);
+SingletonProfiler::Stop("eqpart", "mk_cdnf");
+SingletonProfiler::Start("eqpart", "subst");
     // H(X), H(X')
     Bf_ptr first_cdnf  = subst(cdnf, first_state_varmap),
            second_cdnf = subst(cdnf, second_state_varmap);
-    frnt  = v(addBf(f_frnt_cache  = first_cdnf,  m, tent_sw));
-    frntp = v(addBf(f_frntp_cache = second_cdnf, m, tent_sw));
-
+SingletonProfiler::Stop("eqpart", "subst");
+SingletonProfiler::Start("eqpart", "cache");
+    f_frnt_cache  = first_cdnf;
+    f_frntp_cache = second_cdnf;
+SingletonProfiler::Stop("eqpart", "cache");
+SingletonProfiler::Start("eqpart", "addBf");
+    frnt  = v(addBf(first_cdnf,  m, tent_sw));
+    frntp = v(addBf(second_cdnf, m, tent_sw));
+SingletonProfiler::Stop("eqpart", "addBf");
     // progress criterion (forward image over-approximation)
     //=========================================================================
     // last H(X), T(X,X') => H(X')

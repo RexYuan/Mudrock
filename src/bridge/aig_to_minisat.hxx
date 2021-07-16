@@ -25,4 +25,4 @@ using namespace Minisat;
 // add `aig` as a new state and return map from aig to minisat
 vector<Var> addAig (const Aig& aig, Mana& m);
 // add aig with state vars determined by `last_varmap` and return map from aig to minisat
-vector<Var> addAig (const vector<Var>& last_varmap, const Aig& aig, Mana& m);
+vector<Var> extendAig (const vector<Var>& last_varmap, const Aig& aig, Mana& m);

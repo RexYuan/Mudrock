@@ -129,7 +129,7 @@ release: $(OUT)
 .PHONY: debug
 debug: CXX_O     := -Og
 debug: CXX_DEBUG := -g3
-debug: CPP_DEF   := -D LOGGING -D PROFILING
+debug: CPP_DEF   := -D LOGGING -D PROFILING -D COUNTING
 debug: $(OUT)
 
 .PHONY: clean cleanall

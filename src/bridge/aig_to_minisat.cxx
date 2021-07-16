@@ -79,7 +79,7 @@ vector<Var> addAig (const Aig& aig, Mana& m)
     return varmap;
 }
 
-vector<Var> addAig (const vector<Var>& last_varmap, const Aig& aig, Mana& m)
+vector<Var> extendAig (const vector<Var>& last_varmap, const Aig& aig, Mana& m)
 {
     vector<Var> varmap(1+aig.maxvar(), var_Undef);
 
