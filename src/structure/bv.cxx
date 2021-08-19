@@ -14,16 +14,16 @@ namespace
     inline constinit const size_t data_unit_bits = bits_in_bytes(sizeof(Bv::data_unit));
 
     // mask of 1000...
-    inline constinit const Bv::data_unit one_zeros_mask = 1 << (data_unit_bits-1);
+    inline constinit const Bv::data_unit one_zeros_mask = 1LL << (data_unit_bits-1U);
 
     // mask of 1111...
-    inline constinit const Bv::data_unit ones_mask = ~0;
+    inline constinit const Bv::data_unit ones_mask = ~0LL;
 
     // how many units are needed to store `bits` bits
     inline constexpr const size_t bits_in_units (size_t bits)
     {
-        assert (bits > 0);
-        return (bits+data_unit_bits-1) / data_unit_bits;
+        assert (bits > 0U);
+        return (bits+data_unit_bits-1U) / data_unit_bits;
     }
 
     // which unit is `index`th bit stored
@@ -41,14 +41,14 @@ namespace
     // mask for extracting `index`th bit from its unit
     inline constexpr const size_t get_index_mask (size_t index)
     {
-        assert (0 <= index && index <= data_unit_bits);
+        assert (0U <= index && index <= data_unit_bits);
         return one_zeros_mask >> index;
     }
 
     // mask for removing the rightmost n bits
     inline constexpr const size_t get_right_zeros_mask (size_t len)
     {
-        assert (0 <= len && len <= data_unit_bits);
+        assert (0U <= len && len <= data_unit_bits);
         return ones_mask << len;
     }
 

@@ -2,8 +2,8 @@
 #pragma once
 
 #include <cassert>
-#include <cstdint>
-#include <climits>
+#include <cstdint> // __WORDSIZE
+#include <climits> // CHAR_BIT
 
 #include <string>
 using std::string;
@@ -11,6 +11,12 @@ using namespace std::string_literals;
 
 #include <iostream>
 using std::ostream;
+
+#if __WORDSIZE == 64
+#define FAST_TYPE std::uint_fast64_t
+#else
+#define FAST_TYPE std::uint_fast32_t
+#endif
 
 //=================================================================================================
 // Bit vector type
@@ -64,7 +70,7 @@ struct Bv
     string to_string_pretty () const;
 
     // data unit store
-    using data_unit = std::uint_fast8_t;
+    using data_unit = FAST_TYPE;
     // make sure it's index-able
     static_assert(sizeof(size_t) >= sizeof(data_unit));
 
