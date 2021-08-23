@@ -88,6 +88,14 @@ Bv::Bv (size_t len, unsigned i) : Bv{len}
     validate();
 }
 
+Bv::Bv (void* data_site, size_t len, unsigned i)
+{
+    length = len;
+    data = new (data_site) data_unit [bits_in_units(length)]; // no init
+    setter(i);
+    validate();
+}
+
 Bv::~Bv ()
 {
     delete [] data;

@@ -36,6 +36,7 @@ DEP_DIRS := $(addprefix $(DEP_ROOT)/, $(SUB_DIRS))
 OBJ_DIRS := $(addprefix $(OBJ_ROOT)/, $(SUB_DIRS))
 
 SRCS := $(foreach d, $(SRC_DIRS), $(wildcard $(d)/*.cxx))
+HDRS := $(foreach d, $(SRC_DIRS), $(wildcard $(d)/*.hxx))
 DEPS := $(patsubst $(SRC_ROOT)/%.cxx, $(DEP_ROOT)/%.d, $(SRCS))
 OBJS := $(patsubst $(SRC_ROOT)/%.cxx, $(OBJ_ROOT)/%.o, $(SRCS))
 
@@ -149,7 +150,7 @@ $(DEP_DIRS): | $(DEP_ROOT)
 $(OBJ_ROOT) $(OBJ_DIRS) $(DEP_ROOT) $(DEP_DIRS):
 	mkdir $@
 
-$(MAIN_OBJ): $(MAIN_SRC) $(OBJS) $(MINISAT) | $(OBJ_ROOT)
+$(MAIN_OBJ): $(MAIN_SRC) $(HDRS) $(OBJS) $(MINISAT) | $(OBJ_ROOT)
 	$(CXX) $(CXX_FLAGS) $(OBJS) $< $(CXX_LINKS) -o $@
 
 $(foreach d, $(SUB_DIRS), $(eval $(call DepFactory,$(d))))

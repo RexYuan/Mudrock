@@ -2,8 +2,10 @@
 #pragma once
 
 #include <cassert>
-#include <cstdint> // __WORDSIZE
-#include <climits> // CHAR_BIT
+#include <cstdint>
+// __WORDSIZE
+#include <climits>
+// CHAR_BIT
 
 #include <string>
 using std::string;
@@ -27,6 +29,7 @@ struct Bv
     Bv (size_t len); // construct 0s bv of length `len`
     Bv (string bs);  // construct bv corresponding to `bs`
     Bv (size_t len, unsigned i); // construct bv of length `len` corresponding to `i` (big-endian)
+    Bv (void* data_site, size_t len, unsigned i = 0); // construct at given address
     ~Bv ();
 
     Bv           (const Bv& bv2); // copy constructor
