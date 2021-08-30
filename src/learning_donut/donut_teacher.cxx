@@ -277,10 +277,10 @@ namespace
     }
 
     // extract the valuation Bv in the range of `state_varmap`
-    inline Bv mk_ce (const vector<Var>& state_varmap, const Mana& m)
+    inline Bv* mk_ce (const vector<Var>& state_varmap, const Mana& m)
     {
-        Bv tmp{state_varmap.size()};
-        auto bit = tmp.begin();
+        Bv* tmp = SingletonBvArena::Get().mkBv(state_varmap.size());
+        auto bit = tmp->begin();
         for (const Var v : state_varmap)
         {
             bit.setbit(m.val(v));
@@ -292,7 +292,7 @@ namespace
 //=================================================================================================
 // Query commands for learner
 //
-bool Teacher::membership (Bv bv)
+bool Teacher::membership (Bv* bv)
 {
 PROF_SCOPE();
     bool ret;
@@ -358,7 +358,7 @@ SingletonProfiler::Stop("eqpart", "addBf");
     return ret;
 }
 
-Bv Teacher::counterexample () const
+Bv* Teacher::counterexample () const
 {
 PROF_SCOPE();
     assert(state != Refuted && state != Perfect && state != Unknown);

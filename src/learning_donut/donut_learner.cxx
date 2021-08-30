@@ -21,7 +21,7 @@ void Learner::clear ()
 {
 PROF_SCOPE();
     fb = Unknown;
-    ce = Bv{};
+    ce = nullptr;
     hypts.clear();
 }
 
@@ -95,10 +95,10 @@ ret:
     return;
 }
 
-Bv Learner::minimize (const Bv& ce, const Face& f)
+Bv* Learner::minimize (Bv* ce, const Face& f)
 {
 PROF_SCOPE();
-    auto query = [&](const Bv& bv) -> bool
+    auto query = [&](Bv* bv) -> bool
     {
         bool ret;
 
@@ -106,21 +106,22 @@ PROF_SCOPE();
 
         return ret;
     };
-    Bv tmp = ce;
-    for (size_t i=0; i<ce.len(); i++)
+    Bv* tmp = SingletonBvArena::Get().mkBv(ce->len());
+    *tmp = *ce;
+    for (size_t i=0; i<ce->len(); i++)
     {
         if (terminate_requested)
         {
             log(3, "Top", "SIGTERM received. Breaking out of minimize loop");
             break;
         }
-        if (tmp[i] != f.basis()[i])
+        if (tmp->operator[](i) != f.basis()->operator[](i))
         {
-            tmp.flipper(i);
+            tmp->flipper(i);
             if (query(tmp))
                 i = 0;
             else
-                tmp.flipper(i);
+                tmp->flipper(i);
         }
     }
     return tmp;

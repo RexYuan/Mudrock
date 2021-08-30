@@ -77,13 +77,13 @@ Bf_ptr subst (const Bf_ptr& bf, const vector<int>& varmap)
     throw InvalidBfConn("Unmatched cases."s);
 }
 
-bool evaluate (const Bf_ptr& bf, const Bv& val)
+bool evaluate (const Bf_ptr& bf, Bv* val)
 {
     switch (bf->t)
     {
     case Conn::Base:
-        assert(0 <= bf->get_int() && bf->get_int() < static_cast<int>(val.len()));
-        return val[bf->get_int()];
+        assert(0 <= bf->get_int() && bf->get_int() < static_cast<int>(val->len()));
+        return (*val)[bf->get_int()];
     case Conn::Top:  return true;
     case Conn::Bot:  return false;
     case Conn::Not:  return !evaluate(bf->get_sub(), val);
@@ -118,7 +118,7 @@ string tabulate (const Bf_ptr& bf, size_t len)
         table += tmp.to_string();
         table += ' ';
 
-        auto ret = evaluate(bf, tmp);
+        auto ret = evaluate(bf, &tmp);
 
         table += to_string(static_cast<unsigned>(ret));
         table += '\n';

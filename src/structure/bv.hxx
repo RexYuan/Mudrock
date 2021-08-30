@@ -78,6 +78,7 @@ struct Bv
     static_assert(sizeof(size_t) >= sizeof(data_unit));
 
 private:
+    bool site_provided = false;
     size_t length;
     data_unit* data;
 

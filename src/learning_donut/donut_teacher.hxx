@@ -20,6 +20,7 @@ using std::ostream;
 #include "aig.hxx"
 #include "bf.hxx"
 #include "bv.hxx"
+#include "bv_arena.hxx"
 #include "face.hxx"
 
 #include "mana.hxx"
@@ -64,12 +65,12 @@ struct Teacher
     //=============================================================================================
     // Query commands for learner
     //
-    bool membership (Bv bv);
+    bool membership (Bv* bv);
     // counterexample populators
     //
     Feedback equivalence (const vector<Face>& faces); // if frontier image < `faces` < bad
 
-    Bv counterexample () const;
+    Bv* counterexample () const;
     const Feedback& check_state () const;
 
     vector<Bv> witness () const; // return refutation stimulus
@@ -104,7 +105,7 @@ private:
     size_t unroll_depth = 0;
 
     Feedback state = Unknown;
-    Bv ce = Bv{};
+    Bv* ce = nullptr;
 };
 //=================================================================================================
 }

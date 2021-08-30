@@ -21,7 +21,7 @@ using std::ostream;
 struct Face
 {
     Face () = default;
-    Face (const Bv& b);
+    Face (Bv* b);
     ~Face () = default;
 
     Face           (const Face& face2) = delete; // disallow copy
@@ -30,23 +30,23 @@ struct Face
     Face           (Face&& face2); // use move
     Face& operator=(Face&& face2); // use move
 
-    const Bv&         basis  () const; // get basis
-    const vector<Bv>& primes () const; // get primes
+    Bv*         basis  () const; // get basis
+    const vector<Bv*>& primes () const; // get primes
 
     // use move to push into primes
-    void push (const Bv& b);
+    void push (Bv* b);
 
     bool size  () const; // number of primes
     bool empty () const; // if primes is empty
 
-    bool operator () (const Bv& b) const; // if a point is covered by the face
+    bool operator () (Bv* b) const; // if a point is covered by the face
 
     string to_string        () const;
     string to_string_pretty () const;
 
 private:
-    Bv _basis;
-    vector<Bv> _primes;
+    Bv* _basis;
+    vector<Bv*> _primes;
 };
 
 inline ostream& operator << (ostream& out, const Face& f) { out << f.to_string(); return out; }

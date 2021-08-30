@@ -90,6 +90,7 @@ Bv::Bv (size_t len, unsigned i) : Bv{len}
 
 Bv::Bv (void* data_site, size_t len, unsigned i)
 {
+    site_provided = true;
     length = len;
     data = new (data_site) data_unit [bits_in_units(length)]; // no init
     setter(i);
@@ -112,12 +113,21 @@ Bv::Bv (const Bv& bv2)
 
 Bv& Bv::operator=(const Bv& bv2)
 {
-    delete [] data;
-    length = bv2.length;
-    data = new data_unit [bits_in_units(length)]{};
-    validate();
-    for (size_t i=0; i<bits_in_units(length); i++)
+    if (site_provided)
+    {
+        length = bv2.length;
+        data = bv2.data;
+        validate();
+    }
+    else
+    {
+        delete [] data;
+        length = bv2.length;
+        data = new data_unit [bits_in_units(length)]{};
+        validate();
+        for (size_t i=0; i<bits_in_units(length); i++)
         data[i] = bv2.data[i];
+    }
     return *this;
 }
 

@@ -26,7 +26,7 @@ Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& varmap);
 Bf_ptr subst (const Bf_ptr& bf, const vector<int>& varmap);
 
 // evaluate `bf` according to `val`; variables are indexed {0, ..., val.len()}
-bool evaluate (const Bf_ptr& bf, const Bv& val);
+bool evaluate (const Bf_ptr& bf, Bv* val);
 
 // enumerate bf vars of `range` and check sat; variables are indexed {0, ..., len}
 string tabulate (const Bf_ptr& bf, size_t len);

@@ -44,9 +44,9 @@ struct Learner
 private:
     Teacher& teacher;
     Feedback fb = Unknown;
-    Bv ce = Bv{};
+    Bv* ce = nullptr;
 
-    Bv minimize (const Bv& ce, const Face& f);
+    Bv* minimize (Bv* ce, const Face& f);
 
     vector<Face> hypts; // cdnf
 };
