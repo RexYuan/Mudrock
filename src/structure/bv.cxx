@@ -428,3 +428,18 @@ void Bv::BitIterator::setbit (bool val)
 {
     val ? *p |= mask_ind : *p &= ~mask_ind;
 }
+
+using bv_alloc = ArenaAlloc<Bv>;
+using bv_alloc_traits = allocator_traits<bv_alloc>;
+using data_alloc = bv_alloc_traits::rebind_alloc<Bv::data_unit>;
+using data_alloc_traits = bv_alloc_traits::rebind_traits<Bv::data_unit>;
+using DataPtr = pointer_traits<BvPtr>::rebind<Bv::data_unit>;
+BvPtr mkBv (size_t len, unsigned i)
+{
+    static bv_alloc ba;
+    static data_alloc da;
+    BvPtr site = bv_alloc_traits::allocate(ba, 1);
+    DataPtr data_site = data_alloc_traits::allocate(da, bits_in_units(len));
+    new (site.get()) Bv{data_site.get(), len, i};
+    return site;
+}

@@ -15,7 +15,7 @@ using namespace std::string_literals;
 using std::ostream;
 
 #include "bv.hxx"
-#include "arena.hxx"
+#include "old_arena.hxx"
 
 struct BvArena
 {

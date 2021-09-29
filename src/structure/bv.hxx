@@ -11,8 +11,14 @@
 using std::string;
 using namespace std::string_literals;
 
+#include <memory>
+using std::allocator_traits;
+using std::pointer_traits;
+
 #include <iostream>
 using std::ostream;
+
+#include "arena_alloc.hxx"
 
 #if __WORDSIZE == 64
 #define FAST_TYPE std::uint_fast64_t
@@ -125,3 +131,6 @@ Bv operator | (Bv bv1, Bv bv2);
 Bv operator ^ (Bv bv1, Bv bv2);
 
 inline ostream& operator << (ostream& out, const Bv& bv) { out << bv.to_string(); return out; }
+
+using BvPtr = allocator_traits<ArenaAlloc<Bv>>::pointer;
+BvPtr mkBv (size_t len, unsigned i = 0); // Bv factory
