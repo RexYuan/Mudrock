@@ -26,23 +26,34 @@ using std::ostream;
 #define FAST_TYPE std::uint_fast32_t
 #endif
 
+// data unit store
+using bv_data_unit = FAST_TYPE;
+// make sure it's index-able
+static_assert(sizeof(size_t) >= sizeof(bv_data_unit));
+
+//=================================================================================================
+// Bv factory
+//
+struct Bv;
+using Bv_ptr = allocator_traits<ArenaAlloc<Bv>>::pointer;
+Bv_ptr mkBv (const string& bs);
+Bv_ptr mkBv (size_t len, unsigned i = 0);
+Bv_ptr mkBv (const Bv_ptr bv2);
+
 //=================================================================================================
 // Bit vector type
 //
 struct Bv
 {
-    Bv ();
-    Bv (size_t len); // construct 0s bv of length `len`
-    Bv (string bs);  // construct bv corresponding to `bs`
-    Bv (size_t len, unsigned i); // construct bv of length `len` corresponding to `i` (big-endian)
-    Bv (void* data_site, size_t len, unsigned i = 0); // construct at given address
-    ~Bv ();
+    friend Bv_ptr mkBv (const string&);
+    friend Bv_ptr mkBv (size_t, unsigned);
+    friend Bv_ptr mkBv (const Bv_ptr);
 
-    Bv           (const Bv& bv2); // copy constructor
-    Bv& operator=(const Bv& bv2); // copy assignment
-
-    Bv           (Bv&& bv2); // move constructor
-    Bv& operator=(Bv&& bv2); // move assignment
+    Bv () = delete;
+    ~Bv () = default;
+    Bv& operator=(const Bv& bv2);
+    Bv           (Bv&& bv2) = delete;
+    Bv& operator=(Bv&& bv2) = delete;
 
     size_t len  ()           const; // get length
     bool getter (size_t ind) const; // return value of ind
@@ -50,43 +61,36 @@ struct Bv
     void setter  (size_t ind, bool val); // set ind to val
     void flipper (size_t ind);           // flip value of ind
 
-    void setter (string bs);  // set to bs
+    void setter (const string& bs);  // set to bs
     void setter (unsigned i); // set to i
 
     bool operator [] (size_t ind) const;
 
-    friend bool operator == (const Bv& bv1, const Bv& bv2);
-    friend bool operator != (const Bv& bv1, const Bv& bv2);
-    friend bool operator <  (const Bv& bv1, const Bv& bv2);
-    friend bool operator <= (const Bv& bv1, const Bv& bv2);
+    friend bool operator == (const Bv_ptr bv1, const Bv_ptr bv2);
+    friend bool operator != (const Bv_ptr bv1, const Bv_ptr bv2);
+    friend bool operator <  (const Bv_ptr bv1, const Bv_ptr bv2);
+    friend bool operator <= (const Bv_ptr bv1, const Bv_ptr bv2);
 
-    Bv& operator &= (const Bv& bv2);
-    Bv& operator |= (const Bv& bv2);
-    Bv& operator ^= (const Bv& bv2);
-
-    friend Bv operator ~ (Bv bv);
-    friend Bv operator & (Bv bv1, Bv bv2);
-    friend Bv operator | (Bv bv1, Bv bv2);
-    friend Bv operator ^ (Bv bv1, Bv bv2);
+    friend Bv_ptr operator ~ (const Bv_ptr bv);
+    friend Bv_ptr operator & (const Bv_ptr bv1, const Bv_ptr bv2);
+    friend Bv_ptr operator | (const Bv_ptr bv1, const Bv_ptr bv2);
+    friend Bv_ptr operator ^ (const Bv_ptr bv1, const Bv_ptr bv2);
 
     struct BitIterator;
     BitIterator begin () const;
     BitIterator end   () const;
 
-    explicit operator bool () const; // check if its degen
-
     string to_string        () const;
     string to_string_pretty () const;
 
-    // data unit store
-    using data_unit = FAST_TYPE;
-    // make sure it's index-able
-    static_assert(sizeof(size_t) >= sizeof(data_unit));
-
 private:
-    bool site_provided = false;
+    Bv (size_t len); // construct 0s bv of length `len`
+    Bv (const string& bs);  // construct bv corresponding to `bs`
+    Bv (size_t len, unsigned i); // construct bv of length `len` corresponding to `i` (big-endian)
+    Bv (const Bv& bv2);
+
     size_t length;
-    data_unit* data;
+    bv_data_unit data[];
 
     inline void validate () { length > 0      ? assert(data)        : assert(data == nullptr);
                               data == nullptr ? assert(length == 0) : assert(length > 0); }
@@ -97,7 +101,7 @@ private:
 //
 struct Bv::BitIterator
 {
-    BitIterator (data_unit* ptr, size_t ind);
+    BitIterator (bv_data_unit* ptr, size_t ind);
 
     BitIterator& operator++();    // prefix increment
     BitIterator  operator++(int); // postfix increment
@@ -112,25 +116,23 @@ struct Bv::BitIterator
     friend bool operator != (const BitIterator& bit1, const BitIterator& bit2);
 
 private:
-    data_unit* p;
+    // stores native; allocating after instatiating an iterator might invalidate it from realloc
+    bv_data_unit* p;
     size_t i;
-    data_unit mask_ind;
+    bv_data_unit mask_ind;
 };
 
 bool operator == (const Bv::BitIterator& bit1, const Bv::BitIterator& bit2);
 bool operator != (const Bv::BitIterator& bit1, const Bv::BitIterator& bit2);
 
-bool operator == (const Bv& bv1, const Bv& bv2);
-bool operator != (const Bv& bv1, const Bv& bv2);
-bool operator <  (const Bv& bv1, const Bv& bv2);
-bool operator <= (const Bv& bv1, const Bv& bv2);
+bool operator == (const Bv_ptr bv1, const Bv_ptr bv2);
+bool operator != (const Bv_ptr bv1, const Bv_ptr bv2);
+bool operator <  (const Bv_ptr bv1, const Bv_ptr bv2);
+bool operator <= (const Bv_ptr bv1, const Bv_ptr bv2);
 
-Bv operator ~ (Bv bv);
-Bv operator & (Bv bv1, Bv bv2);
-Bv operator | (Bv bv1, Bv bv2);
-Bv operator ^ (Bv bv1, Bv bv2);
+Bv_ptr operator ~ (const Bv_ptr bv);
+Bv_ptr operator & (const Bv_ptr bv1, const Bv_ptr bv2);
+Bv_ptr operator | (const Bv_ptr bv1, const Bv_ptr bv2);
+Bv_ptr operator ^ (const Bv_ptr bv1, const Bv_ptr bv2);
 
-inline ostream& operator << (ostream& out, const Bv& bv) { out << bv.to_string(); return out; }
-
-using BvPtr = allocator_traits<ArenaAlloc<Bv>>::pointer;
-BvPtr mkBv (size_t len, unsigned i = 0); // Bv factory
+inline ostream& operator << (ostream& out, const Bv_ptr bv) { out << bv->to_string(); return out; }

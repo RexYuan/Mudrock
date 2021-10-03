@@ -16,7 +16,6 @@ using std::ostream;
 #include "aig.hxx"
 #include "bf.hxx"
 #include "bv.hxx"
-#include "bv_arena.hxx"
 #include "face.hxx"
 
 #include "mana.hxx"
@@ -46,12 +45,12 @@ struct Teacher
 
     bool degen (); // if init intersects bad
 
-    Bv* minimize (Bv* bv, const Face& face); // minimize `bv` in `face`
+    Bv_ptr minimize (const Bv_ptr bv, const Face& face); // minimize `bv` in `face`
     // counterexample populator
     Feedback consider (const vector<Face>& faces); // add `hypts` and check if invariant is found
     bool aligned (const Face& face); // if `face` prevents `hypt` from being transitive
 
-    Bv* counterexample () const;
+    Bv_ptr counterexample () const;
     const Feedback& check_state () const;
 
 private:
@@ -71,7 +70,7 @@ private:
            hyptp;     // Hypt(X')
 
     Feedback state = Unknown;
-    Bv* ce = nullptr;
+    Bv_ptr ce{nullptr};
     // Learning apparatuses
     //
     void     setup  (); // prepare learning environment

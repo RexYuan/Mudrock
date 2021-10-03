@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include <type_traits>
 using std::true_type;
 

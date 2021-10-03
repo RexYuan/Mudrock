@@ -95,10 +95,10 @@ ret:
     return;
 }
 
-Bv* Learner::minimize (Bv* ce, const Face& f)
+Bv_ptr Learner::minimize (const Bv_ptr ce, const Face& f)
 {
 PROF_SCOPE();
-    auto query = [&](Bv* bv) -> bool
+    auto query = [&](const Bv_ptr bv) -> bool
     {
         bool ret;
 
@@ -106,8 +106,7 @@ PROF_SCOPE();
 
         return ret;
     };
-    Bv* tmp = SingletonBvArena::Get().mkBv(ce->len());
-    *tmp = *ce;
+    Bv_ptr tmp = mkBv(ce);
     for (size_t i=0; i<ce->len(); i++)
     {
         if (terminate_requested)

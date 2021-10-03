@@ -9,7 +9,7 @@ Bf_ptr toBf (const Face& face)
     Bf_ptr disj = v(false);
 
     Bf_ptr clus; int i;
-    for (Bv* term : face.primes())
+    for (const Bv_ptr term : face.primes())
     {
         clus = v(true);
 

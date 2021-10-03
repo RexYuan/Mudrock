@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <cassert>
@@ -130,12 +131,12 @@ struct ArenaPtr : ArenaPtrBase<T>
     // conversion to void
     operator ArenaPtr<void>() const noexcept
     {
-        return ArenaPtr{this->get()};
+        return {this->get()};
     }
 
     operator ArenaPtr<void const>() const noexcept
     {
-        return ArenaPtr{this->get()};
+        return {this->get()};
     }
 
     // For pointer traits

@@ -1,7 +1,7 @@
 
 #include "face.hxx"
 
-Face::Face (Bv* b) : _basis{b}, _primes{vector<Bv*>{}} {};
+Face::Face (const Bv_ptr b) : _basis{b}, _primes{vector<Bv_ptr>{}} {};
 
 Face::Face (Face&& face2)
 {
@@ -16,24 +16,24 @@ Face& Face::operator=(Face&& face2)
     return *this;
 }
 
-Bv* Face::basis () const
+Bv_ptr Face::basis () const
 {
     return _basis;
 }
 
-const vector<Bv*>& Face::primes () const
+const vector<Bv_ptr>& Face::primes () const
 {
     return _primes;
 }
 
-void Face::push (Bv* b)
+void Face::push (const Bv_ptr b)
 {
     assert(b);
     if ((*this)(b)) return;
 
     for (auto pit=_primes.begin(); pit!=_primes.end();)
         // absorb greater primes to avoid redundancy
-        if ((*b^*basis()) < (**pit^*basis()))
+        if ((b ^ basis()) < (*pit ^ basis()))
             _primes.erase(pit);
         else pit++;
 
@@ -50,10 +50,10 @@ bool Face::empty () const
     return primes().empty();
 }
 
-bool Face::operator () (Bv* b) const
+bool Face::operator () (const Bv_ptr b) const
 {
-    for (Bv* p : primes())
-        if ((*p^*basis()) < (*b^*basis()))
+    for (const Bv_ptr p : primes())
+        if ((p ^ basis()) < (b ^ basis()))
             return true;
     return false;
 }

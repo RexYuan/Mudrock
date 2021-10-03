@@ -277,9 +277,9 @@ namespace
     }
 
     // extract the valuation Bv in the range of `state_varmap`
-    inline Bv* mk_ce (const vector<Var>& state_varmap, const Mana& m)
+    inline Bv_ptr mk_ce (const vector<Var>& state_varmap, const Mana& m)
     {
-        Bv* tmp = SingletonBvArena::Get().mkBv(state_varmap.size());
+        Bv_ptr tmp = mkBv(state_varmap.size());
         auto bit = tmp->begin();
         for (const Var v : state_varmap)
         {
@@ -292,7 +292,7 @@ namespace
 //=================================================================================================
 // Query commands for learner
 //
-bool Teacher::membership (Bv* bv)
+bool Teacher::membership (const Bv_ptr bv)
 {
 PROF_SCOPE();
     bool ret;
@@ -358,7 +358,7 @@ SingletonProfiler::Stop("eqpart", "addBf");
     return ret;
 }
 
-Bv* Teacher::counterexample () const
+Bv_ptr Teacher::counterexample () const
 {
 PROF_SCOPE();
     assert(state != Refuted && state != Perfect && state != Unknown);
@@ -372,13 +372,13 @@ PROF_SCOPE();
     return state;
 }
 
-vector<Bv> Teacher::witness () const
+vector<Bv_ptr> Teacher::witness () const
 {
-    vector<Bv> stimulus;
+    vector<Bv_ptr> stimulus;
     for (const auto& aig_varmap : aig_varmaps_cache)
     {
-        Bv tmp{aig.num_inputs()};
-        auto bit = tmp.begin();
+        Bv_ptr tmp = mkBv(aig.num_inputs());
+        auto bit = tmp->begin();
         for (const auto& aigvar : aig.inputs())
         {
             bit.setbit(m.val(aig_varmap.at(aigvar)));

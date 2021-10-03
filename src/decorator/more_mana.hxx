@@ -26,9 +26,9 @@ bool sat  (const Bf_ptr& bf, Mana& m);
 bool hold (const Bf_ptr& bf, Mana& m);
 
 // set `m` vars to `valuation` according to `state_varmap` and check sat
-bool evaluate (Mana& m, Bv* valuation, const vector<Var>& state_varmap);
+bool evaluate (Mana& m, const Bv_ptr valuation, const vector<Var>& state_varmap);
 // set `m` vars to `valuation` according to `index_varmap` and test `bf`
-bool evaluate (const Bf_ptr& bf, Mana& m, Bv* valuation, const vector<Var>& state_varmap);
+bool evaluate (const Bf_ptr& bf, Mana& m, const Bv_ptr valuation, const vector<Var>& state_varmap);
 
 // TODO: rework tabulate with vector varmap
 // enumerate minisat vars of `range` and check sat

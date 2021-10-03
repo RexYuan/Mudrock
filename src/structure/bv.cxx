@@ -11,13 +11,13 @@ namespace
     inline consteval const size_t bits_in_bytes (size_t bytes) { return bytes*CHAR_BIT; }
 
     // how many bits a data unit contains
-    inline constinit const size_t data_unit_bits = bits_in_bytes(sizeof(Bv::data_unit));
+    inline constinit const size_t data_unit_bits = bits_in_bytes(sizeof(bv_data_unit));
 
     // mask of 1000...
-    inline constinit const Bv::data_unit one_zeros_mask = 1LL << (data_unit_bits-1U);
+    inline constinit const bv_data_unit one_zeros_mask = 1LL << (data_unit_bits-1U);
 
     // mask of 1111...
-    inline constinit const Bv::data_unit ones_mask = ~0LL;
+    inline constinit const bv_data_unit ones_mask = ~0LL;
 
     // how many units are needed to store `bits` bits
     inline constexpr const size_t bits_in_units (size_t bits)
@@ -53,30 +53,58 @@ namespace
     }
 
     // reset data trail to zeros
-    inline constexpr Bv::data_unit reset_data_trail (Bv::data_unit u, size_t total_bit_len)
+    inline constexpr bv_data_unit reset_data_trail (bv_data_unit u, size_t total_bit_len)
     {
         return u & get_right_zeros_mask(data_unit_bits-total_bit_len%data_unit_bits);
     }
 }
 
 //=================================================================================================
-// Bit vector type
+// Bv factory
 //
-Bv::Bv ()
+using byte_alloc = ArenaAlloc<unsigned char>;
+using byte_alloc_traits = allocator_traits<byte_alloc>;
+using byte_ptr = byte_alloc_traits::pointer;
+using byte_ptr_traits = std::pointer_traits<byte_ptr>;
+Bv_ptr mkBv (const string& bs)
 {
-    length = 0;
-    data = nullptr;
-    validate();
+    static byte_alloc ba;
+    size_t needed = sizeof(Bv) + sizeof(bv_data_unit)*bits_in_units(bs.length());
+    byte_ptr site = byte_alloc_traits::allocate(ba, needed);
+    new (site.get()) Bv{bs};
+    return byte_ptr_traits::rebind<Bv>{byte_ptr_traits::rebind<void>{site}};
 }
 
+Bv_ptr mkBv (size_t len, unsigned i)
+{
+    static byte_alloc ba;
+    size_t needed = sizeof(Bv) + sizeof(bv_data_unit)*bits_in_units(len);
+    byte_ptr site = byte_alloc_traits::allocate(ba, needed);
+    new (site.get()) Bv{len, i};
+    return byte_ptr_traits::rebind<Bv>{byte_ptr_traits::rebind<void>{site}};
+}
+
+Bv_ptr mkBv (const Bv_ptr bv2)
+{
+    static byte_alloc ba;
+    size_t needed = sizeof(Bv) + sizeof(bv_data_unit)*bits_in_units(bv2->len());
+    byte_ptr site = byte_alloc_traits::allocate(ba, needed);
+    new (site.get()) Bv{*bv2};
+    return byte_ptr_traits::rebind<Bv>{byte_ptr_traits::rebind<void>{site}};
+}
+
+//=================================================================================================
+// Bit vector type
+//
 Bv::Bv (size_t len)
 {
     length = len;
-    data = new data_unit [bits_in_units(length)]{}; // init to zeros
+    for (size_t i=0; i<bits_in_units(length); i++)
+        data[i] = 0;  // init to zeros
     validate();
 }
 
-Bv::Bv (string bs) : Bv{bs.length()}
+Bv::Bv (const string& bs) : Bv{bs.length()}
 {
     setter(bs);
     validate();
@@ -88,64 +116,20 @@ Bv::Bv (size_t len, unsigned i) : Bv{len}
     validate();
 }
 
-Bv::Bv (void* data_site, size_t len, unsigned i)
-{
-    site_provided = true;
-    length = len;
-    data = new (data_site) data_unit [bits_in_units(length)]; // no init
-    setter(i);
-    validate();
-}
-
-Bv::~Bv ()
-{
-    delete [] data;
-}
-
 Bv::Bv (const Bv& bv2)
 {
     length = bv2.length;
-    data = new data_unit [bits_in_units(length)]{};
-    validate();
     for (size_t i=0; i<bits_in_units(length); i++)
         data[i] = bv2.data[i];
+    validate();
 }
 
 Bv& Bv::operator=(const Bv& bv2)
 {
-    if (site_provided)
-    {
-        length = bv2.length;
-        data = bv2.data;
-        validate();
-    }
-    else
-    {
-        delete [] data;
-        length = bv2.length;
-        data = new data_unit [bits_in_units(length)]{};
-        validate();
-        for (size_t i=0; i<bits_in_units(length); i++)
+    length = bv2.length;
+    for (size_t i=0; i<bits_in_units(length); i++)
         data[i] = bv2.data[i];
-    }
-    return *this;
-}
-
-Bv::Bv (Bv&& bv2)
-{
-    length = bv2.length;
-    data = bv2.data;
-    bv2.length = 0;
-    bv2.data = nullptr;
-}
-
-Bv& Bv::operator=(Bv&& bv2)
-{
-    length = bv2.length;
-    data = bv2.data;
     validate();
-    bv2.length = 0;
-    bv2.data = nullptr;
     return *this;
 }
 
@@ -203,7 +187,7 @@ namespace
             assert(b == '0' || b == '1');
     }
 }
-void Bv::setter (string bs)
+void Bv::setter (const string& bs)
 {
     /*
      * set by bit string.
@@ -235,11 +219,6 @@ void Bv::setter (unsigned i)
         rbit.setbit(1&i);
 }
 
-Bv::operator bool () const
-{
-    return (len() > 0) && (data != nullptr);
-}
-
 string Bv::to_string () const
 {
     string s = ""s;
@@ -268,95 +247,84 @@ bool Bv::operator [] (size_t ind) const
     return getter(ind);
 }
 
-bool operator == (const Bv& bv1, const Bv& bv2)
+bool operator == (const Bv_ptr bv1, const Bv_ptr bv2)
 {
-    assert(bv1.length == bv2.length);
-    auto it1=bv1.data, it2=bv2.data;
-    for (size_t i=0; i<bits_in_units(bv1.length); i++, it1++, it2++)
+    assert(bv1->length == bv2->length);
+    auto it1=bv1->data, it2=bv2->data;
+    for (size_t i=0; i<bits_in_units(bv1->length); i++, it1++, it2++)
         if (*it1 != *it2)
             return false;
     return true;
 }
 
-bool operator != (const Bv& bv1, const Bv& bv2)
+bool operator != (const Bv_ptr bv1, const Bv_ptr bv2)
 {
     return !(bv1 == bv2);
 }
 
-bool operator <  (const Bv& bv1, const Bv& bv2)
+bool operator < (const Bv_ptr bv1, const Bv_ptr bv2)
 {
-    assert(bv1.length == bv2.length);
-    auto it1=bv1.data, it2=bv2.data;
-    for (size_t i=0; i<bits_in_units(bv1.length); i++, it1++, it2++)
+    assert(bv1->length == bv2->length);
+    auto it1=bv1->data, it2=bv2->data;
+    for (size_t i=0; i<bits_in_units(bv1->length); i++, it1++, it2++)
         if ((*it1 & *it2) != *it1)
             return false;
     return true;
 }
 
-bool operator <= (const Bv& bv1, const Bv& bv2)
+bool operator <= (const Bv_ptr bv1, const Bv_ptr bv2)
 {
     return (bv1 == bv2) || (bv1 < bv2);
 }
 
-Bv& Bv::operator &= (const Bv& bv2)
+Bv_ptr operator ~ (const Bv_ptr bv)
 {
-    assert(length == bv2.length);
-    auto it=data, it2=bv2.data;
-    for (size_t i=0; i<bits_in_units(length); i++, it++, it2++)
-        *it &= *it2;
-    return *this;
-}
-
-Bv& Bv::operator |= (const Bv& bv2)
-{
-    assert(length == bv2.length);
-    auto it=data, it2=bv2.data;
-    for (size_t i=0; i<bits_in_units(length); i++, it++, it2++)
-        *it |= *it2;
-    return *this;
-}
-
-Bv& Bv::operator ^= (const Bv& bv2)
-{
-    assert(length == bv2.length);
-    auto it=data, it2=bv2.data;
-    for (size_t i=0; i<bits_in_units(length); i++, it++, it2++)
-        *it ^= *it2;
-    return *this;
-}
-
-Bv operator ~ (Bv bv)
-{
-    auto it=bv.data;
-    for (size_t i=0; i<bits_in_units(bv.length); i++, it++)
+    Bv_ptr tmp = mkBv(bv);
+    auto it=tmp->data;
+    for (size_t i=0; i<bits_in_units(tmp->length); i++, it++)
         *it = ~*it;
     // reset trailing garbage bits to zeros; this is the only place where it could be set to ones
-    it--; *it = reset_data_trail(*it, bv.length);
-    return bv;
+    it--; *it = reset_data_trail(*it, tmp->length);
+    return tmp;
 }
 
-Bv operator & (Bv bv1, Bv bv2)
+Bv_ptr operator & (const Bv_ptr bv1, const Bv_ptr bv2)
 {
-    return bv1 &= bv2;
+    assert(bv1->length == bv2->length);
+    Bv_ptr tmp = mkBv(bv1->length);
+    auto it = tmp->data; auto it1=bv1->data, it2=bv2->data;
+    for (size_t i=0; i<bits_in_units(tmp->length); i++, it++, it1++, it2++)
+        *it = *it1 & *it2;
+    return tmp;
 }
 
-Bv operator | (Bv bv1, Bv bv2)
+Bv_ptr operator | (const Bv_ptr bv1, const Bv_ptr bv2)
 {
-    return bv1 |= bv2;
+    assert(bv1->length == bv2->length);
+    Bv_ptr tmp = mkBv(bv1->length);
+    auto it = tmp->data; auto it1=bv1->data, it2=bv2->data;
+    for (size_t i=0; i<bits_in_units(tmp->length); i++, it++, it1++, it2++)
+        *it = *it1 | *it2;
+    return tmp;
 }
 
-Bv operator ^ (Bv bv1, Bv bv2)
+Bv_ptr operator ^ (const Bv_ptr bv1, const Bv_ptr bv2)
 {
-    return bv1 ^= bv2;
+    assert(bv1->length == bv2->length);
+    Bv_ptr tmp = mkBv(bv1->length);
+    auto it = tmp->data; auto it1=bv1->data, it2=bv2->data;
+    for (size_t i=0; i<bits_in_units(tmp->length); i++, it++, it1++, it2++)
+        *it = *it1 ^ *it2;
+    return tmp;
 }
 
 //=================================================================================================
 // Iterate over bits
 //
-Bv::BitIterator Bv::begin() const { return BitIterator(data, 0); }
-Bv::BitIterator Bv::end()   const { return BitIterator(data, length); }
+Bv::BitIterator Bv::begin() const { return BitIterator((bv_data_unit*)(data), 0); } // relies on UB
+Bv::BitIterator Bv::end()   const { return BitIterator((bv_data_unit*)(data), length); } // relies on UB
 
-Bv::BitIterator::BitIterator (data_unit* ptr, size_t ind) : p(ptr), i(ind)
+Bv::BitIterator::BitIterator (bv_data_unit* ptr, size_t ind) : p(ptr), i(ind)
 {
     for (size_t n=0; n<get_index_prefix(i); n++, p++);
     mask_ind = get_index_mask(get_index_suffix(i));
@@ -427,19 +395,4 @@ const bool Bv::BitIterator::operator*() const
 void Bv::BitIterator::setbit (bool val)
 {
     val ? *p |= mask_ind : *p &= ~mask_ind;
-}
-
-using bv_alloc = ArenaAlloc<Bv>;
-using bv_alloc_traits = allocator_traits<bv_alloc>;
-using data_alloc = bv_alloc_traits::rebind_alloc<Bv::data_unit>;
-using data_alloc_traits = bv_alloc_traits::rebind_traits<Bv::data_unit>;
-using DataPtr = pointer_traits<BvPtr>::rebind<Bv::data_unit>;
-BvPtr mkBv (size_t len, unsigned i)
-{
-    static bv_alloc ba;
-    static data_alloc da;
-    BvPtr site = bv_alloc_traits::allocate(ba, 1);
-    DataPtr data_site = data_alloc_traits::allocate(da, bits_in_units(len));
-    new (site.get()) Bv{data_site.get(), len, i};
-    return site;
 }

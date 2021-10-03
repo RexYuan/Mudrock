@@ -26,7 +26,7 @@ bool hold (const Bf_ptr& bf, Mana& m)
     return !sat(~bf, m);
 }
 
-bool evaluate (Mana& m, Bv* valuation, const vector<Var>& state_varmap)
+bool evaluate (Mana& m, const Bv_ptr valuation, const vector<Var>& state_varmap)
 {
     assert(valuation->len() == state_varmap.size());
 
@@ -41,7 +41,7 @@ bool evaluate (Mana& m, Bv* valuation, const vector<Var>& state_varmap)
     return m.solve(ps);
 }
 
-bool evaluate (const Bf_ptr& bf, Mana& m, Bv* valuation, const vector<Var>& state_varmap)
+bool evaluate (const Bf_ptr& bf, Mana& m, const Bv_ptr valuation, const vector<Var>& state_varmap)
 {
     Sw tmpSw = assume(bf, m);
     bool ret = evaluate(m, valuation, state_varmap);

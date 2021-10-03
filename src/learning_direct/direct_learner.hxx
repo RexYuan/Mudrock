@@ -37,7 +37,7 @@ struct Learner
 private:
     Teacher& teacher;
     Feedback fb = Unknown;
-    Bv* ce = nullptr;
+    Bv_ptr ce{nullptr};
 
     vector<Face> hypts; // cdnf
 };

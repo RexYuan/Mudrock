@@ -101,9 +101,9 @@ namespace
     }
 
     // extract the valuation Bv in the range of `state_varmap`
-    inline Bv* mk_ce (const vector<Var>& state_varmap, const Mana& m)
+    inline Bv_ptr mk_ce (const vector<Var>& state_varmap, const Mana& m)
     {
-        Bv* tmp = SingletonBvArena::Get().mkBv(state_varmap.size());
+        Bv_ptr tmp = mkBv(state_varmap.size());
         auto bit = tmp->begin();
         for (const Var v : state_varmap)
         {
@@ -157,12 +157,12 @@ namespace
     // face1.basis | face2.basis ...
     inline Bf_ptr mk_char_dnf (const vector<Face>& faces)
     {
-        vector<Bv*> previous_negs;
+        vector<Bv_ptr> previous_negs;
         for (const Face& face : faces)
             previous_negs.push_back(face.basis());
 
         Bf_ptr disj = v(false);
-        for (Bv* neg : previous_negs)
+        for (const Bv_ptr neg : previous_negs)
             disj = disj | toBf(neg);
 
         return disj;
@@ -198,7 +198,7 @@ Feedback Teacher::judge (const vector<Face>& faces)
     }
 }
 
-Bv* Teacher::counterexample () const
+Bv_ptr Teacher::counterexample () const
 {
     assert(state != Refuted && state != Perfect);
     assert(ce);
@@ -241,7 +241,7 @@ bool Teacher::aligned (const Face& face)
 namespace
 {
     // constraint of being strictly less than `b` in `face` over `state_varmap`
-    inline Bf_ptr mk_lt_basis (Bv* b, const Face& f, const vector<Var>& state_varmap)
+    inline Bf_ptr mk_lt_basis (const Bv_ptr b, const Face& f, const vector<Var>& state_varmap)
     {
         assert(b->len() == f.basis()->len() && b->len() == state_varmap.size());
         Bf_ptr ret = v(true);
@@ -250,8 +250,7 @@ namespace
         ret = ret & subst(~toBf(b), state_varmap);
 
         // leq
-        Bv* xored = SingletonBvArena::Get().mkBv(b->len());
-        *xored = *b ^ *f.basis();
+        Bv_ptr xored = b ^ f.basis();
         auto bit = b->begin();
         auto xit = xored->begin();
         auto mit = state_varmap.begin();
@@ -264,10 +263,9 @@ namespace
     }
 }
 // minimize positive counterexample
-Bv* Teacher::minimize (Bv* bv, const Face& face)
+Bv_ptr Teacher::minimize (const Bv_ptr bv, const Face& face)
 {
-    Bv* tmp = SingletonBvArena::Get().mkBv(bv->len());
-    *tmp = *bv;
+    Bv_ptr tmp = mkBv(bv);
     // Hypt(X), Trans(I,X,X'), ~Hypt(X'), X' <_{face} bv, ~DEAD_ENDS(X')
     // ~DEAD_ENDS(X') is implicit by `judge` always giving negative first if there's any
     while (sat(mk_lt_basis(tmp, face, next_state_varmap) &

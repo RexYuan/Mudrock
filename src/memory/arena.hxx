@@ -47,7 +47,7 @@ public:
     , freed_size(0)
     {
         capacity(s);
-        //cout << "arena[" << this << "] of size " << size << " created.\n";
+        // cout << "arena[" << this << "] of size " << size << " created.\n";
     }
 
     Arena (const Arena&) = delete;
@@ -55,7 +55,7 @@ public:
 
     ~Arena()
     {
-        //cout << "arena[" << this << "] destroyed; final fill level was: " << offset << "; freed " << freed_size << "\n";
+        // cout << "arena[" << this << "] destroyed; final fill level was: " << offset << "; freed " << freed_size << "\n";
         free(data);
     }
 
@@ -94,7 +94,7 @@ public:
     {
         offset = (offset + a - 1) / a * a; // align offset
 
-        //cout << "arena[" << this << "] allocating " << n << " bytes at offset " << offset << ".\n";
+        // cout << "arena[" << this << "] allocating " << n << " bytes at offset " << offset << ".\n";
 
         if (offset + n > size)
             capacity(offset+n+1);
@@ -106,7 +106,7 @@ public:
 
     void deallocate(void*, size_t n)
     {
-        //std::cout << "arena[" << this << "] may deallocate " << n << " bytes.\n";
+        // std::cout << "arena[" << this << "] may deallocate " << n << " bytes.\n";
         freed_size++;
     }
 };

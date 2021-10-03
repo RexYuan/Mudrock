@@ -77,7 +77,7 @@ Bf_ptr subst (const Bf_ptr& bf, const vector<int>& varmap)
     throw InvalidBfConn("Unmatched cases."s);
 }
 
-bool evaluate (const Bf_ptr& bf, Bv* val)
+bool evaluate (const Bf_ptr& bf, const Bv_ptr val)
 {
     switch (bf->t)
     {
@@ -114,11 +114,11 @@ string tabulate (const Bf_ptr& bf, size_t len)
 
     for (unsigned i=0; i<pow(2,len); i++)
     {
-        auto tmp = Bv{len, i};
-        table += tmp.to_string();
+        auto tmp = mkBv(len, i);
+        table += tmp->to_string();
         table += ' ';
 
-        auto ret = evaluate(bf, &tmp);
+        auto ret = evaluate(bf, tmp);
 
         table += to_string(static_cast<unsigned>(ret));
         table += '\n';

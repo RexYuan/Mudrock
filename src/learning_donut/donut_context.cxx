@@ -68,7 +68,7 @@ string Context::witness () const
     wit << "1\n"s
         << "b0\n"s
         << string(teacher.aig.num_latches(), '0') << "\n"s;
-    for (const auto& line : teacher.witness())
+    for (const Bv_ptr line : teacher.witness())
         wit << line << "\n"s;
     wit << ".\n"s;
     return wit.str();
