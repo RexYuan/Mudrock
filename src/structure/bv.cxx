@@ -65,7 +65,7 @@ namespace
 using byte_alloc = ArenaAlloc<unsigned char>;
 using byte_alloc_traits = allocator_traits<byte_alloc>;
 using byte_ptr = byte_alloc_traits::pointer;
-using byte_ptr_traits = std::pointer_traits<byte_ptr>;
+using byte_ptr_traits = pointer_traits<byte_ptr>;
 Bv_ptr mkBv (const string& bs)
 {
     static byte_alloc ba;
@@ -321,10 +321,10 @@ Bv_ptr operator ^ (const Bv_ptr bv1, const Bv_ptr bv2)
 //=================================================================================================
 // Iterate over bits
 //
-Bv::BitIterator Bv::begin() const { return BitIterator((bv_data_unit*)(data), 0); } // relies on UB
-Bv::BitIterator Bv::end()   const { return BitIterator((bv_data_unit*)(data), length); } // relies on UB
+Bv::BitIterator Bv::begin() const { return BitIterator(data_ptr{(bv_data_unit*)data}, 0); }      // relies on UB casting away const
+Bv::BitIterator Bv::end()   const { return BitIterator(data_ptr{(bv_data_unit*)data}, length); } // relies on UB casting away const
 
-Bv::BitIterator::BitIterator (bv_data_unit* ptr, size_t ind) : p(ptr), i(ind)
+Bv::BitIterator::BitIterator (data_ptr ptr, size_t ind) : p(ptr), i(ind)
 {
     for (size_t n=0; n<get_index_prefix(i); n++, p++);
     mask_ind = get_index_mask(get_index_suffix(i));

@@ -99,9 +99,10 @@ private:
 //=================================================================================================
 // Iterate over bits
 //
+using data_ptr = pointer_traits<Bv_ptr>::rebind<bv_data_unit>;
 struct Bv::BitIterator
 {
-    BitIterator (bv_data_unit* ptr, size_t ind);
+    BitIterator (data_ptr ptr, size_t ind);
 
     BitIterator& operator++();    // prefix increment
     BitIterator  operator++(int); // postfix increment
@@ -116,8 +117,7 @@ struct Bv::BitIterator
     friend bool operator != (const BitIterator& bit1, const BitIterator& bit2);
 
 private:
-    // stores native; allocating after instatiating an iterator might invalidate it from realloc
-    bv_data_unit* p;
+    data_ptr p;
     size_t i;
     bv_data_unit mask_ind;
 };
