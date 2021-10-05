@@ -76,6 +76,8 @@ private:
     Conn t;
     variant<monostate, int, Bf_ptr, Bf_ptr_vector> sub;
 
+    friend Bf_ptr mkBfBool (bool);
+    friend Bf_ptr mkBfInt (int);
     //=============================================================================================
     // Private constructors. Do not call directly
     //

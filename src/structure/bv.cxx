@@ -66,31 +66,34 @@ using byte_alloc = ArenaAlloc<unsigned char>;
 using byte_alloc_traits = allocator_traits<byte_alloc>;
 using byte_ptr = byte_alloc_traits::pointer;
 using byte_ptr_traits = pointer_traits<byte_ptr>;
-Bv_ptr mkBv (const string& bs)
-{
-    static byte_alloc ba;
-    size_t needed = sizeof(Bv) + sizeof(bv_data_unit)*bits_in_units(bs.length());
-    byte_ptr site = byte_alloc_traits::allocate(ba, needed);
-    new (site.get()) Bv{bs};
-    return byte_ptr_traits::rebind<Bv>{byte_ptr_traits::rebind<void>{site}};
-}
 
-Bv_ptr mkBv (size_t len, unsigned i)
+inline Bv_ptr allocate_Bv (size_t len)
 {
     static byte_alloc ba;
     size_t needed = sizeof(Bv) + sizeof(bv_data_unit)*bits_in_units(len);
     byte_ptr site = byte_alloc_traits::allocate(ba, needed);
-    new (site.get()) Bv{len, i};
     return byte_ptr_traits::rebind<Bv>{byte_ptr_traits::rebind<void>{site}};
+}
+
+Bv_ptr mkBv (const string& bs)
+{
+    Bv_ptr site = allocate_Bv(bs.length());
+    new (site.get()) Bv{bs};
+    return site;
+}
+
+Bv_ptr mkBv (size_t len, unsigned i)
+{
+    Bv_ptr site = allocate_Bv(len);
+    new (site.get()) Bv{len, i};
+    return site;
 }
 
 Bv_ptr mkBv (const Bv_ptr bv2)
 {
-    static byte_alloc ba;
-    size_t needed = sizeof(Bv) + sizeof(bv_data_unit)*bits_in_units(bv2->len());
-    byte_ptr site = byte_alloc_traits::allocate(ba, needed);
+    Bv_ptr site = allocate_Bv(bv2->len());
     new (site.get()) Bv{*bv2};
-    return byte_ptr_traits::rebind<Bv>{byte_ptr_traits::rebind<void>{site}};
+    return site;
 }
 
 //=================================================================================================

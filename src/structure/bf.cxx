@@ -4,20 +4,38 @@
 //=================================================================================================
 // Pointer manipulation helpers
 //
-Bf_ptr v (bool b)
+inline Bf_ptr allocate_Bf ()
 {
-    static Bf_alloc ba; // TODO: optimize by cache
+    static Bf_alloc ba;
     Bf_ptr site = Bf_alloc_traits::allocate(ba, 1);
-    new (site.get()) Bf{b};
     return site;
 }
 
-Bf_ptr v (int i)
+inline Bf_ptr mkBfBool (bool b)
 {
-    static Bf_alloc ba; // TODO: optimize by cache
-    Bf_ptr site = Bf_alloc_traits::allocate(ba, 1);
+    Bf_ptr site = allocate_Bf();
+    new (site.get()) Bf{b};
+    return site;
+}
+Bf_ptr v (bool b)
+{
+    static Bf_ptr t = mkBfBool(true),
+                  f = mkBfBool(false);
+    return b ? t : f;
+}
+
+inline Bf_ptr mkBfInt (int i)
+{
+    Bf_ptr site = allocate_Bf();
     new (site.get()) Bf{i};
     return site;
+}
+Bf_ptr v (int i)
+{
+    static vector<Bf_ptr> vs;
+    while (i >= static_cast<int>(vs.size()))
+        vs.push_back(mkBfInt(static_cast<int>(vs.size())));
+    return vs[i];
 }
 
 Bf_ptr neg (Bf_ptr bf)
@@ -28,8 +46,7 @@ Bf_ptr neg (Bf_ptr bf)
     case Conn::Bot: return v(true);
     case Conn::Not: return bf->get_sub();
     default:
-        static Bf_alloc ba;
-        Bf_ptr site = Bf_alloc_traits::allocate(ba, 1);
+        Bf_ptr site = allocate_Bf();
         new (site.get()) Bf{Conn::Not, bf};
         return site;
     }
@@ -43,9 +60,9 @@ Bf_ptr conj (Bf_ptr bf1, Bf_ptr bf2)
     else if (bf2->t == Conn::Top) return bf1;
     else
     {
-        static Bf_alloc ba;
-        Bf_ptr tmp = Bf_alloc_traits::allocate(ba, 1);
+        Bf_ptr tmp = allocate_Bf();
         new (tmp.get()) Bf{Conn::And};
+
         if (bf1->t == Conn::And)
             for (auto s : bf1->get_subs())
                 tmp->push_sub(s);
@@ -68,9 +85,9 @@ Bf_ptr disj (Bf_ptr bf1, Bf_ptr bf2)
     else if (bf2->t == Conn::Bot) return bf1;
     else
     {
-        static Bf_alloc ba;
-        Bf_ptr tmp = Bf_alloc_traits::allocate(ba, 1);
+        Bf_ptr tmp = allocate_Bf();
         new (tmp.get()) Bf{Conn::Or};
+
         if (bf1->t == Conn::Or)
             for (auto s : bf1->get_subs())
                 tmp->push_sub(s);
