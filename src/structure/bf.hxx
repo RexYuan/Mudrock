@@ -22,10 +22,12 @@ using std::monostate;
 using std::get;
 using std::holds_alternative;
 #include <memory>
-using std::shared_ptr;
-using std::make_shared;
+using std::allocator_traits;
+using std::pointer_traits;
 #include <stdexcept>
 using std::logic_error;
+
+#include "arena_alloc.hxx"
 
 // boolean connectives
 enum class Conn {Top, Bot, Base, Not, And, Or};
@@ -34,7 +36,14 @@ enum class Conn {Top, Bot, Base, Not, And, Or};
 // Boolean formula type
 //
 struct Bf;
-using Bf_ptr = shared_ptr<Bf>;
+using Bf_alloc = ArenaAlloc<Bf>;
+using Bf_alloc_traits = allocator_traits<Bf_alloc>;
+using Bf_ptr = Bf_alloc_traits::pointer;
+using Bf_ptr_traits = pointer_traits<Bf_ptr>;
+
+using Bf_ptr_alloc = ArenaAlloc<Bf_ptr>;
+using Bf_ptr_vector = vector<Bf_ptr>;
+
 template <typename T>     concept is_Bf_ptr   = same_as<T, Bf_ptr>;
 template <typename... Ts> concept are_Bf_ptrs = (is_Bf_ptr<Ts> && ...);
 struct Bf
@@ -52,19 +61,20 @@ struct Bf
     friend Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& to);
     friend Bf_ptr subst (const Bf_ptr& bf, const vector<int>& to);
 
-    const bool            get_bool () const;
-    const int             get_int  () const;
-    const Bf_ptr&         get_sub  () const;
-    const vector<Bf_ptr>& get_subs () const;
+    const Conn get_type () const;
+
+    const bool           get_bool () const;
+    const int            get_int  () const;
+    const Bf_ptr&        get_sub  () const;
+    const Bf_ptr_vector& get_subs () const;
 
     void push_sub (Bf_ptr bf);
 
     string to_string ();
 
-//DEBUG: the following cannot be private since that'd break smart pointers
-//private:
+private:
     Conn t;
-    variant<monostate, int, Bf_ptr, vector<Bf_ptr>> sub;
+    variant<monostate, int, Bf_ptr, Bf_ptr_vector> sub;
 
     //=============================================================================================
     // Private constructors. Do not call directly
@@ -77,7 +87,7 @@ struct Bf
     inline Bf (Conn c, Bf_ptr bf) : t {c}, sub {Bf_ptr{bf}} {}
     // construct n-ary formula node of type `c` containing `bfs`
     template <typename... Ts> requires are_Bf_ptrs<Ts...>
-    inline Bf (Conn c, Ts... bfs) : t {c}, sub {vector<Bf_ptr>{bfs...}} {}
+    inline Bf (Conn c, Ts... bfs) : t {c}, sub {Bf_ptr_vector{bfs...}} {}
     // construct uninitialized formula node of type `c`
     inline Bf (Conn c) : t {c}
     {
@@ -88,7 +98,7 @@ struct Bf
         case Conn::Base: sub = int{}; break;
         case Conn::Not: sub = Bf_ptr{}; break;
         case Conn::And: [[fallthrough]];
-        case Conn::Or: sub = vector<Bf_ptr>{}; break;
+        case Conn::Or: sub = Bf_ptr_vector{}; break;
         }
     }
 };

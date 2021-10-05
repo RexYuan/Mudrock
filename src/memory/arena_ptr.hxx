@@ -24,6 +24,8 @@ using std::common_type;
 template <typename T>
 class ArenaPtrBase
 {
+    template <typename U> friend struct ArenaPtrBase;
+
 protected:
     static const ptrdiff_t null_value = -1;
     ptrdiff_t offset; // offset in bytes from the beginning of host arena

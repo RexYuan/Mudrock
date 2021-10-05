@@ -6,17 +6,18 @@
 //
 Bf_ptr v (bool b)
 {
-    static Bf_ptr t = make_shared<Bf>(true),
-                  f = make_shared<Bf>(false);
-    return b ? t : f;
+    static Bf_alloc ba; // TODO: optimize by cache
+    Bf_ptr site = Bf_alloc_traits::allocate(ba, 1);
+    new (site.get()) Bf{b};
+    return site;
 }
 
 Bf_ptr v (int i)
 {
-    static vector<Bf_ptr> vs; // cache vars
-    while (i >= static_cast<int>(vs.size()))
-        vs.push_back(make_shared<Bf>(static_cast<int>(vs.size())));
-    return vs[i];
+    static Bf_alloc ba; // TODO: optimize by cache
+    Bf_ptr site = Bf_alloc_traits::allocate(ba, 1);
+    new (site.get()) Bf{i};
+    return site;
 }
 
 Bf_ptr neg (Bf_ptr bf)
@@ -26,7 +27,11 @@ Bf_ptr neg (Bf_ptr bf)
     case Conn::Top: return v(false);
     case Conn::Bot: return v(true);
     case Conn::Not: return bf->get_sub();
-    default:        return make_shared<Bf>(Conn::Not, bf);
+    default:
+        static Bf_alloc ba;
+        Bf_ptr site = Bf_alloc_traits::allocate(ba, 1);
+        new (site.get()) Bf{Conn::Not, bf};
+        return site;
     }
 }
 
@@ -38,7 +43,9 @@ Bf_ptr conj (Bf_ptr bf1, Bf_ptr bf2)
     else if (bf2->t == Conn::Top) return bf1;
     else
     {
-        Bf_ptr tmp = make_shared<Bf>(Conn::And);
+        static Bf_alloc ba;
+        Bf_ptr tmp = Bf_alloc_traits::allocate(ba, 1);
+        new (tmp.get()) Bf{Conn::And};
         if (bf1->t == Conn::And)
             for (auto s : bf1->get_subs())
                 tmp->push_sub(s);
@@ -61,7 +68,9 @@ Bf_ptr disj (Bf_ptr bf1, Bf_ptr bf2)
     else if (bf2->t == Conn::Bot) return bf1;
     else
     {
-        Bf_ptr tmp = make_shared<Bf>(Conn::Or);
+        static Bf_alloc ba;
+        Bf_ptr tmp = Bf_alloc_traits::allocate(ba, 1);
+        new (tmp.get()) Bf{Conn::Or};
         if (bf1->t == Conn::Or)
             for (auto s : bf1->get_subs())
                 tmp->push_sub(s);
@@ -79,6 +88,11 @@ Bf_ptr disj (Bf_ptr bf1, Bf_ptr bf2)
 //=================================================================================================
 // Boolean formula type
 //
+const Conn Bf::get_type () const
+{
+    return t;
+}
+
 const bool Bf::get_bool () const
 {
     assert(t == Conn::Top || t == Conn::Bot);
@@ -103,16 +117,16 @@ const Bf_ptr& Bf::get_sub () const
     return get<Bf_ptr>(sub);
 }
 
-const vector<Bf_ptr>& Bf::get_subs () const
+const Bf_ptr_vector& Bf::get_subs () const
 {
     assert(t == Conn::And || t == Conn::Or);
-    return get<vector<Bf_ptr>>(sub);
+    return get<Bf_ptr_vector>(sub);
 }
 
 void Bf::push_sub (Bf_ptr bf)
 {
-    assert(holds_alternative<vector<Bf_ptr>>(sub));
-    get<vector<Bf_ptr>>(sub).push_back(bf);
+    assert(holds_alternative<Bf_ptr_vector>(sub));
+    get<Bf_ptr_vector>(sub).push_back(bf);
 }
 
 string Bf::to_string ()

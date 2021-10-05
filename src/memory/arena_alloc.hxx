@@ -3,6 +3,7 @@
 
 #include <type_traits>
 using std::true_type;
+using std::false_type;
 
 #include "arena.hxx"
 #include "arena_ptr.hxx"
@@ -16,9 +17,9 @@ struct ArenaAlloc
     using value_type = T;
     using pointer = ArenaPtr<T>;
 
-    using propagate_on_container_copy_assignment = true_type;
-    using propagate_on_container_move_assignment = true_type;
-    using propagate_on_container_swap = true_type;
+    using propagate_on_container_copy_assignment = false_type;
+    using propagate_on_container_move_assignment = false_type;
+    using propagate_on_container_swap = false_type;
 
     explicit ArenaAlloc () {}
 

@@ -6,7 +6,7 @@
 //
 size_t dryCountClause (const Bf_ptr& bf)
 {
-    switch (bf->t)
+    switch (bf->get_type())
     {
     case Conn::Top:  [[fallthrough]];
     case Conn::Bot:  [[fallthrough]];

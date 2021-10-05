@@ -3,7 +3,7 @@
 
 bool contains (const Bf_ptr& bf, int v)
 {
-    switch (bf->t)
+    switch (bf->get_type())
     {
     case Conn::Base: return (bf->get_int() == v);
     case Conn::Top:  [[fallthrough]];
@@ -79,7 +79,7 @@ Bf_ptr subst (const Bf_ptr& bf, const vector<int>& varmap)
 
 bool evaluate (const Bf_ptr& bf, const Bv_ptr val)
 {
-    switch (bf->t)
+    switch (bf->get_type())
     {
     case Conn::Base:
         assert(0 <= bf->get_int() && bf->get_int() < static_cast<int>(val->len()));

@@ -8,7 +8,7 @@ Var addBf (const Bf_ptr& bf, Mana& m, optional<Sw> swopt, optional<bool> dvaropt
 {
     Sw sw = swopt ? swopt.value() : m.fixedSw();
     bool dvar = dvaropt ? dvaropt.value() : false; // defaults to non-decision var
-    switch (bf->t)
+    switch (bf->get_type())
     {
     case Conn::Top:  return m.constTrue();
     case Conn::Bot:  return m.constFalse();
