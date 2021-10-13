@@ -33,11 +33,18 @@ inline Bf_ptr mkBfInt (int i)
 Bf_ptr v (int i)
 {
     static vector<Bf_ptr> vs;
+    vs.reserve(1024);
     while (i >= static_cast<int>(vs.size()))
         vs.push_back(mkBfInt(static_cast<int>(vs.size())));
     return vs[i];
 }
 
+inline Bf_ptr mkBfNeg (Bf_ptr bf)
+{
+    Bf_ptr site = allocate_Bf();
+    new (site.get()) Bf{Conn::Not, bf};
+    return site;
+}
 Bf_ptr neg (Bf_ptr bf)
 {
     switch (bf->t)
@@ -45,13 +52,20 @@ Bf_ptr neg (Bf_ptr bf)
     case Conn::Top: return v(false);
     case Conn::Bot: return v(true);
     case Conn::Not: return bf->get_sub();
-    default:
-        Bf_ptr site = allocate_Bf();
-        new (site.get()) Bf{Conn::Not, bf};
-        return site;
+    default: return mkBfNeg(bf);
     }
 }
 
+inline Bf_ptr mkBfConj ()
+{
+    Bf_ptr site = allocate_Bf();
+    new (site.get()) Bf{Conn::And};
+    return site;
+}
+Bf_ptr conj ()
+{
+    return mkBfConj();
+}
 Bf_ptr conj (Bf_ptr bf1, Bf_ptr bf2)
 {
     if      (bf1->t == Conn::Bot ||
@@ -60,9 +74,7 @@ Bf_ptr conj (Bf_ptr bf1, Bf_ptr bf2)
     else if (bf2->t == Conn::Top) return bf1;
     else
     {
-        Bf_ptr tmp = allocate_Bf();
-        new (tmp.get()) Bf{Conn::And};
-
+        Bf_ptr tmp = mkBfConj();
         if (bf1->t == Conn::And)
             for (auto s : bf1->get_subs())
                 tmp->push_sub(s);
@@ -77,6 +89,16 @@ Bf_ptr conj (Bf_ptr bf1, Bf_ptr bf2)
     }
 }
 
+inline Bf_ptr mkBfDisj ()
+{
+    Bf_ptr site = allocate_Bf();
+    new (site.get()) Bf{Conn::Or};
+    return site;
+}
+Bf_ptr disj ()
+{
+    return mkBfDisj();
+}
 Bf_ptr disj (Bf_ptr bf1, Bf_ptr bf2)
 {
     if      (bf1->t == Conn::Top ||
@@ -85,9 +107,7 @@ Bf_ptr disj (Bf_ptr bf1, Bf_ptr bf2)
     else if (bf2->t == Conn::Bot) return bf1;
     else
     {
-        Bf_ptr tmp = allocate_Bf();
-        new (tmp.get()) Bf{Conn::Or};
-
+        Bf_ptr tmp = mkBfDisj();
         if (bf1->t == Conn::Or)
             for (auto s : bf1->get_subs())
                 tmp->push_sub(s);

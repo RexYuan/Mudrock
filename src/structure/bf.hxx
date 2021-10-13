@@ -54,8 +54,12 @@ struct Bf
     friend Bf_ptr v    (bool b);                 // return bool constant valued `b`
     friend Bf_ptr v    (int i);                  // return variable numbered `i`
     friend Bf_ptr neg  (Bf_ptr bf);              // return `not bf`
+    friend Bf_ptr conj ();                       // return emtpy conjunction
     friend Bf_ptr conj (Bf_ptr bf1, Bf_ptr bf2); // return `bf1 and bf2`
+    friend Bf_ptr disj ();                       // return emtpy disjunction
     friend Bf_ptr disj (Bf_ptr bf1, Bf_ptr bf2); // return `bf1 or bf2`
+
+    friend Bf_ptr operator += (const Bf_ptr&, const Bf_ptr&); // add a subformula to conj or disj
 
     // substitute var space
     friend Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& to);
@@ -68,7 +72,11 @@ struct Bf
     const Bf_ptr&        get_sub  () const;
     const Bf_ptr_vector& get_subs () const;
 
-    void push_sub (Bf_ptr bf);
+    void reserve (size_t n)
+    {
+        assert(t == Conn::And || t == Conn::Or);
+        get<Bf_ptr_vector>(sub).reserve(n);
+    }
 
     string to_string ();
 
@@ -77,7 +85,11 @@ private:
     variant<monostate, int, Bf_ptr, Bf_ptr_vector> sub;
 
     friend Bf_ptr mkBfBool (bool);
-    friend Bf_ptr mkBfInt (int);
+    friend Bf_ptr mkBfInt  (int);
+    friend Bf_ptr mkBfNeg  (Bf_ptr bf);
+    friend Bf_ptr mkBfConj ();
+    friend Bf_ptr mkBfDisj ();
+
     //=============================================================================================
     // Private constructors. Do not call directly
     //
@@ -103,13 +115,19 @@ private:
         case Conn::Or: sub = Bf_ptr_vector{}; break;
         }
     }
+
+    void push_sub (Bf_ptr bf);
 };
 
 Bf_ptr v    (bool b);
 Bf_ptr v    (int i);
 Bf_ptr neg  (Bf_ptr bf);
+Bf_ptr conj ();
 Bf_ptr conj (Bf_ptr bf1, Bf_ptr bf2);
+Bf_ptr disj ();
 Bf_ptr disj (Bf_ptr bf1, Bf_ptr bf2);
+
+inline Bf_ptr operator += (const Bf_ptr& bf1, const Bf_ptr& bf2) { bf1->push_sub(bf2); return bf1; }
 
 inline Bf_ptr operator ~  (const Bf_ptr& bf)                     { return neg(bf); }
 inline Bf_ptr operator &  (const Bf_ptr& bf1, const Bf_ptr& bf2) { return conj(bf1, bf2); }

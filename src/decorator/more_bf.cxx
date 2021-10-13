@@ -33,16 +33,18 @@ Bf_ptr subst (const Bf_ptr& bf, const map<int,int>& varmap)
     case Conn::Not:  return ~subst(bf->get_sub(), varmap);
     case Conn::And:
     {
-        Bf_ptr tmp = v(true);
+        Bf_ptr tmp = conj();
+        tmp->reserve(bf->get_subs().size());
         for (Bf_ptr s : bf->get_subs())
-            tmp = tmp & subst(s, varmap);
+            tmp += subst(s, varmap);
         return tmp;
     }
     case Conn::Or:
     {
-        Bf_ptr tmp = v(false);
+        Bf_ptr tmp = disj();
+        tmp->reserve(bf->get_subs().size());
         for (Bf_ptr s : bf->get_subs())
-            tmp = tmp | subst(s, varmap);
+            tmp += subst(s, varmap);
         return tmp;
     }
     }
@@ -61,16 +63,18 @@ Bf_ptr subst (const Bf_ptr& bf, const vector<int>& varmap)
     case Conn::Not:  return ~subst(bf->get_sub(), varmap);
     case Conn::And:
     {
-        Bf_ptr tmp = v(true);
+        Bf_ptr tmp = conj();
+        tmp->reserve(bf->get_subs().size());
         for (Bf_ptr s : bf->get_subs())
-            tmp = tmp & subst(s, varmap);
+            tmp += subst(s, varmap);
         return tmp;
     }
     case Conn::Or:
     {
-        Bf_ptr tmp = v(false);
+        Bf_ptr tmp = disj();
+        tmp->reserve(bf->get_subs().size());
         for (Bf_ptr s : bf->get_subs())
-            tmp = tmp | subst(s, varmap);
+            tmp += subst(s, varmap);
         return tmp;
     }
     }

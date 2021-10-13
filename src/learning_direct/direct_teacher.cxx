@@ -20,11 +20,12 @@ namespace
     // Init := X = 0
     inline Bf_ptr mk_init (const Aig& aig, const vector<Var>& curr_varmap)
     {
-        Bf_ptr tmp = v(true);
+        Bf_ptr tmp = conj();
+        tmp->reserve(aig.latches().size());
 
         // set all latches to 0s
         for (const auto& [aigvar,aiglit] : aig.latches())
-            tmp = tmp & ~toBf(aigvar);
+            tmp += ~toBf(aigvar);
 
         tmp = subst(tmp, curr_varmap);
         return tmp;
@@ -42,7 +43,8 @@ namespace
     inline Bf_ptr mk_trans (const Aig& aig, const vector<Var>& curr_varmap,
                                             const vector<Var>& next_varmap)
     {
-        Bf_ptr tmp = v(true);
+        Bf_ptr tmp = conj();
+        tmp->reserve(aig.latches().size());
 
         for (Bf_ptr x, xp; const auto& [aigvar,aiglit] : aig.latches())
         {
@@ -52,7 +54,7 @@ namespace
             xp = subst(xp, next_varmap);
             x  = subst(x,  curr_varmap);
 
-            tmp = tmp & (xp == x);
+            tmp += (xp == x);
         }
 
         return tmp;
@@ -94,9 +96,10 @@ namespace
 {
     inline Bf_ptr mk_cdnf (const vector<Face>& faces)
     {
-        Bf_ptr tmp = v(true);
+        Bf_ptr tmp = conj();
+        tmp->reserve(faces.size());
         for (const auto& face : faces)
-            tmp = tmp & toBf(face);
+            tmp += toBf(face);
         return tmp;
     }
 
@@ -158,14 +161,16 @@ namespace
     inline Bf_ptr mk_char_dnf (const vector<Face>& faces)
     {
         vector<Bv_ptr> previous_negs;
+        previous_negs.reserve(faces.size());
         for (const Face& face : faces)
             previous_negs.push_back(face.basis());
 
-        Bf_ptr disj = v(false);
+        Bf_ptr dj = disj();
+        dj->reserve(previous_negs.size());
         for (const Bv_ptr neg : previous_negs)
-            disj = disj | toBf(neg);
+            dj += toBf(neg);
 
-        return disj;
+        return dj;
     }
 }
 /*
@@ -244,10 +249,11 @@ namespace
     inline Bf_ptr mk_lt_basis (const Bv_ptr b, const Face& f, const vector<Var>& state_varmap)
     {
         assert(b->len() == f.basis()->len() && b->len() == state_varmap.size());
-        Bf_ptr ret = v(true);
+        Bf_ptr ret = conj();
+        ret->reserve(1+f.basis()->len());
 
         // neq
-        ret = ret & subst(~toBf(b), state_varmap);
+        ret += subst(~toBf(b), state_varmap);
 
         // leq
         Bv_ptr xored = b ^ f.basis();
@@ -256,8 +262,8 @@ namespace
         auto mit = state_varmap.begin();
         for (; bit != b->end(); bit++, xit++, mit++)
             if (!*xit)
-                ret = ret & (*bit ? v(*mit) :
-                                   ~v(*mit));
+                ret += (*bit ? v(*mit) :
+                              ~v(*mit));
 
         return ret;
     }

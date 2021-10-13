@@ -82,11 +82,12 @@ namespace
     // Init := X_{0} = 0
     inline Bf_ptr mk_init (const Aig& aig, const vector<Var>& first_varmap)
     {
-        Bf_ptr tmp = v(true);
+        Bf_ptr tmp = conj();
+        tmp->reserve(aig.latches().size());
 
         // set all latches to 0s
         for (const auto& [aigvar,aiglit] : aig.latches())
-            tmp = tmp & ~toBf(aigvar);
+            tmp += ~toBf(aigvar);
 
         tmp = subst(tmp, first_varmap);
         return tmp;
@@ -104,7 +105,8 @@ namespace
     inline Bf_ptr mk_trans (const Aig& aig, const vector<Var>& k_varmap,
                                             const vector<Var>& kp_varmap)
     {
-        Bf_ptr tmp = v(true);
+        Bf_ptr tmp = conj();
+        tmp->reserve(aig.latches().size());
 
         for (Bf_ptr x, xp; const auto& [aigvar,aiglit] : aig.latches())
         {
@@ -114,7 +116,7 @@ namespace
             xp = subst(xp, kp_varmap);
             x  = subst(x,  k_varmap);
 
-            tmp = tmp & (xp == x);
+            tmp += (xp == x);
         }
 
         return tmp;
@@ -270,9 +272,10 @@ namespace
 {
     inline Bf_ptr mk_cdnf (const vector<Face>& faces)
     {
-        Bf_ptr tmp = v(true);
+        Bf_ptr tmp = conj();
+        tmp->reserve(faces.size());
         for (const auto& face : faces)
-            tmp = tmp & toBf(face);
+            tmp += toBf(face);
         return tmp;
     }
 
