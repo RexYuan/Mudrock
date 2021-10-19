@@ -54,20 +54,24 @@ struct Teacher
     // Higher order commands for context
     //
     void setup       ();           // prepare learning environment
-    bool degen       ();           // if init meets bad
-    bool advanceable ();           // if frontier image doesn't meet bad
     void unroll      (size_t n=1); // unroll bad by `n` step
     void restart     ();           // reset frontier back to init
-    bool progressed  ();           // if current frontier > last frontier
     void advance     ();           // advance frontier
+
+    bool reachbad   (); // if init reaches bad
+    bool meetbad    (); // if frontier image doesn't meet bad
+    bool fixedpoint (); // if current frontier > last frontier
 
     //=============================================================================================
     // Query commands for learner
     //
+    void addCdnf (const vector<Face>& faces);
+
     bool membership (const Bv_ptr bv);
     // counterexample populators
-    //
-    Feedback equivalence (const vector<Face>& faces); // if frontier image < `faces` < bad
+    Feedback equivalence (const vector<Face>& faces); // if frontier image < `faces` < b
+    bool progress  (); // last H(X), T(X,X') => H(X')
+    bool soundness (); // H(X'), T(X',X'',...) => ~B(X',X'',...)
 
     Bv_ptr counterexample () const;
     const Feedback& check_state () const;

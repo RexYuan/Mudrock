@@ -189,8 +189,8 @@ PROF_SCOPE();
     }
 }
 
-// if init meets bad
-bool Teacher::degen ()
+// if init reaches bad
+bool Teacher::reachbad ()
 {
 PROF_SCOPE();
     bool ret;
@@ -209,16 +209,29 @@ PROF_SCOPE();
 }
 
 // if frontier image doesn't meet bad
-bool Teacher::advanceable ()
+bool Teacher::meetbad ()
 {
 PROF_SCOPE();
     bool ret;
     // last H(X), T(X,X'), T(X',X'',...), B(X',X'',...)
     // DEBUG: this takes too much time
     if (PROF_SAT(sat(last_frnt & trans_hd & trans_tl & bad, m)))
-        ret = false;
-    else
         ret = true;
+    else
+        ret = false;
+    return ret;
+}
+
+// if current frontier <= last frontier
+bool Teacher::fixedpoint ()
+{
+PROF_SCOPE();
+    bool ret;
+    // H(X) <= last H(X) and H is non-empty means no progress
+    if (PROF_SAT(hold(frnt |= last_frnt, m) && sat(frnt, m)))
+        ret = true;
+    else
+        ret = false;
     return ret;
 }
 
@@ -235,19 +248,6 @@ PROF_SCOPE();
     f_last_frntp_cache = last_frntp = init;
     f_frnt_cache       = frnt       = v(false);
     f_frntp_cache      = frntp      = v(false);
-}
-
-// if current frontier > last frontier
-bool Teacher::progressed ()
-{
-PROF_SCOPE();
-    bool ret;
-    // H(X) <= last H(X) and H is non-empty means no progress
-    if (PROF_SAT(hold(frnt |= last_frnt, m) && sat(frnt, m)))
-        ret = false;
-    else
-        ret = true;
-    return ret;
 }
 
 // advance frontier
@@ -295,6 +295,29 @@ namespace
 //=================================================================================================
 // Query commands for learner
 //
+void Teacher::addCdnf (const vector<Face>& faces)
+{
+PROF_SCOPE();
+    m.releaseSw(tent_sw);
+    tent_sw = m.newSw();
+SingletonProfiler::Start("eqpart", "mk_cdnf");
+    Bf_ptr cdnf = mk_cdnf(faces);
+SingletonProfiler::Stop("eqpart", "mk_cdnf");
+SingletonProfiler::Start("eqpart", "subst");
+    // H(X), H(X')
+    Bf_ptr first_cdnf  = subst(cdnf, first_state_varmap),
+           second_cdnf = subst(cdnf, second_state_varmap);
+SingletonProfiler::Stop("eqpart", "subst");
+SingletonProfiler::Start("eqpart", "cache");
+    f_frnt_cache  = first_cdnf;
+    f_frntp_cache = second_cdnf;
+SingletonProfiler::Stop("eqpart", "cache");
+SingletonProfiler::Start("eqpart", "addBf");
+    frnt  = v(addBf(first_cdnf,  m, tent_sw));
+    frntp = v(addBf(second_cdnf, m, tent_sw));
+SingletonProfiler::Stop("eqpart", "addBf");
+}
+
 bool Teacher::membership (const Bv_ptr bv)
 {
 PROF_SCOPE();
@@ -314,29 +337,11 @@ PROF_SCOPE();
     Feedback ret;
     assert(first_state_varmap.size() > 0 && last_state_varmap.size() > 0);
 
-    m.releaseSw(tent_sw);
-    tent_sw = m.newSw();
-SingletonProfiler::Start("eqpart", "mk_cdnf");
-    Bf_ptr cdnf = mk_cdnf(faces);
-SingletonProfiler::Stop("eqpart", "mk_cdnf");
-SingletonProfiler::Start("eqpart", "subst");
-    // H(X), H(X')
-    Bf_ptr first_cdnf  = subst(cdnf, first_state_varmap),
-           second_cdnf = subst(cdnf, second_state_varmap);
-SingletonProfiler::Stop("eqpart", "subst");
-SingletonProfiler::Start("eqpart", "cache");
-    f_frnt_cache  = first_cdnf;
-    f_frntp_cache = second_cdnf;
-SingletonProfiler::Stop("eqpart", "cache");
-SingletonProfiler::Start("eqpart", "addBf");
-    frnt  = v(addBf(first_cdnf,  m, tent_sw));
-    frntp = v(addBf(second_cdnf, m, tent_sw));
-SingletonProfiler::Stop("eqpart", "addBf");
+    addCdnf(faces);
     // progress criterion (forward image over-approximation)
     //=========================================================================
     // last H(X), T(X,X') => H(X')
-    if (PROF_SAT_AS("progress"s,
-        !hold(last_frnt & trans_hd |= frntp, m)))
+    if (progress())
     {
         // X' is positive counterexample
         ce = mk_ce(second_state_varmap, m);
@@ -346,8 +351,7 @@ SingletonProfiler::Stop("eqpart", "addBf");
     //=========================================================================
     // H(X'), T(X',X'',...) => ~B(X',X'',...)
     // DEBUG: this takes too much time
-    else if (PROF_SAT_AS("soundness"s,
-             !hold(frntp & trans_tl |= ~bad, m)))
+    else if (soundness())
     {
         // X' is negative counterexample
         ce = mk_ce(second_state_varmap, m);
@@ -358,6 +362,30 @@ SingletonProfiler::Stop("eqpart", "addBf");
     {
         ret = (state = Perfect);
     }
+    return ret;
+}
+
+bool Teacher::progress ()
+{
+PROF_SCOPE();
+    bool ret;
+    // last H(X), T(X,X') => H(X')
+    if (PROF_SAT(!hold(last_frnt & trans_hd |= frntp, m)))
+        ret = true;
+    else
+        ret = false;
+    return ret;
+}
+
+bool Teacher::soundness ()
+{
+PROF_SCOPE();
+    bool ret;
+    // H(X'), T(X',X'',...) => ~B(X',X'',...)
+    if (PROF_SAT(!hold(frntp & trans_tl |= ~bad, m)))
+        ret = true;
+    else
+        ret = false;
     return ret;
 }
 

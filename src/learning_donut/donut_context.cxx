@@ -12,18 +12,18 @@ Feedback Context::check ()
 {
     teacher.setup();                             // prepare constraints
     teacher.restart();                           // prepare frontiers: last frnt = false, frnt = init
-    if (teacher.degen())                         // if init meets bad
+    if (teacher.reachbad())                         // if init meets bad
         return (result = Refuted);               //     return refuted
     learner.learn();                             // frnt = frnt image < frnt < bad
     size_t depth = 0;
     while (true)                                 // loop
     {                                            // {
-        if (!teacher.advanceable())              //     if frnt image meets bad
+        if (teacher.meetbad())              //     if frnt image meets bad
         {                                        //     {
             log(3, "Top", "Restarting, iter depth = "s + to_string(depth));
             depth=0;
             teacher.unroll();                    //         unroll bad
-            if (teacher.degen())                 //         if init meets bad
+            if (teacher.reachbad())                 //         if init meets bad
                 return (result = Refuted);       //             return refuted
             else                                 //         else
                 teacher.restart();               //             frnt = init
@@ -31,7 +31,7 @@ Feedback Context::check ()
         else                                     //     else
         {                                        //     {
             learner.relearn();                   //         frnt = frnt image < frnt < bad
-            if (!teacher.progressed())           //         if frnt <= last frnt
+            if (teacher.fixedpoint())           //         if frnt <= last frnt
             {
                 log(3, "Top", "Ending, iter depth = "s + to_string(depth));
                 return (result = Perfect);       //             return perfect
