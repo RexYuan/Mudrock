@@ -46,6 +46,7 @@ namespace Donut
 Teacher::Teacher (const string& filename) :
 m{Mana{}},
 aig{Aig{filename}},
+mm{aig},
 cumu_sw{m.newSw()}, tent_sw{m.newSw()}
 {
     assert(aig);
@@ -239,6 +240,8 @@ PROF_SCOPE();
 void Teacher::restart ()
 {
 PROF_SCOPE();
+    mm.restart();
+
     m.releaseSw(cumu_sw);
     m.releaseSw(tent_sw);
     cumu_sw = m.newSw();
@@ -254,6 +257,8 @@ PROF_SCOPE();
 void Teacher::advance ()
 {
 PROF_SCOPE();
+    mm.advance(cdnf_cache);
+
     // cumulate progress
     frnt  = v(addBf(f_frnt_cache,  m, cumu_sw));
     frntp = v(addBf(f_frntp_cache, m, cumu_sw));
@@ -302,6 +307,7 @@ PROF_SCOPE();
     tent_sw = m.newSw();
 SingletonProfiler::Start("eqpart", "mk_cdnf");
     Bf_ptr cdnf = mk_cdnf(faces);
+    cdnf_cache = cdnf;
 SingletonProfiler::Stop("eqpart", "mk_cdnf");
 SingletonProfiler::Start("eqpart", "subst");
     // H(X), H(X')
@@ -321,13 +327,7 @@ SingletonProfiler::Stop("eqpart", "addBf");
 bool Teacher::membership (const Bv_ptr bv)
 {
 PROF_SCOPE();
-    bool ret;
-    // accept X' when last H(X), T(X,X') is sat
-    if (PROF_SAT(evaluate(last_frnt & trans_hd, m, bv, second_state_varmap)))
-        ret = true;
-    else
-        ret = false;
-    return ret;
+    return mm.membership(bv);
 }
 
 // if frontier image < `faces` < bad
@@ -418,6 +418,76 @@ vector<Bv_ptr> Teacher::witness () const
         stimulus.push_back(tmp);
     }
     return stimulus;
+}
+
+// Member Manager
+//
+MemberMana::MemberMana (const Aig& aig_) :
+aig{aig_}
+{}
+
+inline Bf_ptr mk_state_init (const Aig& aig)
+{
+    Bf_ptr tmp = conj();
+    tmp->reserve(aig.latches().size());
+
+    // set all latches to 0s
+    for (size_t i = 0; i < aig.latches().size(); i++)
+        tmp += ~toBf(i);
+
+    return tmp;
+}
+void MemberMana::setup ()
+{
+    // set up variables over X,X' in solver
+    auto first_aig_varmap  = addAig(aig, m);
+    auto second_aig_varmap = addAig(aig, m);
+    first_state_varmap  = mk_state_varmap(aig, first_aig_varmap);
+    second_state_varmap = mk_state_varmap(aig, second_aig_varmap);
+
+    // set up Init(X), Trans(X,X') in solver var
+    auto f_init  = mk_init(aig, first_aig_varmap);
+    auto f_trans = mk_trans(aig, first_aig_varmap, second_aig_varmap);
+    init  = v(addBf(f_init, m));
+    trans = v(addBf(f_trans, m));
+}
+
+void MemberMana::restart ()
+{
+    renew();
+    setup();
+
+    cumu_hypt = init;
+    f_cumu_hypt = disj();
+    f_cumu_hypt += mk_state_init(aig); // in state vars
+}
+
+void MemberMana::advance (Bf_ptr cdnf)
+{
+    renew();
+    setup();
+
+    f_cumu_hypt += cdnf;
+
+    Bf_ptr first_cdnf = subst(f_cumu_hypt, first_state_varmap);
+    cumu_hypt = v(addBf(first_cdnf, m));
+}
+
+void MemberMana::renew ()
+{
+    m.~Mana();
+    new (&m) Mana{};
+}
+
+bool MemberMana::membership(const Bv_ptr bv)
+{
+    bool ret;
+    // accept X' when last H(X), T(X,X') is sat
+    if (PROF_SAT(evaluate(cumu_hypt & trans, m, bv, second_state_varmap)))
+        ret = true;
+    else
+        ret = false;
+    return ret;
 }
 //=================================================================================================
 }

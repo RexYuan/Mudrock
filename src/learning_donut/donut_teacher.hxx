@@ -34,6 +34,31 @@ namespace Donut
 //=================================================================================================
 // Classic Teacher for stepwise over/under-approximation with unrolling
 //
+struct MemberMana
+{
+    MemberMana (const Aig& aig);
+    void setup ();
+    void renew ();
+    void restart ();
+    void advance (Bf_ptr cdnf);
+
+    bool membership (const Bv_ptr bv);
+
+    Mana m;
+    const Aig& aig;
+    vector<Var> first_state_varmap, second_state_varmap; // state var to minisat var
+
+    Bf_ptr init, trans; // solver vars
+    Bf_ptr cumu_hypt; // solver vars
+    Bf_ptr f_cumu_hypt; // state vars
+};
+
+struct FullMana
+{};
+
+struct CoiMana
+{};
+
 struct Teacher
 {
     // using enum Feedback; needs g++-11
@@ -85,6 +110,10 @@ private:
     vector<Var> first_state_varmap, second_state_varmap, last_state_varmap;
     vector< vector<Var> > aig_varmaps_cache;
 
+    MemberMana mm;
+    FullMana fm;
+    CoiMana cm;
+
     Sw cumu_sw, // tracking the cumulative disjuncted hypotheses set
        tent_sw; // tracking the tentative frontier hypothesis
     // Working with bf formulae
@@ -104,6 +133,7 @@ private:
            f_last_frntp_cache,
            f_frnt_cache,
            f_frntp_cache;
+    Bf_ptr cdnf_cache;
 
     size_t unroll_depth = 0;
 
