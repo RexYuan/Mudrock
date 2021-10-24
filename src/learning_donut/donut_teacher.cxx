@@ -446,10 +446,9 @@ void MemberMana::setup ()
     second_state_varmap = mk_state_varmap(aig, second_aig_varmap);
 
     // set up Init(X), Trans(X,X') in solver var
-    auto f_init  = mk_init(aig, first_aig_varmap);
-    auto f_trans = mk_trans(aig, first_aig_varmap, second_aig_varmap);
-    init  = v(addBf(f_init, m));
-    trans = v(addBf(f_trans, m));
+    f_init  = mk_init(aig, first_aig_varmap);
+    f_trans = mk_trans(aig, first_aig_varmap, second_aig_varmap);
+    fixBf(f_trans, m);
 }
 
 void MemberMana::restart ()
@@ -457,7 +456,8 @@ void MemberMana::restart ()
     renew();
     setup();
 
-    cumu_hypt = init;
+    fixBf(f_init, m);
+
     f_cumu_hypt = disj();
     f_cumu_hypt += mk_state_init(aig); // in state vars
 }
@@ -470,7 +470,8 @@ void MemberMana::advance (Bf_ptr cdnf)
     f_cumu_hypt += cdnf;
 
     Bf_ptr first_cdnf = subst(f_cumu_hypt, first_state_varmap);
-    cumu_hypt = v(addBf(first_cdnf, m));
+
+    fixBf(first_cdnf, m);
 }
 
 void MemberMana::renew ()
@@ -483,7 +484,7 @@ bool MemberMana::membership(const Bv_ptr bv)
 {
     bool ret;
     // accept X' when last H(X), T(X,X') is sat
-    if (PROF_SAT(evaluate(cumu_hypt & trans, m, bv, second_state_varmap)))
+    if (PROF_SAT(evaluate(m, bv, second_state_varmap)))
         ret = true;
     else
         ret = false;

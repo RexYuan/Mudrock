@@ -48,9 +48,8 @@ struct MemberMana
     const Aig& aig;
     vector<Var> first_state_varmap, second_state_varmap; // state var to minisat var
 
-    Bf_ptr init, trans; // solver vars
-    Bf_ptr cumu_hypt; // solver vars
-    Bf_ptr f_cumu_hypt; // state vars
+    Bf_ptr f_init, f_trans; // in solver vars
+    Bf_ptr f_cumu_hypt; // in state vars
 };
 
 struct FullMana
