@@ -46,7 +46,7 @@ namespace Donut
 Teacher::Teacher (const string& filename) :
 m{Mana{}},
 aig{Aig{filename}},
-mm{aig},
+mm{aig}, fm{aig},
 cumu_sw{m.newSw()}, tent_sw{m.newSw()}
 {
     assert(aig);
@@ -227,13 +227,7 @@ PROF_SCOPE();
 bool Teacher::fixedpoint ()
 {
 PROF_SCOPE();
-    bool ret;
-    // H(X) <= last H(X) and H is non-empty means no progress
-    if (PROF_SAT(hold(frnt |= last_frnt, m) && sat(frnt, m)))
-        ret = true;
-    else
-        ret = false;
-    return ret;
+    return fm.fixedpoint();
 }
 
 // reset frontier back to init
@@ -241,6 +235,7 @@ void Teacher::restart ()
 {
 PROF_SCOPE();
     mm.restart();
+    fm.restart();
 
     m.releaseSw(cumu_sw);
     m.releaseSw(tent_sw);
@@ -258,6 +253,7 @@ void Teacher::advance ()
 {
 PROF_SCOPE();
     mm.advance(cdnf_cache);
+    fm.advance();
 
     // cumulate progress
     frnt  = v(addBf(f_frnt_cache,  m, cumu_sw));
@@ -338,13 +334,14 @@ PROF_SCOPE();
     assert(first_state_varmap.size() > 0 && last_state_varmap.size() > 0);
 
     addCdnf(faces);
+    Bf_ptr cdnf = mk_cdnf(faces);
     // progress criterion (forward image over-approximation)
     //=========================================================================
     // last H(X), T(X,X') => H(X')
-    if (progress())
+    if (fm.progress(cdnf))
     {
         // X' is positive counterexample
-        ce = mk_ce(second_state_varmap, m);
+        ce = fm.get_ce();
         ret = (state = TooSmall);
     }
     // soundness criterion with foresight (unrolled ~bad under-approximation)
@@ -362,18 +359,6 @@ PROF_SCOPE();
     {
         ret = (state = Perfect);
     }
-    return ret;
-}
-
-bool Teacher::progress ()
-{
-PROF_SCOPE();
-    bool ret;
-    // last H(X), T(X,X') => H(X')
-    if (PROF_SAT(!hold(last_frnt & trans_hd |= frntp, m)))
-        ret = true;
-    else
-        ret = false;
     return ret;
 }
 
@@ -485,6 +470,99 @@ bool MemberMana::membership(const Bv_ptr bv)
     bool ret;
     // accept X' when last H(X), T(X,X') is sat
     if (PROF_SAT(evaluate(m, bv, second_state_varmap)))
+        ret = true;
+    else
+        ret = false;
+    return ret;
+}
+
+// Full Transition Manager
+//
+FullMana::FullMana (const Aig& aig_) :
+aig{aig_}
+{}
+
+void FullMana::setup ()
+{
+    // set up variables over X,X' in solver
+    auto first_aig_varmap  = addAig(aig, m);
+    auto second_aig_varmap = addAig(aig, m);
+    first_state_varmap  = mk_state_varmap(aig, first_aig_varmap);
+    second_state_varmap = mk_state_varmap(aig, second_aig_varmap);
+
+    // set up Init(X), Trans(X,X') in solver var
+    f_init  = mk_init(aig, first_aig_varmap);
+    f_trans = mk_trans(aig, first_aig_varmap, second_aig_varmap);
+    fixBf(f_trans, m);
+}
+
+void FullMana::restart ()
+{
+    renew();
+    setup();
+
+    // fixBf(f_init, m);
+    cumu_hypt = v(addBf(f_init, m));
+
+    f_cumu_hypt = disj();
+    f_cumu_hypt += mk_state_init(aig); // in state vars
+}
+
+void FullMana::advance ()
+{
+    renew();
+    setup();
+
+    f_cumu_hypt += f_frnt;
+
+    Bf_ptr first_cdnf = subst(f_cumu_hypt, first_state_varmap);
+
+    // fixBf(first_cdnf, m);
+    cumu_hypt = v(addBf(first_cdnf, m));
+}
+
+void FullMana::renew ()
+{
+    m.~Mana();
+    new (&m) Mana{};
+}
+
+bool FullMana::progress (Bf_ptr cdnf)
+{
+    f_frnt = cdnf;
+    auto first_cdnf = subst(cdnf, first_state_varmap);
+    auto second_cdnf = subst(cdnf, second_state_varmap);
+    frnt  = v(addBf(first_cdnf, m));
+    frntp = v(addBf(second_cdnf, m));
+
+    bool ret;
+    // last H(X), T(X,X') => H(X') hold
+    // last H(X), T(X,X'), ~H(X') sat
+    if (PROF_SAT(sat(cumu_hypt & ~frntp, m)))
+    {
+        ret = true;
+        ce = mk_ce(second_state_varmap, m);
+    }
+    else
+    {
+        ret = false;
+    }
+    return ret;
+}
+
+Bv_ptr FullMana::get_ce ()
+{
+    assert(ce);
+    return ce;
+}
+
+bool FullMana::fixedpoint ()
+{
+    bool ret;
+    // H(X) => last H(X) and H is non-empty means no progress
+    // H(X) => last H(X) hold
+    // H(X), ~last H(X) unsat
+    if (PROF_SAT(!sat(frnt & ~cumu_hypt, m) && sat(frnt, m)))
         ret = true;
     else
         ret = false;

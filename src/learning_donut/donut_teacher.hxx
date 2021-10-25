@@ -42,7 +42,7 @@ struct MemberMana
     void restart ();
     void advance (Bf_ptr cdnf);
 
-    bool membership (const Bv_ptr bv);
+    bool membership (const Bv_ptr bv); // if `bv` is image of `f_cumu_hypt`
 
     Mana m;
     const Aig& aig;
@@ -53,7 +53,31 @@ struct MemberMana
 };
 
 struct FullMana
-{};
+{
+    FullMana (const Aig& aig);
+    void setup ();
+    void renew ();
+    void restart ();
+    void advance ();
+
+    bool progress (Bf_ptr cdnf); // if `cdnf` is forward img overapprox of `f_cumu_hypt`
+                                 // last H(X), T(X,X') => H(X')
+    bool fixedpoint (); // if `frnt` is in `f_cumu_hypt`
+                        // H(X) => last H(X) and H is non-empty
+
+    Bv_ptr get_ce (); // ce for progress
+
+    Mana m;
+    const Aig& aig;
+    vector<Var> first_state_varmap, second_state_varmap; // state var to minisat var
+
+    Bf_ptr f_frnt;
+    Bf_ptr frnt, frntp;
+    Bf_ptr f_init, f_trans;
+    Bf_ptr f_cumu_hypt, cumu_hypt;
+
+    Bv_ptr ce;
+};
 
 struct CoiMana
 {};
@@ -94,7 +118,6 @@ struct Teacher
     bool membership (const Bv_ptr bv);
     // counterexample populators
     Feedback equivalence (const vector<Face>& faces); // if frontier image < `faces` < b
-    bool progress  (); // last H(X), T(X,X') => H(X')
     bool soundness (); // H(X'), T(X',X'',...) => ~B(X',X'',...)
 
     Bv_ptr counterexample () const;
