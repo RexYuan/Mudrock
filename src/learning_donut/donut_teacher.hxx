@@ -77,6 +77,7 @@ struct FullMana
     Bf_ptr f_cumu_hypt, cumu_hypt;
 
     Bv_ptr ce;
+    Sw tent_sw, cumu_sw;
 };
 
 struct CoiMana

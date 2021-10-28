@@ -165,6 +165,8 @@ PROF_SCOPE();
 
     aig_varmaps_cache.push_back(first_aig_varmap);
     aig_varmaps_cache.push_back(second_aig_varmap);
+
+    fm.setup();
 }
 
 // unroll bad by `n` step
@@ -479,21 +481,20 @@ bool MemberMana::membership(const Bv_ptr bv)
 // Full Transition Manager
 //
 FullMana::FullMana (const Aig& aig_) :
-aig{aig_}
+aig{aig_},
+tent_sw{m.newSw()}, cumu_sw{m.newSw()}
 {}
 
 void FullMana::setup ()
 {
     // set up variables over X,X' in solver
     auto first_aig_varmap  = addAig(aig, m);
-    auto second_aig_varmap = addAig(aig, m);
+    auto second_aig_varmap = extendAig(first_aig_varmap, aig, m);
     first_state_varmap  = mk_state_varmap(aig, first_aig_varmap);
     second_state_varmap = mk_state_varmap(aig, second_aig_varmap);
 
     // set up Init(X), Trans(X,X') in solver var
     f_init  = mk_init(aig, first_aig_varmap);
-    f_trans = mk_trans(aig, first_aig_varmap, second_aig_varmap);
-    fixBf(f_trans, m);
 }
 
 void FullMana::restart ()
@@ -510,30 +511,27 @@ void FullMana::restart ()
 
 void FullMana::advance ()
 {
-    renew();
-    setup();
-
-    f_cumu_hypt += f_frnt;
-
-    Bf_ptr first_cdnf = subst(f_cumu_hypt, first_state_varmap);
-
-    // fixBf(first_cdnf, m);
-    cumu_hypt = v(addBf(first_cdnf, m));
+    cumu_hypt = v(addBf(frnt | cumu_hypt,  m, cumu_sw));
 }
 
 void FullMana::renew ()
 {
     m.~Mana();
     new (&m) Mana{};
+    tent_sw = m.newSw();
+    cumu_sw = m.newSw();
 }
 
 bool FullMana::progress (Bf_ptr cdnf)
 {
+    m.releaseSw(tent_sw);
+    tent_sw = m.newSw();
+
     f_frnt = cdnf;
     auto first_cdnf = subst(cdnf, first_state_varmap);
     auto second_cdnf = subst(cdnf, second_state_varmap);
-    frnt  = v(addBf(first_cdnf, m));
-    frntp = v(addBf(second_cdnf, m));
+    frnt  = v(addBf(first_cdnf,  m, tent_sw));
+    frntp = v(addBf(second_cdnf, m, tent_sw));
 
     bool ret;
     // last H(X), T(X,X') => H(X') hold
@@ -546,6 +544,7 @@ bool FullMana::progress (Bf_ptr cdnf)
     else
     {
         ret = false;
+        frnt = v(addBf(first_cdnf,  m, cumu_sw));
     }
     return ret;
 }
