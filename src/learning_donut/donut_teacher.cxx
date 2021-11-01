@@ -192,6 +192,23 @@ PROF_SCOPE();
     }
 }
 
+bool Teacher::degen ()
+{
+PROF_SCOPE();
+    Mana degen_m;
+
+    // set up variables over X
+    auto degen_first_aig_varmap  = addAig(aig, degen_m);
+
+    // set up Init(X), Bad(X')
+    auto f_init     = mk_init(aig, degen_first_aig_varmap);
+    auto f_bad      = mk_bad(aig,  degen_first_aig_varmap);
+    auto degen_init = v(addBf(f_init, degen_m));
+    auto degen_bad  = v(addBf(f_bad,  degen_m));
+
+    return PROF_SAT(sat(degen_init & degen_bad, degen_m));
+}
+
 // if init reaches bad
 bool Teacher::reachbad ()
 {

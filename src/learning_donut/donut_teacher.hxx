@@ -107,6 +107,7 @@ struct Teacher
     void restart     ();           // reset frontier back to init
     void advance     ();           // advance frontier
 
+    bool degen      (); // if init meets bad
     bool reachbad   (); // if init reaches bad
     bool meetbad    (); // if frontier image doesn't meet bad
     bool fixedpoint (); // if current frontier > last frontier

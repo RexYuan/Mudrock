@@ -10,6 +10,8 @@ learner{teacher} {}
 
 Feedback Context::check ()
 {
+    if (teacher.degen())
+        return (result = Refuted);
     teacher.setup();                             // prepare constraints
     teacher.restart();                           // prepare frontiers: last frnt = false, frnt = init
     if (teacher.reachbad())                         // if init meets bad
