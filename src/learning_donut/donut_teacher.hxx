@@ -71,17 +71,46 @@ struct FullMana
     const Aig& aig;
     vector<Var> first_state_varmap, second_state_varmap; // state var to minisat var
 
-    Bf_ptr f_frnt;
     Bf_ptr frnt, frntp;
-    Bf_ptr f_init, f_trans;
-    Bf_ptr f_cumu_hypt, cumu_hypt;
+    Bf_ptr f_init;
+    Bf_ptr cumu_hypt;
 
     Bv_ptr ce;
     Sw tent_sw, cumu_sw;
 };
 
 struct CoiMana
-{};
+{
+    CoiMana (const Aig& aig);
+    void setup ();
+    void renew ();
+    void restart ();
+    void advance ();
+    void unroll (size_t n);
+
+    bool reachbad (); // if init reaches bad
+    bool meetbad  (); // if frontier image doesn't meet bad
+    bool soundness (Bf_ptr cdnf); // H(X'), T(X',X'',...) => ~B(X',X'',...)
+
+    Bv_ptr get_ce (); // ce for progress
+
+    Mana m;
+    const Aig& aig;
+    vector<Var> first_aig_varmap,   second_aig_varmap,   last_aig_varmap;
+    vector<Var> first_state_varmap, second_state_varmap, last_state_varmap; // state var to minisat var
+    vector< vector<Var> > aig_varmaps_cache; // for witness extraction
+
+    Bf_ptr frnt, frntp;
+    Bf_ptr init, badp;
+    Bf_ptr cumu_hypt;
+
+    Bf_ptr trans_hd, trans_tl;
+
+    Bv_ptr ce;
+    Sw tent_sw, cumu_sw;
+
+    size_t unroll_depth{0};
+};
 
 struct Teacher
 {
@@ -96,8 +125,6 @@ struct Teacher
 
     Teacher  (const string& filename);
     ~Teacher () = default;
-
-    void renewMana ();
 
     //=============================================================================================
     // Higher order commands for context
@@ -115,12 +142,9 @@ struct Teacher
     //=============================================================================================
     // Query commands for learner
     //
-    void addCdnf (const vector<Face>& faces);
-
     bool membership (const Bv_ptr bv);
     // counterexample populators
     Feedback equivalence (const vector<Face>& faces); // if frontier image < `faces` < b
-    bool soundness (); // H(X'), T(X',X'',...) => ~B(X',X'',...)
 
     Bv_ptr counterexample () const;
     const Feedback& check_state () const;
@@ -128,38 +152,13 @@ struct Teacher
     vector<Bv_ptr> witness () const; // return refutation stimulus
 
 private:
-    Mana m;
     Aig aig;
-    vector<Var> first_aig_varmap,   second_aig_varmap,   last_aig_varmap;
-    vector<Var> first_state_varmap, second_state_varmap, last_state_varmap;
-    vector< vector<Var> > aig_varmaps_cache;
 
     MemberMana mm;
     FullMana fm;
     CoiMana cm;
 
-    Sw cumu_sw, // tracking the cumulative disjuncted hypotheses set
-       tent_sw; // tracking the tentative frontier hypothesis
-    // Working with bf formulae
-    //
-    // formulae for given conditions
-    Bf_ptr init,      // I(X)
-           bad,       // B(X',X''...)
-           trans_hd,  // T(X,X')
-           trans_tl;  // T(X',X'',...)
-    // formulae for hypotheses to be tested
-    Bf_ptr last_frnt,  // H-1(X)  last frontier
-           last_frntp, // H-1(X') last frontier
-           frnt,       // H(X)    current frontier
-           frntp;      // H(X')   current frontier
-    // cache formula for renewing mana
-    Bf_ptr f_last_frnt_cache,
-           f_last_frntp_cache,
-           f_frnt_cache,
-           f_frntp_cache;
     Bf_ptr cdnf_cache;
-
-    size_t unroll_depth = 0;
 
     Feedback state = Unknown;
     Bv_ptr ce{nullptr};
