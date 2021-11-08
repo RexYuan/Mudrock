@@ -21,3 +21,5 @@ Var addBf (const Bf_ptr& bf, Mana& m, optional<Sw> swopt=nullopt, optional<bool>
 
 // add `bf` and then fix it to true
 void fixBf (const Bf_ptr& bf, Mana& m); // addBf then addClause
+
+void addClause (const vector<Bf_ptr> vs, Mana& m, Sw sw);

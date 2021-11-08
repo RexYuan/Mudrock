@@ -61,3 +61,15 @@ void fixBf (const Bf_ptr& bf, Mana& m)
     [[maybe_unused]] bool ret = m.addClause(m.fixedSw(), mkLit(tmp));
     assert(ret);
 }
+
+void addClause (const vector<Bf_ptr> vs, Mana& m, Sw sw)
+{
+    for (const Bf_ptr v : vs)
+        assert(v->get_type() == Conn::Base);
+
+    vec<Lit> tmp;
+    for (const Bf_ptr v : vs)
+        tmp.push(mkLit(v->get_int()));
+
+    m.addClause(sw, tmp);
+}
