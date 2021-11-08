@@ -454,7 +454,10 @@ bool FullMana::fixedpoint ()
 CoiMana::CoiMana (const Aig& aig_) :
 aig{aig_},
 tent_sw{m.newSw()}, cumu_sw{m.newSw()}
-{}
+{
+    cone = findCOIof(aig, aig.outputs()[0].var);
+    cout << "SAVED " << (aig.latches().size() - cone.size()) << " LATCHES" << endl;
+}
 
 void CoiMana::setup ()
 {
@@ -501,7 +504,7 @@ void CoiMana::unroll (size_t n)
     for (size_t i=0; i<n; i++)
     {
         // set up X''
-        auto tmp_aig_varmap = extendAig(last_aig_varmap, aig, m);
+        auto tmp_aig_varmap = extendAigSel(cone, last_aig_varmap, aig, m);
 
         // set up Bad(X'')
         auto f_bad = mk_bad(aig, tmp_aig_varmap);

@@ -17,6 +17,8 @@ using std::endl;
 #include "direct_context.hxx"
 #include "donut_context.hxx"
 
+#include "more_aig.hxx"
+
 void print_usage ()
 {
     cout << "usage: ./main.o d|m input.aag\n"s;

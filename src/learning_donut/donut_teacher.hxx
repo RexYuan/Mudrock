@@ -8,6 +8,8 @@ using std::string;
 using namespace std::string_literals;
 #include <vector>
 using std::vector;
+#include <set>
+using std::set;
 
 #include <iostream>
 using std::ostream;
@@ -28,6 +30,7 @@ using std::ostream;
 #include "face_to_bf.hxx"
 #include "bf_to_minisat.hxx"
 #include "aig_to_minisat.hxx"
+#include "more_aig.hxx"
 
 namespace Donut
 {
@@ -110,6 +113,8 @@ struct CoiMana
     Sw tent_sw, cumu_sw;
 
     size_t unroll_depth{0};
+
+    set<AigVar> cone;
 };
 
 struct Teacher

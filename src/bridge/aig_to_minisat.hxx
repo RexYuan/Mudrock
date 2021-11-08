@@ -5,6 +5,8 @@
 
 #include <vector>
 using std::vector;
+#include <set>
+using std::set;
 
 #include <optional>
 using std::nullopt;
@@ -26,3 +28,5 @@ using namespace Minisat;
 vector<Var> addAig (const Aig& aig, Mana& m);
 // add aig with state vars determined by `last_varmap` and return map from aig to minisat
 vector<Var> extendAig (const vector<Var>& last_varmap, const Aig& aig, Mana& m);
+// add aig with state vars determined by `last_varmap` selectively on
+vector<Var> extendAigSel (const set<AigVar>& cone, const vector<Var>& last_varmap, const Aig& aig, Mana& m);

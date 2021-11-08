@@ -117,3 +117,45 @@ vector<Var> extendAig (const vector<Var>& last_varmap, const Aig& aig, Mana& m)
     validate_varmap(varmap, aig, m);
     return varmap;
 }
+
+vector<Var> extendAigSel (const set<AigVar>& cone, const vector<Var>& last_varmap, const Aig& aig, Mana& m)
+{
+    vector<Var> varmap(1+aig.maxvar(), var_Undef);
+
+    // when AigVar has var 0 it is a constant (0=false, 1=true)
+    varmap[0] = m.constFalse();
+
+    // add input
+    for (const auto& aigvar : aig.inputs())
+    {
+        assert(isNew(aigvar, varmap));
+        varmap[aigvar] = m.newVar();
+    }
+
+    // add state in terms of last step
+    for (const auto& [aigvar,aiglit] : aig.latches())
+    {
+        assert(isNew(aigvar, varmap));
+        if (cone.contains(aigvar))
+            varmap[aigvar] = addBf(subst(toBf(aiglit), last_varmap), m);
+        else
+            varmap[aigvar] = m.newVar();
+    }
+
+    // add and
+    for (const auto& [aigvar,aiglit1,aiglit2] : aig.ands())
+    {
+        assert(isNew(aigvar, varmap));
+        assert(isOrdered(aigvar, aiglit1, aiglit2, varmap));
+        // set decision if it's next state
+        bool is_next = false;
+        for (const auto& [curr_aigvar,next_aiglit] : aig.latches())
+            if (aigvar == next_aiglit.var) is_next = true;
+
+        Bf_ptr tmpbf = subst(toBf(aiglit1) & toBf(aiglit2), varmap);
+        varmap[aigvar] = addBf(tmpbf, m, nullopt, is_next);
+    }
+
+    validate_varmap(varmap, aig, m);
+    return varmap;
+}
