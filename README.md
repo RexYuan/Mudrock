@@ -2,7 +2,7 @@
 
 # Mudrock
 
-<img src="https://user-images.githubusercontent.com/5001650/198895789-3f067a37-8863-4455-851f-8e88f57f772c.png" height="500px" width="500px">
+<img src="https://user-images.githubusercontent.com/5001650/198895789-3f067a37-8863-4455-851f-8e88f57f772c.png" width="75%">
 
 </div>
 
