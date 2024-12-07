@@ -1,11 +1,3 @@
-<div align="center">
-
-# Mudrock
-
-<img src="https://user-images.githubusercontent.com/5001650/198895789-3f067a37-8863-4455-851f-8e88f57f772c.png" width="75%">
-
-</div>
-
 ## Dependency
 
 1. [gcc@10](https://formulae.brew.sh/formula/gcc@10)
@@ -37,7 +29,7 @@ make cleanall # delete builds including libraries
 For configurations, see:
 
 ```
-./test.py -h    
+./test.py -h
 usage: test.py [-h] [-r RESULT] [-w WORKER] [--no-direct] [-f FILE [FILE ...] | -n NUMBER]
 
 options:
